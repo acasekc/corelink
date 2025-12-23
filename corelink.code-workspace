@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "SSH FS - pantrylinkec2",
+			"uri": "ssh://pantrylinkec2/"
+		}
+	],
+	"settings": {
+		"sshfs.configs": [
+			{
+				"name": "pantrylinkec2",
+				"label": "pantrylinkec2",
+				"host": "13.58.60.85",
+				"username": "ec2-user",
+				"password": "RQvU6dVLv7XJHny",
+				"sftpSudo": true
+			}
+		]
+	}
+}
