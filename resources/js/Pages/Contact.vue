@@ -71,8 +71,8 @@
                             {{ form.processing ? 'Sending...' : 'Send Message' }}
                         </button>
 
-                        <div v-if="successMessage" class="p-4 bg-green-500/20 border border-green-400/50 rounded-lg text-green-300">
-                            ✓ {{ successMessage }}
+                        <div v-if="showSuccess" class="p-4 bg-green-500/20 border border-green-400/50 rounded-lg text-green-300">
+                            ✓ {{ successText }}
                         </div>
                     </form>
                 </div>
@@ -85,7 +85,7 @@
 
 <script setup>
 import { Link, useForm, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 
 const form = useForm({
@@ -96,13 +96,24 @@ const form = useForm({
 });
 
 const page = usePage();
-const successMessage = computed(() => page.props.flash?.success);
+const showSuccess = ref(false);
+const successText = ref('');
+
+// Check for flash message on mount (after redirect)
+onMounted(() => {
+    if (page.props.flash?.success) {
+        showSuccess.value = true;
+        successText.value = page.props.flash.success;
+    }
+});
 
 const submitForm = () => {
     form.post('/contact', {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
+            showSuccess.value = true;
+            successText.value = 'Thank you for your message! We\'ll get back to you soon.';
         },
     });
 };
