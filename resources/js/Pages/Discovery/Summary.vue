@@ -1,25 +1,7 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        <!-- Navigation -->
-        <nav class="fixed top-0 w-full bg-slate-900/80 backdrop-blur-md border-b border-slate-700 z-50">
-            <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-lg flex items-center justify-center font-bold">
-                        CL
-                    </div>
-                    <span class="text-xl font-bold">CoreLink</span>
-                </div>
-                <div class="hidden md:flex gap-8">
-                    <Link href="/" class="hover:text-blue-400 transition">Home</Link>
-                    <Link href="/projects" class="hover:text-blue-400 transition">Projects</Link>
-                    <Link href="/about" class="hover:text-blue-400 transition">About</Link>
-                    <Link href="/contact" class="hover:text-blue-400 transition">Contact</Link>
-                </div>
-            </div>
-        </nav>
-
+    <PublicLayout>
         <!-- Main Content -->
-        <div class="pt-32 pb-20 px-6">
+        <div class="pt-36 pb-20 px-6">
             <div class="max-w-3xl mx-auto">
                 <!-- Header -->
                 <div class="text-center mb-12">
@@ -112,11 +94,12 @@
                 </p>
             </div>
         </div>
-    </div>
+    </PublicLayout>
 </template>
 
 <script setup>
 import { Link } from '@inertiajs/vue3';
+import PublicLayout from '@/Layouts/PublicLayout.vue';
 
 const props = defineProps({
     sessionId: String,
