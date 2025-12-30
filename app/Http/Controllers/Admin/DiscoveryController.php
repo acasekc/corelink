@@ -94,10 +94,8 @@ class DiscoveryController extends Controller
         $invite = InviteCode::create([
             'admin_user_id' => auth()->id(),
             'code' => $code,
-            'max_uses' => $validated['max_uses'] ?? null,
-            'expires_at' => isset($validated['expires_days']) 
-                ? now()->addDays($validated['expires_days']) 
-                : null,
+            // Default max_uses to 1 if not provided to avoid DB integrity errors
+            'max_uses' => $validated['max_uses'] ?? 1,
             'is_active' => true,
         ]);
 
