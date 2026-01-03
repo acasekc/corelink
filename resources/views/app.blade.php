@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="CoreLink Development specializes in crafting intelligent, scalable web and mobile applications using cutting-edge AI technology.">
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 

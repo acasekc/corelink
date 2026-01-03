@@ -5,37 +5,49 @@
             <!-- Header -->
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold mb-2">Project Discovery</h1>
-                <p class="text-slate-400">Let's explore your project idea together</p>
+                <p class="text-slate-200">Let's explore your project idea together</p>
             </div>
 
             <!-- Invite Code Entry (if no session) -->
             <div v-if="!sessionId" class="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-8 max-w-md mx-auto">
                 <h2 class="text-xl font-semibold mb-4">Enter Your Invite Code</h2>
-                <p class="text-slate-400 mb-6 text-sm">You'll need an invite code to start your project discovery session.</p>
+                <p class="text-slate-300 mb-6 text-sm">You'll need an invite code to start your project discovery session.</p>
                 
-                <form @submit.prevent="validateInviteCode">
-                    <input
-                        v-model="inviteCode"
-                        type="text"
-                        placeholder="Enter invite code"
-                        class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-                        :disabled="isValidating"
-                    />
+                <form @submit.prevent="validateInviteCode" novalidate>
+                    <div class="mb-4">
+                        <label for="inviteCode" class="block text-sm font-semibold mb-2">Invite Code <span class="text-red-400" aria-label="required">*</span></label>
+                        <input
+                            id="inviteCode"
+                            v-model="inviteCode"
+                            type="text"
+                            placeholder="Enter invite code"
+                            class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500"
+                            :disabled="isValidating"
+                            required
+                            aria-required="true"
+                            :aria-invalid="!!inviteError"
+                            :aria-describedby="inviteError ? 'inviteError' : undefined"
+                        />
+                    </div>
                     
-                    <input
-                        v-model="userEmail"
-                        type="email"
-                        placeholder="Your email (optional)"
-                        class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-                        :disabled="isValidating"
-                    />
+                    <div class="mb-4">
+                        <label for="userEmail" class="block text-sm font-semibold mb-2">Your Email <span class="text-slate-400 text-xs">(optional)</span></label>
+                        <input
+                            id="userEmail"
+                            v-model="userEmail"
+                            type="email"
+                            placeholder="your@email.com"
+                            class="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500"
+                            :disabled="isValidating"
+                        />
+                    </div>
                     
-                    <p v-if="inviteError" class="text-red-400 text-sm mb-4">{{ inviteError }}</p>
+                    <p v-if="inviteError" id="inviteError" class="error-message mb-4">{{ inviteError }}</p>
                     
                     <button
                         type="submit"
                         :disabled="isValidating || !inviteCode"
-                        class="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-blue-400"
                     >
                         {{ isValidating ? 'Validating...' : 'Start Discovery' }}
                     </button>
@@ -47,15 +59,15 @@
                 <!-- Status Bar -->
                 <div class="flex items-center justify-between mb-4 px-4 py-2 bg-slate-800/50 rounded-lg">
                     <div class="flex items-center gap-2">
-                        <div :class="['w-2 h-2 rounded-full', sessionStatus === 'active' ? 'bg-green-400' : 'bg-yellow-400']"></div>
-                        <span class="text-sm text-slate-400">
+                        <div :class="['w-2 h-2 rounded-full', sessionStatus === 'active' ? 'bg-green-400' : 'bg-yellow-400']" aria-hidden="true"></div>
+                        <span class="text-sm text-slate-300" aria-live="polite" aria-atomic="true">
                             Turn {{ turnNumber }} of {{ maxTurns }}
                         </span>
                     </div>
-                    <div v-if="turnStatus === 'soft_nudge'" class="text-sm text-yellow-400">
+                    <div v-if="turnStatus === 'soft_nudge'" class="text-sm text-yellow-300" aria-live="polite">
                         Wrapping up soon...
                     </div>
-                    <div v-else-if="turnStatus === 'force_summary'" class="text-sm text-orange-400">
+                    <div v-else-if="turnStatus === 'force_summary'" class="text-sm text-orange-300" aria-live="polite">
                         Final questions...
                     </div>
                 </div>
@@ -64,6 +76,9 @@
                 <div 
                     ref="messagesContainer"
                     class="flex-1 overflow-y-auto space-y-4 mb-4 px-2"
+                    role="log"
+                    aria-live="polite"
+                    aria-label="Chat messages"
                 >
                     <div
                         v-for="(message, index) in messages"
@@ -80,22 +95,22 @@
 
                     <!-- Typing Indicator -->
                     <div v-if="isTyping" class="max-w-[85%] p-4 bg-slate-700/50 rounded-2xl rounded-bl-sm mr-auto">
-                        <div class="flex gap-1">
-                            <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span>
-                            <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span>
-                            <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span>
+                        <div class="flex gap-1" aria-label="Bot is typing">
+                            <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0ms" aria-hidden="true"></span>
+                            <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 150ms" aria-hidden="true"></span>
+                            <span class="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 300ms" aria-hidden="true"></span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Plan Generation Status -->
-                <div v-if="planGenerating" class="mb-4 p-4 bg-blue-500/20 border border-blue-500/50 rounded-lg text-center">
+                <div v-if="planGenerating" class="mb-4 p-4 bg-blue-500/20 border border-blue-500/50 rounded-lg text-center" role="status" aria-live="polite">
                     <div class="flex items-center justify-center gap-2">
-                        <svg class="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg class="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <span class="text-blue-400">Creating your project summary...</span>
+                        <span class="text-blue-300">Creating your project summary...</span>
                     </div>
                 </div>
 
@@ -106,14 +121,15 @@
                         @keydown.enter.exact.prevent="sendMessage"
                         placeholder="Type your message..."
                         rows="2"
-                        class="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        class="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500 resize-none"
                         :disabled="isTyping || planGenerating"
+                        aria-label="Message input"
                     ></textarea>
                     <div class="flex flex-col gap-2">
                         <button
                             @click="sendMessage"
                             :disabled="!userMessage.trim() || isTyping || planGenerating"
-                            class="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-blue-400"
                         >
                             Send
                         </button>
@@ -121,7 +137,7 @@
                             v-if="turnNumber >= 3 && botOfferedSummary"
                             @click="requestPlan"
                             :disabled="planGenerating"
-                            class="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700 transition disabled:opacity-50"
+                            class="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700 transition disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-green-400"
                         >
                             Generate Plan
                         </button>
@@ -129,12 +145,12 @@
                 </div>
 
                 <!-- Session Completed -->
-                <div v-else-if="sessionStatus === 'completed'" class="text-center p-6 bg-green-500/20 border border-green-500/50 rounded-lg">
-                    <h3 class="text-xl font-semibold text-green-400 mb-2">Discovery Complete! 🎉</h3>
-                    <p class="text-slate-300 mb-4">Your project summary has been created and sent to your email.</p>
+                <div v-else-if="sessionStatus === 'completed'" class="text-center p-6 bg-green-500/20 border border-green-500/50 rounded-lg" role="status" aria-live="polite">
+                    <h3 class="text-xl font-semibold text-green-300 mb-2"><span aria-hidden="true">🎉</span> Discovery Complete!</h3>
+                    <p class="text-slate-200 mb-4">Your project summary has been created and sent to your email.</p>
                     <Link 
                         :href="`/discovery/${sessionId}/summary`"
-                        class="inline-block px-6 py-3 bg-green-600 rounded-lg font-semibold hover:bg-green-700 transition"
+                        class="inline-block px-6 py-3 bg-green-600 rounded-lg font-semibold hover:bg-green-700 transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 focus-visible:ring-green-400"
                     >
                         View Summary
                     </Link>

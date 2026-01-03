@@ -9,3 +9,63 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Accessibility Improvements */
+
+/* Visible focus states for keyboard navigation */
+@layer components {
+    .focus-visible-ring {
+        @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900;
+    }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        @apply !animate-none !transition-none;
+    }
+}
+
+/* Skip to main content link */
+.skip-to-main {
+    @apply absolute top-0 left-0 z-[100] p-2 m-2 bg-blue-600 text-white rounded;
+    clip-path: inset(100%);
+    white-space: nowrap;
+    overflow: hidden;
+    position: fixed;
+
+    &:focus {
+        clip-path: unset;
+    }
+}
+
+/* Improved color contrast for text */
+.high-contrast-text {
+    @apply text-slate-100;
+}
+
+/* Error message styling with better contrast */
+.error-message {
+    @apply text-red-300 text-sm mt-1;
+}
+
+/* Success message styling */
+.success-message {
+    @apply text-green-300 text-sm;
+}
+
+/* Focus visible for form elements */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+}
+
+/* Better contrast for links and buttons */
+a, button {
+    &:focus-visible {
+        outline: 2px solid #60a5fa;
+        outline-offset: 2px;
+    }
+}
