@@ -30,7 +30,7 @@ jobs:
           ssh ec2-user@corelink.dev << 'ENDSSH'
           set -e
           
-          cd /var/www
+          cd /var/www/corelink.dev
           
           echo "📥 Pulling latest changes from git..."
           git fetch origin

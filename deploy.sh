@@ -23,7 +23,7 @@ echo -e "${YELLOW}Connecting to ${REMOTE_HOST}...${NC}"
 ssh ${REMOTE_USER}@${REMOTE_HOST} << 'ENDSSH'
 set -e
 
-cd /var/www
+cd /var/www/corelink.dev
 
 echo "📥 Pulling latest changes from git..."
 git fetch origin
