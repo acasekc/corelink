@@ -13,6 +13,9 @@ Route::get('/about', [PageController::class, 'about']);
 Route::get('/contact', [PageController::class, 'contact']);
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
+// Case Studies
+Route::get('/case-studies/dusties-delights', [PageController::class, 'caseStudyDustiesDelights'])->name('case-studies.dusties-delights');
+
 // Discovery Bot Routes
 Route::get('/discovery', [DiscoveryController::class, 'chat'])->name('discovery.chat');
 Route::get('/discovery/{sessionId}/summary', [DiscoveryController::class, 'summary'])->name('discovery.summary');

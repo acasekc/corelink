@@ -25,4 +25,9 @@ class PageController extends Controller
     {
         return Inertia::render('Contact');
     }
+
+    public function caseStudyDustiesDelights()
+    {
+        return Inertia::render('CaseStudies/DustiesDelights');
+    }
 }
