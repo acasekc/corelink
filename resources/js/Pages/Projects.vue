@@ -8,50 +8,50 @@
                     <p class="text-xl text-slate-300">Innovative solutions powering businesses and individuals</p>
                 </div>
 
-                <!-- AuctionLink -->
+                <!-- ChampLink -->
                 <div class="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-8 mb-8">
                     <div class="grid md:grid-cols-2 gap-8 items-center">
                         <div>
-                            <div class="inline-block mb-4 px-4 py-2 bg-purple-500/20 border border-purple-400/50 rounded-full text-sm">
-                                SaaS Platform
+                            <div class="inline-block mb-4 px-4 py-2 bg-orange-500/20 border border-orange-400/50 rounded-full text-sm">
+                                Tournament Platform
                             </div>
-                            <h2 class="text-4xl font-bold mb-4">AuctionLink</h2>
+                            <h2 class="text-4xl font-bold mb-4">ChampLink</h2>
                             <p class="text-slate-300 mb-6 leading-relaxed">
-                                A powerful multi-tenant online auction platform enabling auctioneers and consignors to manage auctions, lots, and bidding in real-time. Features include advanced bidding mechanics, real-time WebSocket updates, payment processing, and comprehensive auction automation.
+                                A powerful tournament bracket management platform for competition organizers. Create and manage single elimination, double elimination, round robin, and group knockout tournaments with real-time updates and participant engagement.
                             </p>
                             <ul class="space-y-3 text-slate-300 mb-6">
                                 <li class="flex items-center gap-2">
-                                    <span class="text-blue-400">✓</span> Multi-tenant architecture for multiple auction houses
+                                    <span class="text-orange-400">✓</span> Multiple tournament formats (single/double elimination, round robin)
                                 </li>
                                 <li class="flex items-center gap-2">
-                                    <span class="text-blue-400">✓</span> Real-time bidding with WebSocket broadcasts
+                                    <span class="text-orange-400">✓</span> Interactive visual bracket editor
                                 </li>
                                 <li class="flex items-center gap-2">
-                                    <span class="text-blue-400">✓</span> Advanced lot management with custom fields
+                                    <span class="text-orange-400">✓</span> Real-time score updates via WebSockets
                                 </li>
                                 <li class="flex items-center gap-2">
-                                    <span class="text-blue-400">✓</span> Stripe & manual payment processing
+                                    <span class="text-orange-400">✓</span> Email invitations and participant management
                                 </li>
                                 <li class="flex items-center gap-2">
-                                    <span class="text-blue-400">✓</span> Automated auction lifecycle management
+                                    <span class="text-orange-400">✓</span> Team and individual competition support
                                 </li>
                                 <li class="flex items-center gap-2">
-                                    <span class="text-blue-400">✓</span> Email and in-app notifications
+                                    <span class="text-orange-400">✓</span> Public spectator mode for followers
                                 </li>
                             </ul>
-                            <a href="#" class="inline-block px-6 py-3 bg-purple-500 hover:bg-purple-600 rounded-lg font-semibold transition">
-                                Coming Soon
+                            <a href="https://champlink.app" class="inline-block px-6 py-3 bg-orange-500 hover:bg-orange-600 rounded-lg font-semibold transition">
+                                Visit ChampLink
                             </a>
                         </div>
                         <div class="bg-slate-900/50 rounded-xl p-6 border border-slate-600">
                             <div class="text-sm text-slate-400 mb-4 font-mono">Tech Stack:</div>
                             <div class="space-y-2 text-slate-300">
                                 <div>• Laravel 12</div>
-                                <div>• Vue 3 + Inertia.js</div>
+                                <div>• React 19 + TypeScript</div>
                                 <div>• Laravel Reverb (WebSockets)</div>
-                                <div>• PostgreSQL</div>
-                                <div>• Stripe Integration</div>
-                                <div>• Laravel Broadcasting</div>
+                                <div>• MariaDB</div>
+                                <div>• Tailwind CSS v4</div>
+                                <div>• AWS EC2 + GitHub Actions</div>
                                 <div>• Full Testing Coverage</div>
                             </div>
                         </div>
