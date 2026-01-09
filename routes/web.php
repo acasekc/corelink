@@ -6,15 +6,14 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DiscoveryController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\DiscoveryController as AdminDiscoveryController;
+use App\Http\Controllers\ProcessController;
 
 Route::get('/', [PageController::class, 'home']);
 Route::get('/projects', [PageController::class, 'projects']);
 Route::get('/about', [PageController::class, 'about']);
 Route::get('/contact', [PageController::class, 'contact']);
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
-
-// Case Studies
-Route::get('/case-studies/dusties-delights', [PageController::class, 'caseStudyDustiesDelights'])->name('case-studies.dusties-delights');
+Route::get('/process', [ProcessController::class, 'index'])->name('process');
 
 // Discovery Bot Routes
 Route::get('/discovery', [DiscoveryController::class, 'chat'])->name('discovery.chat');

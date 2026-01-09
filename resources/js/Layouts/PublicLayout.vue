@@ -15,6 +15,7 @@
                     <Link href="/" class="hover:text-blue-400 transition focus-visible:ring-2 focus-visible:ring-blue-400 px-2 py-1 rounded">Home</Link>
                     <Link href="/projects" class="hover:text-blue-400 transition focus-visible:ring-2 focus-visible:ring-blue-400 px-2 py-1 rounded">Projects</Link>
                     <Link href="/case-studies/dusties-delights" class="hover:text-blue-400 transition focus-visible:ring-2 focus-visible:ring-blue-400 px-2 py-1 rounded">Case Studies</Link>
+                    <Link href="/process" class="hover:text-blue-400 transition focus-visible:ring-2 focus-visible:ring-blue-400 px-2 py-1 rounded">Process</Link>
                     <Link href="/about" class="hover:text-blue-400 transition focus-visible:ring-2 focus-visible:ring-blue-400 px-2 py-1 rounded">About</Link>
                     <Link href="/contact" class="hover:text-blue-400 transition focus-visible:ring-2 focus-visible:ring-blue-400 px-2 py-1 rounded">Contact</Link>
                 </div>
@@ -58,6 +59,11 @@
                         class="py-2 hover:text-blue-400 transition focus-visible:ring-2 focus-visible:ring-blue-400 px-2 rounded"
                         @click="mobileMenuOpen = false"
                     >Case Studies</Link>
+                    <Link 
+                        href="/process" 
+                        class="py-2 hover:text-blue-400 transition focus-visible:ring-2 focus-visible:ring-blue-400 px-2 rounded"
+                        @click="mobileMenuOpen = false"
+                    >Process</Link>
                     <Link 
                         href="/about" 
                         class="py-2 hover:text-blue-400 transition focus-visible:ring-2 focus-visible:ring-blue-400 px-2 rounded"

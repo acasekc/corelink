@@ -300,12 +300,12 @@ php artisan test --filter=BracketGenerator
 - [ ] SMTP email delivery for invitations
 - [ ] Enhanced spectator view
 - [ ] Tournament sharing and embedding
+- [ ] **Partial Seeding for Brackets**: Ability to seed some or all participants in elimination brackets (8-man, 16-man, etc.). Seed top competitors manually, then randomly assign remaining unseeded participants to fill the bracket.
 
 ### Planned Features 🗓️
 - [ ] Swiss system tournaments
 - [ ] Custom scoring systems
 - [ ] Team management with rosters
-- [ ] Tournament seeding based on rankings
 - [ ] Match scheduling with calendar integration
 - [ ] Export brackets as images/PDFs
 - [ ] Tournament statistics and analytics
