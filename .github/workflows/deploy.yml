@@ -19,7 +19,7 @@ jobs:
           script: |
             cd /var/www/corelink.dev
             git fetch origin
-            git reset --hard origin/corelink
+            git reset --hard origin/main
             composer install --no-dev --optimize-autoloader --no-interaction
             npm ci
             npm run build
