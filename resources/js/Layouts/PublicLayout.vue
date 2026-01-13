@@ -1,5 +1,8 @@
 <template>
     <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+        <Head>
+            <link rel="canonical" :href="canonicalUrl" />
+        </Head>
         <!-- Skip to main content link -->
         <a href="#main-content" class="skip-to-main">Skip to main content</a>
 
@@ -91,8 +94,12 @@
 </template>
 
 <script setup>
+
 import { ref, onMounted, onUnmounted } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, Head } from '@inertiajs/vue3';
+import { useCanonicalUrl } from '@/composables/useCanonicalUrl';
+
+const canonicalUrl = useCanonicalUrl();
 
 const mobileMenuOpen = ref(false);
 
