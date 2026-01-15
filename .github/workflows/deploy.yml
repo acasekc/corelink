@@ -36,8 +36,8 @@ jobs:
             echo "🗄️ Running migrations..."
             php artisan migrate --force
             
-            echo "🌱 Seeding case studies..."
-            php artisan db:seed --class=CaseStudySeeder --force
+            echo "🌱 Seeding projects..."
+            php artisan db:seed --class=ProjectSeeder --force
             
             echo "🔗 Creating storage symlink..."
             php artisan storage:link --force
