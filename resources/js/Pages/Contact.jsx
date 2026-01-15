@@ -26,11 +26,14 @@ const Contact = () => {
     setSuccess("");
 
     try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      
       const response = await fetch("/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
+          "X-CSRF-TOKEN": csrfToken,
         },
         body: JSON.stringify(formData),
       });
@@ -93,10 +96,15 @@ const Contact = () => {
           >
             <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-8 md:p-10">
               {error && (
-                <div className="mb-4 text-red-500 text-center font-medium">{error}</div>
+                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-center font-medium">
+                  {error}
+                </div>
               )}
               {success && (
-                <div className="mb-4 text-green-500 text-center font-medium">{success}</div>
+                <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-center font-medium">
+                  <div className="text-2xl mb-2">✓</div>
+                  {success}
+                </div>
               )}
               <div className="space-y-6">
                 {/* Name Field */}
