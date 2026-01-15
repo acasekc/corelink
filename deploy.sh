@@ -44,6 +44,9 @@ php artisan migrate --force
 echo "🌱 Seeding case studies..."
 php artisan db:seed --class=CaseStudySeeder --force
 
+echo "🔗 Creating storage symlink..."
+php artisan storage:link --force
+
 echo "🧹 Clearing and caching..."
 php artisan config:cache
 php artisan route:cache
