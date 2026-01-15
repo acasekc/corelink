@@ -10,7 +10,6 @@ use App\Models\InviteCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Inertia\Inertia;
 
 class DiscoveryController extends Controller
 {
@@ -47,10 +46,7 @@ class DiscoveryController extends Controller
             ->take(5)
             ->get();
 
-        return Inertia::render('Admin/Discovery/Index', [
-            'stats' => $stats,
-            'recentSessions' => $recentSessions,
-        ]);
+        return view('app');
     }
 
     /**
@@ -63,9 +59,11 @@ class DiscoveryController extends Controller
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('Admin/Discovery/Invites', [
-            'invites' => $invites,
-        ]);
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json($invites);
+        }
+
+        return view('app');
     }
 
     /**
@@ -73,7 +71,7 @@ class DiscoveryController extends Controller
      */
     public function createInvite()
     {
-        return Inertia::render('Admin/Discovery/CreateInvite');
+        return view('app');
     }
 
     /**
@@ -94,8 +92,10 @@ class DiscoveryController extends Controller
         $invite = InviteCode::create([
             'admin_user_id' => auth()->id(),
             'code' => $code,
+            'email' => $validated['email'] ?? null,
             // Default max_uses to 1 if not provided to avoid DB integrity errors
             'max_uses' => $validated['max_uses'] ?? 1,
+            'expires_at' => isset($validated['expires_days']) ? now()->addDays($validated['expires_days']) : null,
             'is_active' => true,
         ]);
 
@@ -144,9 +144,7 @@ class DiscoveryController extends Controller
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('Admin/Discovery/Sessions', [
-            'sessions' => $sessions,
-        ]);
+        return view('app');
     }
 
     /**
@@ -183,9 +181,7 @@ class DiscoveryController extends Controller
             return $msgs;
         })->values();
 
-        return Inertia::render('Admin/Discovery/SessionDetail', [
-            'session' => array_merge($session->toArray(), ['messages' => $messages]),
-        ]);
+        return view('app');
     }
 
     /**
@@ -198,9 +194,7 @@ class DiscoveryController extends Controller
             ->latest()
             ->paginate(20);
 
-        return Inertia::render('Admin/Discovery/Plans', [
-            'plans' => $plans,
-        ]);
+        return view('app');
     }
 
     /**
@@ -214,9 +208,7 @@ class DiscoveryController extends Controller
 
         $plan->load(['session.inviteCode']);
 
-        return Inertia::render('Admin/Discovery/PlanDetail', [
-            'plan' => $plan,
-        ]);
+        return view('app');
     }
 
     /**

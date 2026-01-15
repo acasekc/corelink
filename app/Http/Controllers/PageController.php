@@ -2,32 +2,44 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
-
 class PageController extends Controller
 {
+    /**
+     * Return the React app view for all page routes.
+     * React Router handles client-side routing.
+     */
     public function home()
     {
-        return Inertia::render('Index');
+        return view('app');
     }
 
     public function projects()
     {
-        return Inertia::render('Projects');
+        return view('app');
+    }
+
+    public function process()
+    {
+        return view('app');
     }
 
     public function about()
     {
-        return Inertia::render('About');
+        return view('app');
     }
 
     public function contact()
     {
-        return Inertia::render('Contact');
+        return view('app');
+    }
+
+    public function caseStudies()
+    {
+        return view('app');
     }
 
     public function caseStudyDustiesDelights()
     {
-        return Inertia::render('CaseStudies/DustiesDelights');
+        return view('app');
     }
 }

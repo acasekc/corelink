@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
 
 class AuthController extends Controller
 {
@@ -14,7 +13,7 @@ class AuthController extends Controller
      */
     public function showLogin()
     {
-        return Inertia::render('Admin/Login');
+        return view('app');
     }
 
     /**
@@ -38,7 +37,7 @@ class AuthController extends Controller
                 ]);
             }
 
-            return redirect()->intended('/admin/discovery');
+            return redirect()->intended('/admin');
         }
 
         return back()->withErrors([

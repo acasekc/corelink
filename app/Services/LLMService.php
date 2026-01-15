@@ -46,7 +46,7 @@ class LLMService
             // Add current user message
             $messages[] = ['role' => 'user', 'content' => $userMessage];
 
-            $response = Http::withHeaders([
+            $response = Http::timeout(120)->withHeaders([
                 'Authorization' => "Bearer {$this->apiKey}",
                 'Content-Type' => 'application/json',
             ])->post("{$this->baseUrl}/chat/completions", [

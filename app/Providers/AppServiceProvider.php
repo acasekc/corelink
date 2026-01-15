@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Configure authentication redirects
+        if (class_exists(\Illuminate\Auth\Middleware\Authenticate::class)) {
+            \Illuminate\Auth\Middleware\Authenticate::redirectUsing(function () {
+                return route('admin.login');
+            });
+        }
     }
 }

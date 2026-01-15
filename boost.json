@@ -1,0 +1,9 @@
+{
+    "agents": [
+        "copilot"
+    ],
+    "editors": [
+        "claude_code"
+    ],
+    "guidelines": []
+}

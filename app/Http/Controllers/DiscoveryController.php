@@ -4,26 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Models\BotSession;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class DiscoveryController extends Controller
 {
     /**
      * Show the discovery chat interface
      */
-    public function chat(Request $request): Response
+    public function chat(Request $request)
     {
-        return Inertia::render('Discovery/Chat', [
-            'initialSessionId' => $request->query('session'),
-            'initialToken' => $request->query('token'),
-        ]);
+        return view('app');
     }
 
     /**
      * Show the discovery summary page
      */
-    public function summary(string $sessionId): Response
+    public function summary(string $sessionId)
+    {
+        return view('app');
+    }
+
+    /**
+     * Get the discovery summary data as JSON
+     */
+    public function getSummaryData(string $sessionId)
     {
         $session = BotSession::with('discoveryPlan')->findOrFail($sessionId);
 
@@ -31,7 +34,7 @@ class DiscoveryController extends Controller
         $userSummary = $plan?->user_summary;
         $requirements = $plan?->structured_requirements;
 
-        // Transform the data to match what the Summary.vue component expects
+        // Transform the data to match what the Summary component expects
         $summary = $userSummary ? [
             'project_name' => $requirements['project']['name'] ?? 'Your Project',
             'overview' => $userSummary['project_overview'] ?? null,
@@ -42,7 +45,7 @@ class DiscoveryController extends Controller
             'complexity' => $userSummary['complexity'] ?? null,
         ] : null;
 
-        return Inertia::render('Discovery/Summary', [
+        return response()->json([
             'sessionId' => $sessionId,
             'summary' => $summary,
         ]);

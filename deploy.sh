@@ -41,6 +41,9 @@ npm run build
 echo "🗄️ Running database migrations..."
 php artisan migrate --force
 
+echo "🌱 Seeding case studies..."
+php artisan db:seed --class=CaseStudySeeder --force
+
 echo "🧹 Clearing and caching..."
 php artisan config:cache
 php artisan route:cache

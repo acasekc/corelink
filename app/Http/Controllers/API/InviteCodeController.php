@@ -37,6 +37,7 @@ class InviteCodeController extends Controller
         return response()->json([
             'valid' => true,
             'invite_code_id' => $result['invite_code_id'],
+            'email' => $result['email'] ?? null,
         ], 200);
     }
 

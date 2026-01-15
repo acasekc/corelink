@@ -34,8 +34,8 @@ class DatabaseSeeder extends Seeder
 
         // Email the admin their credentials
         Mail::to($admin->email)->send(new AdminCredentialsMail($admin, $password));
-
         $this->command->info("Admin user created: {$admin->email}");
         $this->command->info("Password emailed to: {$admin->email}");
+        $this->command->info($password);
     }
 }

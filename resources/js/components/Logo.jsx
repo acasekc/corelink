@@ -1,0 +1,17 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+
+export const Logo = () => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex items-center"
+    >
+      <img src="/images/logo_100_h.png" alt="CoreLink" className="h-24 w-auto" />
+    </motion.div>
+  );
+};
+
+export default Logo;

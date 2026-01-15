@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
-use Inertia\Response;
-
 class ProcessController extends Controller
 {
-    public function index(): Response
+    public function index()
     {
-        return Inertia::render('Process');
+        return view('app');
     }
 }

@@ -3,7 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches:
-      - main
+      - corelink
   workflow_dispatch:
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
           script: |
             cd /var/www/corelink.dev
             git fetch origin
-            git reset --hard origin/main
+            git reset --hard origin/corelink
             composer install --no-dev --optimize-autoloader --no-interaction
             npm ci
             npm run build
@@ -29,3 +29,4 @@ jobs:
             php artisan view:cache
             php artisan event:cache
             php artisan queue:restart
+            php artisan db:seed --class=CaseStudySeeder --force
