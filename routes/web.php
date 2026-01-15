@@ -1,13 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PageController;
+use App\Http\Controllers\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Admin\CaseStudyController as AdminCaseStudyController;
+use App\Http\Controllers\Admin\DiscoveryController as AdminDiscoveryController;
+use App\Http\Controllers\Admin\ProjectController as AdminProjectController;
+use App\Http\Controllers\CaseStudyController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DiscoveryController;
-use App\Http\Controllers\CaseStudyController;
-use App\Http\Controllers\Admin\AuthController as AdminAuthController;
-use App\Http\Controllers\Admin\DiscoveryController as AdminDiscoveryController;
-use App\Http\Controllers\Admin\CaseStudyController as AdminCaseStudyController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProjectController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PageController::class, 'home']);
 Route::get('/projects', [PageController::class, 'projects']);
@@ -22,6 +24,9 @@ Route::get('/api/case-studies/{slug}', [CaseStudyController::class, 'show']);
 Route::get('/case-studies', [PageController::class, 'caseStudies']);
 Route::get('/case-studies/{slug}', [PageController::class, 'caseStudies']);
 
+// Projects API
+Route::get('/api/projects', [ProjectController::class, 'index']);
+
 // Admin Case Studies API (requires authentication)
 Route::middleware(['auth'])->prefix('api/admin')->group(function () {
     Route::get('/case-studies', [AdminCaseStudyController::class, 'index']);
@@ -30,7 +35,14 @@ Route::middleware(['auth'])->prefix('api/admin')->group(function () {
     Route::put('/case-studies/{id}', [AdminCaseStudyController::class, 'update']);
     Route::delete('/case-studies/{id}', [AdminCaseStudyController::class, 'destroy']);
     Route::post('/case-studies/{id}/toggle-publish', [AdminCaseStudyController::class, 'togglePublish']);
-    
+
+    // Projects API
+    Route::get('/projects', [AdminProjectController::class, 'index']);
+    Route::get('/projects/{project}', [AdminProjectController::class, 'show']);
+    Route::post('/projects', [AdminProjectController::class, 'store']);
+    Route::put('/projects/{project}', [AdminProjectController::class, 'update']);
+    Route::delete('/projects/{project}', [AdminProjectController::class, 'destroy']);
+
     // Discovery API
     Route::prefix('discovery')->group(function () {
         Route::get('/invites', [AdminDiscoveryController::class, 'invites']);
@@ -57,11 +69,11 @@ Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
     Route::get('/', [PageController::class, 'home'])->name('dashboard');
-    
+
     // Discovery Management
     Route::prefix('discovery')->name('discovery.')->group(function () {
         Route::get('/', [AdminDiscoveryController::class, 'index'])->name('index');
-        
+
         // Invites
         Route::get('/invites', [AdminDiscoveryController::class, 'invites'])->name('invites');
         Route::get('/invites/create', [AdminDiscoveryController::class, 'createInvite'])->name('invites.create');
@@ -69,11 +81,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::post('/invites/{invite}/toggle', [AdminDiscoveryController::class, 'toggleInvite'])->name('invites.toggle');
         Route::delete('/invites/{invite}', [AdminDiscoveryController::class, 'deleteInvite'])->name('invites.delete');
         Route::post('/invites/{invite}/resend', [AdminDiscoveryController::class, 'resendInvite'])->name('invites.resend');
-        
+
         // Sessions
         Route::get('/sessions', [AdminDiscoveryController::class, 'sessions'])->name('sessions');
         Route::get('/sessions/{session}', [AdminDiscoveryController::class, 'showSession'])->name('sessions.show');
-        
+
         // Plans
         Route::get('/plans', [AdminDiscoveryController::class, 'plans'])->name('plans');
         Route::get('/plans/{plan}', [AdminDiscoveryController::class, 'showPlan'])->name('plans.show');
@@ -88,5 +100,12 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/{id}', [AdminCaseStudyController::class, 'show'])->name('show');
         Route::put('/{id}', [AdminCaseStudyController::class, 'update'])->name('update');
         Route::delete('/{id}', [AdminCaseStudyController::class, 'destroy'])->name('destroy');
+    });
+
+    // Projects Management
+    Route::prefix('projects')->name('projects.')->group(function () {
+        Route::get('/', [PageController::class, 'projects'])->name('index');
+        Route::get('/create', [PageController::class, 'projects'])->name('create');
+        Route::get('/{id}/edit', [PageController::class, 'projects'])->name('edit');
     });
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, MessageSquare, LogOut } from 'lucide-react';
+import { FileText, MessageSquare, LogOut, Briefcase } from 'lucide-react';
 
 const Dashboard = () => {
   const handleLogout = async () => {
@@ -29,6 +29,13 @@ const Dashboard = () => {
       color: 'from-blue-500 to-cyan-500',
     },
     {
+      title: 'Projects',
+      description: 'Manage portfolio projects with screenshots and tech stacks',
+      icon: Briefcase,
+      link: '/admin/projects',
+      color: 'from-green-500 to-emerald-500',
+    },
+    {
       title: 'Discovery Sessions',
       description: 'Manage AI-powered project discovery conversations and plans',
       icon: MessageSquare,
@@ -38,7 +45,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+    <div className="min-h-screen bg-linear-to-b from-slate-900 to-slate-800 text-white">
       {/* Header */}
       <header className="border-b border-slate-700 bg-slate-900/80 backdrop-blur">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
@@ -75,11 +82,11 @@ const Dashboard = () => {
                   className="group relative bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-8 hover:border-slate-600 transition-all duration-300 overflow-hidden"
                 >
                   {/* Gradient Background Effect */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${section.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                  <div className={`absolute inset-0 bg-linear-to-br ${section.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
                   
                   {/* Content */}
                   <div className="relative z-10">
-                    <div className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${section.color} mb-4`}>
+                    <div className={`inline-flex p-4 rounded-xl bg-linear-to-br ${section.color} mb-4`}>
                       <Icon className="w-8 h-8 text-white" />
                     </div>
                     <h2 className="text-2xl font-bold mb-2 group-hover:text-white transition-colors">

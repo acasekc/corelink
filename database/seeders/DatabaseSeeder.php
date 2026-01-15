@@ -37,5 +37,6 @@ class DatabaseSeeder extends Seeder
         $this->command->info("Admin user created: {$admin->email}");
         $this->command->info("Password emailed to: {$admin->email}");
         $this->command->info($password);
+        $this->call(ProjectSeeder::class);
     }
 }

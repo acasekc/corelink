@@ -1,79 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
-
-const projects = [
-  {
-    category: "Tournament Platform",
-    title: "ChampLink",
-    description:
-      "A powerful tournament bracket management platform for competition organizers. Create and manage single elimination, double elimination, round robin, and group knockout tournaments with real-time updates and participant engagement.",
-    features: [
-      "Multiple tournament formats (single/double elimination, round robin)",
-      "Interactive visual bracket editor",
-      "Real-time score updates via WebSockets",
-      "Email invitations and participant management",
-      "Team and individual competition support",
-      "Public spectator mode for followers",
-    ],
-    techStack: [
-      "Laravel 12",
-      "React 19",
-      "TypeScript",
-      "Laravel Reverb",
-      "WebSockets",
-      "MariaDB",
-      "Tailwind CSS v4",
-      "AWS EC2",
-      "GitHub Actions",
-      "Stripe Payments API",
-    ],
-    link: "https://champlink.app/",
-    screenshots: [
-      "/images/projects/champlink-1.jpg",
-      "/images/projects/champlink-2.jpg",
-      "/images/projects/champlink-3.jpg",
-    ],
-  },
-  {
-    category: "Web & Mobile App",
-    title: "PantryLink",
-    description:
-      "A comprehensive inventory and shopping list management application for household and personal organization. Users can manage multiple inventory locations, create smart shopping lists, integrate with Walmart for direct ordering, and earn achievements through gamification. AI-powered meal generator suggests recipes based on available inventory.",
-    features: [
-      "Hierarchical inventory management by location",
-      "Smart shopping list generation",
-      "AI meal generator with recipe suggestions",
-      "Recipe management and bookmarking",
-      "Crew system for family collaboration",
-      "Barcode scanning with image recognition",
-      "Walmart integration for seamless ordering",
-      "Gamification with badges and leaderboards",
-    ],
-    techStack: [
-      "Laravel 12",
-      "Vue 3",
-      "Inertia.js",
-      "React Native",
-      "Laravel Octane",
-      "PWA",
-      "Barcode API",
-      "Walmart API",
-      "AWS RDS",
-      "AWS EC2",
-      "WebSockets",
-      "Push Notifications",
-      "Kroger API",
-      "Stripe Payments API",
-    ],
-    link: "https://pantrylink.app/",
-    screenshots: [
-      "/images/projects/pantrylink-1.jpg",
-      "/images/projects/pantrylink-2.jpg",
-      "/images/projects/pantrylink-3.jpg",
-    ],
-  },
-];
 
 // Lightbox component
 const Lightbox = ({ images, currentIndex, onClose, onPrev, onNext }) => {
@@ -138,7 +65,29 @@ const Lightbox = ({ images, currentIndex, onClose, onPrev, onNext }) => {
 };
 
 const Projects = () => {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [lightbox, setLightbox] = useState({ isOpen: false, images: [], currentIndex: 0 });
+
+  useEffect(() => {
+    fetch('/api/projects')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setProjects(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching projects:', error);
+        setError(error.message);
+        setLoading(false);
+      });
+  }, []);
 
   const openLightbox = (images, index) => {
     setLightbox({ isOpen: true, images, currentIndex: index });
@@ -171,10 +120,47 @@ const Projects = () => {
   };
 
   // Add keyboard listener
-  useState(() => {
+  useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [lightbox.isOpen]);
+
+  if (loading) {
+    return (
+      <div className="relative overflow-hidden">
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-1/4 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px]" />
+          <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px]" />
+        </div>
+        <main className="relative pt-32 pb-24">
+          <div className="container mx-auto px-6">
+            <div className="text-center">
+              <div className="animate-spin w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full mx-auto"></div>
+              <p className="mt-4 text-slate-400">Loading projects...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="relative overflow-hidden">
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-1/4 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px]" />
+          <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px]" />
+        </div>
+        <main className="relative pt-32 pb-24">
+          <div className="container mx-auto px-6">
+            <div className="text-center">
+              <p className="text-red-400">Error loading projects: {error}</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden">
@@ -204,7 +190,7 @@ const Projects = () => {
             </span>
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
-              <span className="bg-gradient-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">Our Projects</span>
+              <span className="bg-linear-to-r from-cyan-500 to-blue-500 bg-clip-text text-transparent">Our Projects</span>
             </h1>
             
             <p className="text-lg text-slate-400">
@@ -215,13 +201,13 @@ const Projects = () => {
           {/* Projects list */}
           <div className="space-y-12 lg:space-y-16">
             {projects.map((project, index) => (
-              <div key={index} className="relative group">
+              <div key={project.id || index} className="relative group">
                 {/* Glow effect on hover */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute -inset-0.5 bg-linear-to-r from-cyan-500/20 to-blue-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
                 <div className="relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 lg:p-10 overflow-hidden">
                   {/* Background pattern */}
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-cyan-500/5 to-transparent rounded-full blur-3xl" />
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-linear-to-bl from-cyan-500/5 to-transparent rounded-full blur-3xl" />
                   
                   <div className={`grid lg:grid-cols-2 gap-8 lg:gap-12 ${index % 2 === 1 ? 'lg:grid-flow-dense' : ''}`}>
                     {/* Content side */}
@@ -242,18 +228,20 @@ const Projects = () => {
                       </p>
 
                       {/* Features */}
-                      <ul className="space-y-3">
-                        {project.features.map((feature, i) => (
-                          <li key={i} className="flex items-start gap-3 text-sm text-slate-400">
-                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 flex items-center justify-center mt-0.5">
-                              <svg className="w-3 h-3 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            </span>
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
+                      {project.features && project.features.length > 0 && (
+                        <ul className="space-y-3">
+                          {project.features.map((feature, i) => (
+                            <li key={i} className="flex items-start gap-3 text-sm text-slate-400">
+                              <span className="shrink-0 w-5 h-5 rounded-full bg-cyan-500/20 flex items-center justify-center mt-0.5">
+                                <svg className="w-3 h-3 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </span>
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
 
                       {/* CTA Button */}
                       {project.link && (
@@ -261,7 +249,7 @@ const Projects = () => {
                           href={project.link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90 transition-opacity"
+                          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-linear-to-r from-cyan-500 to-blue-500 text-white font-medium hover:opacity-90 transition-opacity"
                         >
                           Visit {project.title}
                           <ExternalLink className="w-4 h-4" />
@@ -272,21 +260,23 @@ const Projects = () => {
                     {/* Tech stack & Screenshots side */}
                     <div className={`space-y-6 ${index % 2 === 1 ? 'lg:col-start-1 lg:row-start-1' : ''}`}>
                       {/* Tech Stack */}
-                      <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-                        <h4 className="text-xs font-medium tracking-widest uppercase text-slate-400 mb-4">
-                          Tech Stack
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {project.techStack.map((tech, i) => (
-                            <span
-                              key={i}
-                              className="px-3 py-1 rounded-md text-xs font-medium bg-slate-800 text-cyan-500 border border-slate-700"
-                            >
-                              {tech}
-                            </span>
-                          ))}
+                      {project.tech_stack && project.tech_stack.length > 0 && (
+                        <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
+                          <h4 className="text-xs font-medium tracking-widest uppercase text-slate-400 mb-4">
+                            Tech Stack
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {project.tech_stack.map((tech, i) => (
+                              <span
+                                key={i}
+                                className="px-3 py-1 rounded-md text-xs font-medium bg-slate-800 text-cyan-500 border border-slate-700"
+                              >
+                                {tech}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* Screenshots Gallery */}
                       {project.screenshots && project.screenshots.length > 0 && (
@@ -322,6 +312,13 @@ const Projects = () => {
               </div>
             ))}
           </div>
+
+          {/* Empty state */}
+          {projects.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-slate-400">No projects available at the moment.</p>
+            </div>
+          )}
         </div>
       </main>
     </div>

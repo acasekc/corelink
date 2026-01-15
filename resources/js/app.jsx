@@ -19,6 +19,8 @@ import Plans from "./Pages/Admin/Discovery/Plans";
 import PlanDetail from "./Pages/Admin/Discovery/PlanDetail";
 import CaseStudiesList from "./Pages/Admin/CaseStudies/List";
 import CaseStudyForm from "./Pages/Admin/CaseStudies/Form";
+import ProjectsList from "./Pages/Admin/Projects/List";
+import ProjectForm from "./Pages/Admin/Projects/Form";
 import DiscoveryChat from "./Pages/Discovery/Chat";
 import DiscoverySummary from "./Pages/Discovery/Summary";
 
@@ -48,6 +50,9 @@ export default function App() {
 					<Route path="/admin/case-studies" element={<CaseStudiesList />} />
 					<Route path="/admin/case-studies/create" element={<CaseStudyForm />} />
 					<Route path="/admin/case-studies/:id/edit" element={<CaseStudyForm />} />
+					<Route path="/admin/projects" element={<ProjectsList />} />
+					<Route path="/admin/projects/create" element={<ProjectForm />} />
+					<Route path="/admin/projects/:id/edit" element={<ProjectForm />} />
 				</Routes>
 			</PublicLayout>
 		</Router>

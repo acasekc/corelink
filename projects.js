@@ -1,0 +1,63 @@
+
+const projects = [
+  {
+    category: "Tournament Platform",
+    title: "ChampLink",
+    description:
+      "A powerful tournament bracket management platform for competition organizers. Create and manage single elimination, double elimination, round robin, and group knockout tournaments with real-time updates and participant engagement.",
+    features: [
+      "Multiple tournament formats (single/double elimination, round robin)",
+      "Interactive visual bracket editor",
+      "Real-time score updates via WebSockets",
+      "Email invitations and participant management",
+      "Team and individual competition support",
+      "Public spectator mode for followers",
+    ],
+    techStack: [
+      "Laravel 12",
+      "React 19",
+      "TypeScript",
+      "Laravel Reverb",
+      "WebSockets",
+      "MariaDB",
+      "Tailwind CSS v4",
+      "AWS EC2",
+      "GitHub Actions",
+      "Stripe Payments API",
+    ],
+    link: "https://champlink.app/",
+  },
+  {
+    category: "Web & Mobile App",
+    title: "PantryLink",
+    description:
+      "A comprehensive inventory and shopping list management application for household and personal organization. Users can manage multiple inventory locations, create smart shopping lists, integrate with Walmart for direct ordering, and earn achievements through gamification. AI-powered meal generator suggests recipes based on available inventory.",
+    features: [
+      "Hierarchical inventory management by location",
+      "Smart shopping list generation",
+      "AI meal generator with recipe suggestions",
+      "Recipe management and bookmarking",
+      "Crew system for family collaboration",
+      "Barcode scanning with image recognition",
+      "Walmart integration for seamless ordering",
+      "Gamification with badges and leaderboards",
+    ],
+    techStack: [
+      "Laravel 12",
+      "Vue 3",
+      "Inertia.js",
+      "React Native",
+      "Laravel Octane",
+      "PWA",
+      "Barcode API",
+      "Walmart API",
+      "AWS RDS",
+      "AWS EC2",
+      "WebSockets",
+      "Push Notifications",
+      "Kroger API",
+      "Stripe Payments API",
+    ],
+    link: "https://pantrylink.app/",
+  },
+];
