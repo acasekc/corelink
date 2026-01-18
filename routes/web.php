@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\CaseStudyController as AdminCaseStudyController;
 use App\Http\Controllers\Admin\DiscoveryController as AdminDiscoveryController;
+use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\ProjectController as AdminProjectController;
 use App\Http\Controllers\CaseStudyController;
 use App\Http\Controllers\ContactController;
@@ -28,8 +29,14 @@ Route::get('/case-studies/{slug}', [PageController::class, 'caseStudies']);
 // Projects API
 Route::get('/api/projects', [ProjectController::class, 'index']);
 
-// Admin Case Studies API (requires authentication)
+// Admin Profile API (exempt from force-password-change)
 Route::middleware(['auth'])->prefix('api/admin')->group(function () {
+    Route::get('/profile', [AdminProfileController::class, 'show']);
+    Route::post('/change-password', [AdminProfileController::class, 'changePassword']);
+});
+
+// Admin Case Studies API (requires authentication)
+Route::middleware(['auth', 'force-password-change'])->prefix('api/admin')->group(function () {
     Route::get('/case-studies', [AdminCaseStudyController::class, 'index']);
     Route::get('/case-studies/{id}', [AdminCaseStudyController::class, 'show']);
     Route::post('/case-studies', [AdminCaseStudyController::class, 'store']);
@@ -66,8 +73,13 @@ Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
     ->middleware('auth')
     ->name('admin.logout');
 
+// Admin Change Password (authenticated, exempt from force-password-change)
+Route::middleware(['auth'])->prefix('admin')->group(function () {
+    Route::get('/change-password', [PageController::class, 'home'])->name('admin.change-password');
+});
+
 // Admin Routes (requires authentication)
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'force-password-change'])->prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
     Route::get('/', [PageController::class, 'home'])->name('dashboard');
 
@@ -133,9 +145,14 @@ Route::post('/helpdesk/logout', [HelpdeskAuthController::class, 'logout'])
     ->middleware('auth')
     ->name('helpdesk.logout');
 
-// User Helpdesk Portal (authenticated users)
+// Helpdesk Change Password (authenticated, exempt from force-password-change)
 Route::middleware(['auth'])->prefix('helpdesk')->group(function () {
+    Route::get('/change-password', [PageController::class, 'helpdesk'])->name('helpdesk.change-password');
+});
+
+// User Helpdesk Portal (authenticated users)
+Route::middleware(['auth', 'force-password-change'])->prefix('helpdesk')->group(function () {
     Route::get('/{any?}', [PageController::class, 'helpdesk'])
-        ->where('any', '^(?!login).*')
+        ->where('any', '^(?!login|change-password).*')
         ->name('user.helpdesk');
 });

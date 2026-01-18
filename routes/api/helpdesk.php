@@ -73,7 +73,9 @@ Route::prefix('api/helpdesk/user')->middleware(['web', 'auth'])->group(function 
     Route::get('profile', [UserProfileController::class, 'show']);
     Route::patch('profile', [UserProfileController::class, 'update']);
     Route::post('change-password', [UserProfileController::class, 'changePassword']);
+});
 
+Route::prefix('api/helpdesk/user')->middleware(['web', 'auth', 'force-password-change'])->group(function () {
     // Dashboard
     Route::get('dashboard', UserDashboardController::class);
 
@@ -108,7 +110,7 @@ Route::prefix('api/helpdesk/user')->middleware(['web', 'auth'])->group(function 
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin'])->group(function () {
+Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-password-change'])->group(function () {
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'global']);
     Route::get('projects/{project}/dashboard', [DashboardController::class, 'project']);

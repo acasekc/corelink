@@ -43,6 +43,7 @@ import UserHelpdeskProjectDetail from "./Pages/Helpdesk/ProjectDetail";
 import UserHelpdeskLogin from "./Pages/Helpdesk/Login";
 import UserHelpdeskProfile from "./Pages/Helpdesk/Profile";
 import UserHelpdeskChangePassword from "./Pages/Helpdesk/ChangePassword";
+import AdminChangePassword from "./Pages/Admin/ChangePassword";
 
 export default function App() {
 	return (
@@ -71,6 +72,7 @@ export default function App() {
 
 				{/* Admin Routes - No public header/footer */}
 				<Route path="/admin/login" element={<AdminLayout><Login /></AdminLayout>} />
+				<Route path="/admin/change-password" element={<AdminLayout><AdminChangePassword /></AdminLayout>} />
 				<Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
 				<Route path="/admin/discovery" element={<AdminLayout><DiscoveryDashboard /></AdminLayout>} />
 				<Route path="/admin/discovery/invites" element={<AdminLayout><Invites /></AdminLayout>} />
