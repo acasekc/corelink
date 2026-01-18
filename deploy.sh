@@ -53,7 +53,12 @@ php artisan route:cache
 php artisan view:cache
 php artisan event:cache
 
-echo "🔄 Restarting services..."
+echo "� Setting permissions..."
+# Ensure storage and cache directories are writable by web server
+sudo chown -R ec2-user:nginx storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+
+echo "�🔄 Restarting services..."
 php artisan queue:restart
 sudo systemctl reload php-fpm || sudo systemctl reload php8.4-fpm || echo "Could not reload PHP-FPM, please restart manually if needed"
 

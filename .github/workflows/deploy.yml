@@ -48,7 +48,12 @@ jobs:
             php artisan view:cache
             php artisan event:cache
             
-            echo "🔄 Restarting queue workers..."
+            echo "� Setting permissions..."
+            sudo chown -R nginx:nginx storage bootstrap/cache
+            sudo chmod -R 775 storage bootstrap/cache
+            
+            echo "🔄 Restarting services..."
             php artisan queue:restart
+            sudo systemctl reload php-fpm || echo "Could not reload PHP-FPM"
             
             echo "✅ Deployment complete!"

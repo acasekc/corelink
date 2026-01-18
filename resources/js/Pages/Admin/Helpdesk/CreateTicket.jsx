@@ -19,6 +19,7 @@ export default function AdminCreateTicket() {
     const [priorities, setPriorities] = useState([]);
     const [types, setTypes] = useState([]);
     const [statuses, setStatuses] = useState([]);
+    const [admins, setAdmins] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -92,19 +93,23 @@ export default function AdminCreateTicket() {
 
     const fetchProjectRefData = async () => {
         try {
-            const [statusesRes, prioritiesRes, typesRes] = await Promise.all([
-                fetch('/api/helpdesk/admin/statuses', { credentials: 'same-origin' }),
-                fetch('/api/helpdesk/admin/priorities', { credentials: 'same-origin' }),
-                fetch('/api/helpdesk/admin/types', { credentials: 'same-origin' }),
+            const projectId = form.project_id;
+            const [statusesRes, prioritiesRes, typesRes, adminsRes] = await Promise.all([
+                fetch(`/api/helpdesk/admin/statuses?project_id=${projectId}`, { credentials: 'same-origin' }),
+                fetch(`/api/helpdesk/admin/priorities?project_id=${projectId}`, { credentials: 'same-origin' }),
+                fetch(`/api/helpdesk/admin/types?project_id=${projectId}`, { credentials: 'same-origin' }),
+                fetch('/api/helpdesk/admin/admins', { credentials: 'same-origin' }),
             ]);
-            const [statusesJson, prioritiesJson, typesJson] = await Promise.all([
+            const [statusesJson, prioritiesJson, typesJson, adminsJson] = await Promise.all([
                 statusesRes.json(),
                 prioritiesRes.json(),
                 typesRes.json(),
+                adminsRes.json(),
             ]);
             setStatuses(statusesJson.data || statusesJson || []);
             setPriorities(prioritiesJson.data || prioritiesJson || []);
             setTypes(typesJson.data || typesJson || []);
+            setAdmins(adminsJson.data || adminsJson || []);
 
             // Set default priority to medium
             const mediumPriority = (prioritiesJson.data || prioritiesJson || []).find(p => p.slug === 'medium');
@@ -509,15 +514,11 @@ export default function AdminCreateTicket() {
                                         className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
                                     >
                                         <option value="">Unassigned</option>
-                                        {users.length > 0 ? (
-                                            users.map((user) => (
-                                                <option key={user.id} value={user.id}>
-                                                    {user.name}
-                                                </option>
-                                            ))
-                                        ) : (
-                                            <option disabled>Search for users above first</option>
-                                        )}
+                                        {admins.map((admin) => (
+                                            <option key={admin.id} value={admin.id}>
+                                                {admin.name}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>

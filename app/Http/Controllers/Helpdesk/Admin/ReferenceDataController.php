@@ -8,17 +8,26 @@ use App\Models\Helpdesk\TicketStatus;
 use App\Models\Helpdesk\TicketType;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ReferenceDataController extends Controller
 {
-    public function statuses(): JsonResponse
+    public function statuses(Request $request): JsonResponse
     {
-        $statuses = TicketStatus::whereNull('project_id')
+        $projectId = $request->input('project_id');
+
+        // Try project-specific first, then fall back to global
+        $statuses = TicketStatus::where(function ($query) use ($projectId) {
+            $query->where('project_id', $projectId)
+                ->orWhereNull('project_id');
+        })
+            ->orderByRaw('project_id IS NULL') // Project-specific first
             ->orderBy('order')
-            ->get();
+            ->get()
+            ->unique('slug'); // Dedupe by slug, keeping project-specific
 
         return response()->json([
-            'data' => $statuses->map(fn (TicketStatus $status) => [
+            'data' => $statuses->values()->map(fn (TicketStatus $status) => [
                 'id' => $status->id,
                 'slug' => $status->slug,
                 'title' => $status->title,
@@ -30,14 +39,22 @@ class ReferenceDataController extends Controller
         ]);
     }
 
-    public function priorities(): JsonResponse
+    public function priorities(Request $request): JsonResponse
     {
-        $priorities = TicketPriority::whereNull('project_id')
+        $projectId = $request->input('project_id');
+
+        // Try project-specific first, then fall back to global
+        $priorities = TicketPriority::where(function ($query) use ($projectId) {
+            $query->where('project_id', $projectId)
+                ->orWhereNull('project_id');
+        })
+            ->orderByRaw('project_id IS NULL') // Project-specific first
             ->orderBy('order')
-            ->get();
+            ->get()
+            ->unique('slug'); // Dedupe by slug, keeping project-specific
 
         return response()->json([
-            'data' => $priorities->map(fn (TicketPriority $priority) => [
+            'data' => $priorities->values()->map(fn (TicketPriority $priority) => [
                 'id' => $priority->id,
                 'slug' => $priority->slug,
                 'title' => $priority->title,
@@ -49,12 +66,21 @@ class ReferenceDataController extends Controller
         ]);
     }
 
-    public function types(): JsonResponse
+    public function types(Request $request): JsonResponse
     {
-        $types = TicketType::whereNull('project_id')->get();
+        $projectId = $request->input('project_id');
+
+        // Try project-specific first, then fall back to global
+        $types = TicketType::where(function ($query) use ($projectId) {
+            $query->where('project_id', $projectId)
+                ->orWhereNull('project_id');
+        })
+            ->orderByRaw('project_id IS NULL') // Project-specific first
+            ->get()
+            ->unique('slug'); // Dedupe by slug, keeping project-specific
 
         return response()->json([
-            'data' => $types->map(fn (TicketType $type) => [
+            'data' => $types->values()->map(fn (TicketType $type) => [
                 'id' => $type->id,
                 'slug' => $type->slug,
                 'title' => $type->title,
