@@ -41,13 +41,43 @@ class ProjectController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:helpdesk_projects,slug',
+            'slug' => 'nullable|string|max:255|unique:helpdesk_projects,slug',
             'description' => 'nullable|string',
-            'ticket_prefix' => 'required|string|max:4',
+            'ticket_prefix' => 'nullable|string|max:4',
             'github_repo' => 'nullable|string',
             'color' => 'nullable|string|max:7',
             'icon' => 'nullable|string',
         ]);
+
+        // Auto-generate slug from name if not provided
+        if (empty($validated['slug'])) {
+            $validated['slug'] = \Illuminate\Support\Str::slug($validated['name']);
+
+            // Ensure uniqueness
+            $baseSlug = $validated['slug'];
+            $counter = 1;
+            while (Project::where('slug', $validated['slug'])->exists()) {
+                $validated['slug'] = $baseSlug.'-'.$counter++;
+            }
+        }
+
+        // Auto-generate ticket prefix from name if not provided
+        if (empty($validated['ticket_prefix'])) {
+            // Take first letters of each word, max 4 characters, uppercase
+            $words = preg_split('/\s+/', $validated['name']);
+            $prefix = '';
+            foreach ($words as $word) {
+                $prefix .= strtoupper(substr($word, 0, 1));
+                if (strlen($prefix) >= 4) {
+                    break;
+                }
+            }
+            // If only one word, take first 3-4 characters
+            if (strlen($prefix) < 2) {
+                $prefix = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $validated['name']), 0, 4));
+            }
+            $validated['ticket_prefix'] = $prefix;
+        }
 
         $project = Project::create($validated);
 
