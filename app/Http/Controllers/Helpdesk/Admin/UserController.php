@@ -203,10 +203,25 @@ class UserController extends Controller
     {
         $user = User::withTrashed()->findOrFail($userId);
 
-        if ($user->is_admin && User::where('is_admin', true)->count() === 1) {
-            return response()->json([
-                'message' => 'Cannot permanently delete the only admin user',
-            ], 422);
+        // Only block if this is an active admin AND they're the only active admin
+        // Soft-deleted admins can always be permanently deleted as long as there's at least one active admin
+        if ($user->is_admin) {
+            $activeAdminCount = User::where('is_admin', true)->count();
+            $isUserActive = $user->deleted_at === null;
+
+            // If the user is active and they're the only admin, block deletion
+            // If the user is soft-deleted, only block if there are no active admins left
+            if ($isUserActive && $activeAdminCount === 1) {
+                return response()->json([
+                    'message' => 'Cannot permanently delete the only admin user',
+                ], 422);
+            }
+
+            if (! $isUserActive && $activeAdminCount === 0) {
+                return response()->json([
+                    'message' => 'Cannot permanently delete: no active admin users would remain',
+                ], 422);
+            }
         }
 
         // Detach from all projects first
