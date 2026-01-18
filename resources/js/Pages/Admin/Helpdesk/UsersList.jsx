@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Users, ArrowLeft, LogOut, Search, Plus, Edit2, Trash2, Shield, ChevronLeft, ChevronRight, FolderOpen, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Users, ArrowLeft, LogOut, Search, Plus, Edit2, Trash2, Shield, ChevronLeft, ChevronRight, RotateCcw, AlertTriangle } from 'lucide-react';
 
 const UsersList = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -423,16 +423,9 @@ const UsersList = () => {
                                                             <Link
                                                                 to={`/admin/helpdesk/users/${user.id}`}
                                                                 className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition"
-                                                                title="View & Edit User"
+                                                                title="View & Manage User"
                                                             >
                                                                 <Edit2 className="w-4 h-4" />
-                                                            </Link>
-                                                            <Link
-                                                                to={`/admin/helpdesk/users/${user.id}/projects`}
-                                                                className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition"
-                                                                title="Manage Project Access"
-                                                            >
-                                                                <FolderOpen className="w-4 h-4" />
                                                             </Link>
                                                             <button
                                                                 onClick={() => handleDeleteUser(user.id)}

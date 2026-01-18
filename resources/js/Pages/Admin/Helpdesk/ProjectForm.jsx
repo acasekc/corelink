@@ -41,8 +41,8 @@ const ProjectForm = () => {
                 throw new Error(data.message || 'Failed to create project');
             }
 
-            const project = await response.json();
-            navigate(`/admin/helpdesk/projects/${project.id}`);
+            const result = await response.json();
+            navigate(`/admin/helpdesk/projects/${result.data.id}`);
         } catch (err) {
             alert('Failed to create project: ' + err.message);
         } finally {

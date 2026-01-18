@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Ticket, ArrowLeft, LogOut, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Ticket, ArrowLeft, LogOut, Search, Filter, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 const TicketsList = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -146,9 +146,18 @@ const TicketsList = () => {
             <main className="container mx-auto px-6 py-8">
                 <div className="max-w-7xl mx-auto">
                     {/* Page Header */}
-                    <div className="mb-6">
-                        <h1 className="text-3xl font-bold mb-2">Support Tickets</h1>
-                        <p className="text-slate-400">Manage support tickets from all connected projects</p>
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h1 className="text-3xl font-bold mb-2">Support Tickets</h1>
+                            <p className="text-slate-400">Manage support tickets from all connected projects</p>
+                        </div>
+                        <Link
+                            to="/admin/helpdesk/tickets/create"
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition"
+                        >
+                            <Plus className="w-4 h-4" />
+                            New Ticket
+                        </Link>
                     </div>
 
                     {/* Filters */}

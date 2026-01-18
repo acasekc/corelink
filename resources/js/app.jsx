@@ -28,6 +28,7 @@ import DiscoverySummary from "./Pages/Discovery/Summary";
 import HelpdeskDashboard from "./Pages/Admin/Helpdesk/Dashboard";
 import HelpdeskTicketsList from "./Pages/Admin/Helpdesk/TicketsList";
 import HelpdeskTicketDetail from "./Pages/Admin/Helpdesk/TicketDetail";
+import HelpdeskCreateTicket from "./Pages/Admin/Helpdesk/CreateTicket";
 import HelpdeskProjectsList from "./Pages/Admin/Helpdesk/ProjectsList";
 import HelpdeskProjectDetail from "./Pages/Admin/Helpdesk/ProjectDetail";
 import HelpdeskProjectForm from "./Pages/Admin/Helpdesk/ProjectForm";
@@ -91,6 +92,7 @@ export default function App() {
 				{/* Admin Helpdesk Routes */}
 				<Route path="/admin/helpdesk" element={<AdminLayout><HelpdeskDashboard /></AdminLayout>} />
 				<Route path="/admin/helpdesk/tickets" element={<AdminLayout><HelpdeskTicketsList /></AdminLayout>} />
+				<Route path="/admin/helpdesk/tickets/create" element={<AdminLayout><HelpdeskCreateTicket /></AdminLayout>} />
 				<Route path="/admin/helpdesk/tickets/:ticketId" element={<AdminLayout><HelpdeskTicketDetail /></AdminLayout>} />
 				<Route path="/admin/helpdesk/projects" element={<AdminLayout><HelpdeskProjectsList /></AdminLayout>} />
 				<Route path="/admin/helpdesk/projects/create" element={<AdminLayout><HelpdeskProjectForm /></AdminLayout>} />

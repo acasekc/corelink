@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Helpdesk\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Helpdesk\Project;
 use App\Models\Helpdesk\Ticket;
 use App\Models\Helpdesk\TicketPriority;
 use App\Models\Helpdesk\TicketStatus;
+use App\Models\Helpdesk\TicketType;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -58,6 +60,82 @@ class TicketController extends Controller
                 'total' => $tickets->total(),
             ],
         ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'project_id' => ['required', 'exists:helpdesk_projects,id'],
+            'title' => ['required', 'string', 'max:255'],
+            'content' => ['required', 'string'],
+            'priority_id' => ['nullable', 'exists:helpdesk_ticket_priorities,id'],
+            'type_id' => ['nullable', 'exists:helpdesk_ticket_types,id'],
+            'status_id' => ['nullable', 'exists:helpdesk_ticket_statuses,id'],
+            'assignee_id' => ['nullable', 'exists:users,id'],
+            'submitter_user_id' => ['nullable', 'exists:users,id'],
+            'submitter_name' => ['nullable', 'string', 'max:255'],
+            'submitter_email' => ['nullable', 'email', 'max:255'],
+        ]);
+
+        $project = Project::findOrFail($validated['project_id']);
+
+        // Get default status (project-specific or global fallback)
+        $defaultStatus = $validated['status_id']
+            ? TicketStatus::find($validated['status_id'])
+            : $project->statuses()->where('slug', 'open')->first()
+                ?? $project->statuses()->first()
+                ?? TicketStatus::whereNull('project_id')->where('slug', 'open')->first()
+                ?? TicketStatus::whereNull('project_id')->first();
+
+        // Get priority (explicit or default)
+        $priority = $validated['priority_id']
+            ? TicketPriority::find($validated['priority_id'])
+            : $project->priorities()->where('slug', 'medium')->first()
+                ?? $project->priorities()->first()
+                ?? TicketPriority::whereNull('project_id')->where('slug', 'medium')->first()
+                ?? TicketPriority::whereNull('project_id')->first();
+
+        // Get type (explicit or default)
+        $type = $validated['type_id']
+            ? TicketType::find($validated['type_id'])
+            : $project->types()->where('slug', 'question')->first()
+                ?? $project->types()->first()
+                ?? TicketType::whereNull('project_id')->where('slug', 'question')->first()
+                ?? TicketType::whereNull('project_id')->first();
+
+        // Determine submitter info
+        $submitterUser = null;
+        if (! empty($validated['submitter_user_id'])) {
+            $submitterUser = User::find($validated['submitter_user_id']);
+        }
+
+        $submitterName = $validated['submitter_name'] ?? $submitterUser?->name ?? $user->name;
+        $submitterEmail = $validated['submitter_email'] ?? $submitterUser?->email ?? $user->email;
+
+        $ticket = Ticket::create([
+            'project_id' => $project->id,
+            'number' => $project->getNextTicketNumber(),
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'status_id' => $defaultStatus?->id,
+            'priority_id' => $priority?->id,
+            'type_id' => $type?->id,
+            'assignee_id' => $validated['assignee_id'] ?? null,
+            'submitter_name' => $submitterName,
+            'submitter_email' => $submitterEmail,
+            'submitter_user_id' => $submitterUser?->id ?? $validated['submitter_user_id'] ?? null,
+        ]);
+
+        $ticket->logActivity('created', null, null, $user->id);
+
+        $ticket->load(['project', 'status', 'priority', 'type', 'assignee']);
+
+        return response()->json([
+            'data' => $this->formatTicket($ticket),
+            'message' => 'Ticket created successfully',
+        ], 201);
     }
 
     public function show(Ticket $ticket): JsonResponse
