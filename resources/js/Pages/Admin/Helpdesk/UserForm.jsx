@@ -84,7 +84,7 @@ const UserForm = () => {
             const response = await fetch(
                 isEditing ? `/api/helpdesk/admin/users/${userId}` : '/api/helpdesk/admin/users',
                 {
-                    method: isEditing ? 'PUT' : 'POST',
+                    method: isEditing ? 'PATCH' : 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
