@@ -434,15 +434,13 @@ const UsersList = () => {
                                                             >
                                                                 <FolderOpen className="w-4 h-4" />
                                                             </Link>
-                                                            {!user.is_admin && (
-                                                                <button
-                                                                    onClick={() => handleDeleteUser(user.id)}
-                                                                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition"
-                                                                    title="Delete User"
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
-                                                            )}
+                                                            <button
+                                                                onClick={() => handleDeleteUser(user.id)}
+                                                                className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition"
+                                                                title="Delete User"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
                                                         </>
                                                     )}
                                                 </div>

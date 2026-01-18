@@ -307,15 +307,13 @@ const UserDetail = () => {
                                     <Edit2 className="w-4 h-4" />
                                     Edit
                                 </Link>
-                                {!user?.is_admin && (
-                                    <button
-                                        onClick={handleDeleteUser}
-                                        className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                        Delete
-                                    </button>
-                                )}
+                                <button
+                                    onClick={handleDeleteUser}
+                                    className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete
+                                </button>
                             </div>
                         </div>
                     </div>
