@@ -18,6 +18,7 @@ class ApiKeyController extends Controller
             'data' => $keys->map(fn (ApiKey $key) => [
                 'id' => $key->id,
                 'name' => $key->name,
+                'key' => '••••••••'.substr($key->key, -8),
                 'key_preview' => '••••••••'.substr($key->key, -8),
                 'is_active' => $key->is_active,
                 'expires_at' => $key->expires_at?->toIso8601String(),

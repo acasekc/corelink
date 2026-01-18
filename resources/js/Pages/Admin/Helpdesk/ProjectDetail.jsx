@@ -80,12 +80,13 @@ const ProjectDetail = () => {
                 body: JSON.stringify({ name: newKeyName }),
             });
             if (!response.ok) throw new Error('Failed to create API key');
-            const data = await response.json();
-            setApiKeys([...apiKeys, data]);
+            const json = await response.json();
+            const newKey = json.data;
+            setApiKeys([...apiKeys, newKey]);
             setNewKeyName('');
             setShowCreateKeyForm(false);
             // Show the new key immediately
-            setVisibleKeys({ ...visibleKeys, [data.id]: true });
+            setVisibleKeys({ ...visibleKeys, [newKey.id]: true });
         } catch (err) {
             alert('Failed to create API key: ' + err.message);
         }
