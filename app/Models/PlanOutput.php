@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PlanOutputType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,10 +20,14 @@ class PlanOutput extends Model
         'sent_at',
     ];
 
-    protected $casts = [
-        'content' => 'array',
-        'sent_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'content' => 'array',
+            'sent_at' => 'datetime',
+            'output_type' => PlanOutputType::class,
+        ];
+    }
 
     public function plan(): BelongsTo
     {

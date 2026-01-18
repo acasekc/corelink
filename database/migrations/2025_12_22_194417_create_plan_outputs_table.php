@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('plan_outputs', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('plan_id')->constrained('discovery_plans');
-            $table->enum('output_type', ['user_summary', 'admin_full', 'email_sent']);
+            $table->string('output_type', 32);
             $table->json('content');
             $table->string('recipient_email');
             $table->timestamp('sent_at')->nullable();

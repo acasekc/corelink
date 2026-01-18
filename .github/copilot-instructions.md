@@ -171,6 +171,28 @@ protected function isAccessible(User $user, ?string $path = null): bool
 - Avoid `DB::`; prefer `Model::query()`. Generate code that leverages Laravel's ORM capabilities rather than bypassing them.
 - Generate code that prevents N+1 query problems by using eager loading.
 - Use Laravel's query builder for very complex database operations.
+- **Never use database ENUM types**. Instead, use VARCHAR/string columns with PHP-backed enums and model casts. This allows enum values to be managed in code without requiring migrations to add new values.
+
+<code-snippet name="Code-Managed Enum Pattern" lang="php">
+// Migration: Use string column, not ENUM
+$table->string('status', 32)->default('pending');
+
+// PHP Enum: app/Enums/TicketStatus.php
+enum TicketStatus: string
+{
+    case Pending = 'pending';
+    case Open = 'open';
+    case Closed = 'closed';
+}
+
+// Model: Cast to the PHP enum
+protected function casts(): array
+{
+    return [
+        'status' => TicketStatus::class,
+    ];
+}
+</code-snippet>
 
 ### Model Creation
 - When creating new models, create useful factories and seeders for them too. Ask the user if they need any other things, using `list-artisan-commands` to check the available options to `php artisan make:model`.

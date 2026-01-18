@@ -8,7 +8,6 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,8 +19,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Generate a random password for the admin
-        $password = Str::random(12);
-
+        $password = 'admin123';
         // Create admin user
         $admin = User::updateOrCreate(
             ['email' => 'admin@corelink.dev'],

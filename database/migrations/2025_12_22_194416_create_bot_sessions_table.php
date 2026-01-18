@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignUuid('invite_code_id')->constrained('invite_codes');
             $table->timestamp('started_at');
             $table->timestamp('completed_at')->nullable();
-            $table->enum('status', ['active', 'paused', 'completed', 'abandoned']);
+            $table->string('status', 32)->default('active');
             $table->json('conversation_state')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();

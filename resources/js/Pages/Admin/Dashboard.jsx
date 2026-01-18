@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, MessageSquare, LogOut, Briefcase } from 'lucide-react';
+import { FileText, MessageSquare, LogOut, Briefcase, Ticket } from 'lucide-react';
 
 const Dashboard = () => {
   const handleLogout = async () => {
@@ -41,6 +41,13 @@ const Dashboard = () => {
       icon: MessageSquare,
       link: '/admin/discovery',
       color: 'from-purple-500 to-pink-500',
+    },
+    {
+      title: 'Helpdesk',
+      description: 'Manage support tickets from external applications',
+      icon: Ticket,
+      link: '/admin/helpdesk',
+      color: 'from-orange-500 to-amber-500',
     },
   ];
 

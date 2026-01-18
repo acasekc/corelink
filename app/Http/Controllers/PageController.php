@@ -42,4 +42,9 @@ class PageController extends Controller
     {
         return view('app');
     }
+
+    public function helpdesk()
+    {
+        return view('app');
+    }
 }

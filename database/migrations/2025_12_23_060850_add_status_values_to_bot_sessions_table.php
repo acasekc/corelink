@@ -1,19 +1,18 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * Note: This migration is now a no-op because the base migration uses string columns
+     * instead of ENUMs. This is kept for migration history compatibility.
      */
     public function up(): void
     {
-        // MySQL requires raw SQL to modify enum values
-        DB::statement("ALTER TABLE bot_sessions MODIFY COLUMN status ENUM('active', 'paused', 'completed', 'abandoned', 'generating', 'failed') NOT NULL DEFAULT 'active'");
+        // Originally modified ENUM values, now no-op since we use strings
     }
 
     /**
@@ -21,6 +20,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("ALTER TABLE bot_sessions MODIFY COLUMN status ENUM('active', 'paused', 'completed', 'abandoned') NOT NULL DEFAULT 'active'");
+        // No-op
     }
 };

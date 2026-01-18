@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Support Ticket</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a2e;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a2e; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #16213e; border-radius: 12px; overflow: hidden;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
+                                🎫 New Support Ticket
+                            </h1>
+                            <p style="margin: 10px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">
+                                {{ $ticket->project->name }}
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <!-- Ticket Info Box -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #1a1a2e; border-radius: 8px; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="padding-bottom: 15px;">
+                                                    <span style="color: #f59e0b; font-size: 14px; font-weight: 600;">{{ $ticket->ticket_number }}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding-bottom: 20px;">
+                                                    <h2 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 600;">{{ $ticket->title }}</h2>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding-bottom: 20px; border-bottom: 1px solid #2a2a4e;">
+                                                    <p style="margin: 0; color: #b0b0b0; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">{{ Str::limit($ticket->content, 500) }}</p>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding-top: 20px;">
+                                                    <table width="100%" cellpadding="0" cellspacing="0">
+                                                        <tr>
+                                                            <td style="width: 50%;">
+                                                                <span style="color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Submitted By</span>
+                                                                <p style="margin: 5px 0 0; color: #e0e0e0; font-size: 14px;">{{ $ticket->submitter_name }}</p>
+                                                                <p style="margin: 2px 0 0; color: #a78bfa; font-size: 13px;">{{ $ticket->submitter_email }}</p>
+                                                            </td>
+                                                            <td style="width: 50%;">
+                                                                <span style="color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Priority</span>
+                                                                <p style="margin: 5px 0 0; color: #e0e0e0; font-size: 14px;">{{ $ticket->priority?->title ?? 'Not set' }}</p>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Action Button -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ url('/admin/helpdesk/tickets/' . $ticket->id) }}" 
+                                           style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+                                            View Ticket
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #0f0f1e; padding: 25px; text-align: center;">
+                            <p style="margin: 0; color: #666; font-size: 13px;">
+                                You're receiving this because you have notifications enabled for {{ $ticket->project->name }}.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

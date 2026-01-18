@@ -40,11 +40,14 @@ const Login = () => {
           remember: form.remember,
         }),
       });
+      
+      const data = await res.json();
+      
       if (!res.ok) {
-        const data = await res.json();
         setForm((prev) => ({ ...prev, errors: data.errors || { credentials: data.message || "Login failed." }, processing: false }));
       } else {
-        window.location.href = "/admin/discovery";
+        // Use the redirect from the response
+        window.location.href = data.redirect || "/admin/discovery";
       }
     } catch (err) {
       setForm((prev) => ({ ...prev, errors: { credentials: "Network error." }, processing: false }));
@@ -119,6 +122,14 @@ const Login = () => {
               {form.processing ? "Signing in..." : "Sign In"}
             </button>
           </form>
+        </div>
+        <div className="mt-6 text-center text-gray-500 text-sm">
+          <p>
+            Looking for the support portal?{" "}
+            <a href="/helpdesk/login" className="text-purple-400 hover:text-purple-300 transition">
+              Sign in here
+            </a>
+          </p>
         </div>
       </div>
     </div>

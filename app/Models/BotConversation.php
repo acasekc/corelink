@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\InteractionMode;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,11 +25,15 @@ class BotConversation extends Model
         'turn_context',
     ];
 
-    protected $casts = [
-        'user_audio_transcribed' => 'boolean',
-        'tokens_used' => 'array',
-        'turn_context' => 'array',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'user_audio_transcribed' => 'boolean',
+            'tokens_used' => 'array',
+            'turn_context' => 'array',
+            'interaction_mode' => InteractionMode::class,
+        ];
+    }
 
     public function session(): BelongsTo
     {

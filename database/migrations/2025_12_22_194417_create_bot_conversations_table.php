@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('user_audio_transcribed')->default(false);
             $table->text('assistant_message')->nullable();
             $table->string('assistant_audio_url')->nullable();
-            $table->enum('interaction_mode', ['text', 'voice', 'both']);
+            $table->string('interaction_mode', 32)->default('text');
             $table->json('tokens_used')->nullable();
             $table->json('turn_context')->nullable();
             $table->timestamps();

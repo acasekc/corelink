@@ -3,7 +3,7 @@
         "copilot"
     ],
     "editors": [
-        "claude_code"
+        "vscode"
     ],
     "guidelines": []
 }

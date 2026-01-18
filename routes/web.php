@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ProjectController as AdminProjectController;
 use App\Http\Controllers\CaseStudyController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DiscoveryController;
+use App\Http\Controllers\Helpdesk\AuthController as HelpdeskAuthController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Route;
@@ -108,4 +109,33 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/create', [PageController::class, 'projects'])->name('create');
         Route::get('/{id}/edit', [PageController::class, 'projects'])->name('edit');
     });
+
+    // Admin Helpdesk (SPA - React handles routing)
+    Route::get('/helpdesk/{any?}', [PageController::class, 'helpdesk'])
+        ->where('any', '.*')
+        ->name('helpdesk');
+});
+
+/*
+|--------------------------------------------------------------------------
+| User Helpdesk Portal
+|--------------------------------------------------------------------------
+*/
+
+// Helpdesk Auth Routes (guest only)
+Route::middleware(['guest'])->prefix('helpdesk')->group(function () {
+    Route::get('/login', [HelpdeskAuthController::class, 'showLogin'])->name('helpdesk.login');
+    Route::post('/login', [HelpdeskAuthController::class, 'login']);
+});
+
+// Helpdesk Logout (authenticated)
+Route::post('/helpdesk/logout', [HelpdeskAuthController::class, 'logout'])
+    ->middleware('auth')
+    ->name('helpdesk.logout');
+
+// User Helpdesk Portal (authenticated users)
+Route::middleware(['auth'])->prefix('helpdesk')->group(function () {
+    Route::get('/{any?}', [PageController::class, 'helpdesk'])
+        ->where('any', '^(?!login).*')
+        ->name('user.helpdesk');
 });
