@@ -162,6 +162,8 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     Route::get('users/{user}', [UserController::class, 'show']);
     Route::patch('users/{user}', [UserController::class, 'update']);
     Route::delete('users/{user}', [UserController::class, 'destroy']);
+    Route::post('users/{user}/restore', [UserController::class, 'restore']);
+    Route::delete('users/{user}/force', [UserController::class, 'forceDelete']);
     Route::get('users-search', [UserController::class, 'search']);
     Route::get('roles', [UserController::class, 'roles']);
 });

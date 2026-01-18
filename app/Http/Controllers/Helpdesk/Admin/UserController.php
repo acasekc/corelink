@@ -24,6 +24,13 @@ class UserController extends Controller
             ->with(['helpdeskProjects' => fn ($q) => $q->select('helpdesk_projects.id', 'name', 'slug')])
             ->withCount('helpdeskProjects');
 
+        // Include trashed users if requested
+        if ($request->input('trashed') === 'only') {
+            $query->onlyTrashed();
+        } elseif ($request->input('trashed') === 'with') {
+            $query->withTrashed();
+        }
+
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -158,7 +165,7 @@ class UserController extends Controller
     }
 
     /**
-     * Delete a user
+     * Delete a user (soft delete)
      */
     public function destroy(User $user): JsonResponse
     {
@@ -172,6 +179,43 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User deleted successfully',
+        ]);
+    }
+
+    /**
+     * Restore a soft-deleted user
+     */
+    public function restore(int $userId): JsonResponse
+    {
+        $user = User::onlyTrashed()->findOrFail($userId);
+        $user->restore();
+
+        return response()->json([
+            'data' => $user->fresh()->load('helpdeskProjects'),
+            'message' => 'User restored successfully',
+        ]);
+    }
+
+    /**
+     * Permanently delete a user (hard delete)
+     */
+    public function forceDelete(int $userId): JsonResponse
+    {
+        $user = User::withTrashed()->findOrFail($userId);
+
+        if ($user->is_admin && User::where('is_admin', true)->count() === 1) {
+            return response()->json([
+                'message' => 'Cannot permanently delete the only admin user',
+            ], 422);
+        }
+
+        // Detach from all projects first
+        $user->helpdeskProjects()->detach();
+
+        $user->forceDelete();
+
+        return response()->json([
+            'message' => 'User permanently deleted',
         ]);
     }
 

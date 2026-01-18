@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Eye, EyeOff, Ticket } from 'lucide-react';
+import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket } from 'lucide-react';
 
 const ProjectDetail = () => {
     const { projectId } = useParams();
@@ -11,7 +11,7 @@ const ProjectDetail = () => {
     const [error, setError] = useState(null);
     const [showCreateKeyForm, setShowCreateKeyForm] = useState(false);
     const [newKeyName, setNewKeyName] = useState('');
-    const [visibleKeys, setVisibleKeys] = useState({});
+    const [newlyCreatedKeys, setNewlyCreatedKeys] = useState({}); // Store full keys temporarily
     const [copiedKey, setCopiedKey] = useState(null);
     const [dashboard, setDashboard] = useState(null);
 
@@ -82,11 +82,11 @@ const ProjectDetail = () => {
             if (!response.ok) throw new Error('Failed to create API key');
             const json = await response.json();
             const newKey = json.data;
-            setApiKeys([...apiKeys, newKey]);
+            // Store the full key temporarily (it's only available now!)
+            setNewlyCreatedKeys({ ...newlyCreatedKeys, [newKey.id]: newKey.key });
+            setApiKeys([...apiKeys, { ...newKey, key: newKey.key }]);
             setNewKeyName('');
             setShowCreateKeyForm(false);
-            // Show the new key immediately
-            setVisibleKeys({ ...visibleKeys, [newKey.id]: true });
         } catch (err) {
             alert('Failed to create API key: ' + err.message);
         }
@@ -106,8 +106,10 @@ const ProjectDetail = () => {
             });
             if (!response.ok) throw new Error('Failed to regenerate API key');
             const json = await response.json();
-            setApiKeys(apiKeys.map((k) => (k.id === keyId ? json.data : k)));
-            setVisibleKeys({ ...visibleKeys, [keyId]: true });
+            const regeneratedKey = json.data;
+            // Store the full key temporarily (it's only available now!)
+            setNewlyCreatedKeys({ ...newlyCreatedKeys, [keyId]: regeneratedKey.key });
+            setApiKeys(apiKeys.map((k) => (k.id === keyId ? { ...regeneratedKey, key: regeneratedKey.key } : k)));
         } catch (err) {
             alert('Failed to regenerate API key: ' + err.message);
         }
@@ -142,8 +144,17 @@ const ProjectDetail = () => {
         }
     };
 
-    const toggleKeyVisibility = (keyId) => {
-        setVisibleKeys({ ...visibleKeys, [keyId]: !visibleKeys[keyId] });
+    const hasFullKey = (keyId) => {
+        return !!newlyCreatedKeys[keyId];
+    };
+
+    const getDisplayKey = (apiKey) => {
+        // If we have the full key (just created/regenerated), show it
+        if (newlyCreatedKeys[apiKey.id]) {
+            return newlyCreatedKeys[apiKey.id];
+        }
+        // Otherwise show the preview from the API
+        return apiKey.key_preview || apiKey.key || '••••••••••••••••';
     };
 
     const handleLogout = async () => {
@@ -371,31 +382,31 @@ const ProjectDetail = () => {
                                         </div>
                                         <div className="flex items-center gap-2 bg-slate-900/50 rounded-lg p-2 font-mono text-sm">
                                             <code className="flex-1 text-slate-300 truncate">
-                                                {visibleKeys[apiKey.id] ? apiKey.key : '••••••••••••••••••••••••••••••••••••••••'}
+                                                {getDisplayKey(apiKey)}
                                             </code>
-                                            <button
-                                                onClick={() => toggleKeyVisibility(apiKey.id)}
-                                                className="p-1.5 text-slate-400 hover:text-white transition"
-                                                title={visibleKeys[apiKey.id] ? 'Hide' : 'Show'}
-                                            >
-                                                {visibleKeys[apiKey.id] ? (
-                                                    <EyeOff className="w-4 h-4" />
-                                                ) : (
-                                                    <Eye className="w-4 h-4" />
-                                                )}
-                                            </button>
-                                            <button
-                                                onClick={() => handleCopyKey(apiKey.key)}
-                                                className="p-1.5 text-slate-400 hover:text-white transition"
-                                                title="Copy"
-                                            >
-                                                {copiedKey === apiKey.key ? (
-                                                    <Check className="w-4 h-4 text-green-400" />
-                                                ) : (
-                                                    <Copy className="w-4 h-4" />
-                                                )}
-                                            </button>
+                                            {hasFullKey(apiKey.id) ? (
+                                                <button
+                                                    onClick={() => handleCopyKey(newlyCreatedKeys[apiKey.id])}
+                                                    className="p-1.5 text-slate-400 hover:text-white transition"
+                                                    title="Copy"
+                                                >
+                                                    {copiedKey === newlyCreatedKeys[apiKey.id] ? (
+                                                        <Check className="w-4 h-4 text-green-400" />
+                                                    ) : (
+                                                        <Copy className="w-4 h-4" />
+                                                    )}
+                                                </button>
+                                            ) : (
+                                                <span className="text-xs text-slate-500 italic">
+                                                    Key hidden - regenerate to get new key
+                                                </span>
+                                            )}
                                         </div>
+                                        {hasFullKey(apiKey.id) && (
+                                            <p className="text-xs text-amber-400 mt-2">
+                                                ⚠️ Copy this key now - it won't be shown again!
+                                            </p>
+                                        )}
                                         {apiKey.last_used_at && (
                                             <p className="text-xs text-slate-500 mt-2">
                                                 Last used: {new Date(apiKey.last_used_at).toLocaleString()}

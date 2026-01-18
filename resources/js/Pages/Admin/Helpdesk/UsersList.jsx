@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Users, ArrowLeft, LogOut, Search, Plus, Edit2, Trash2, Shield, ChevronLeft, ChevronRight, FolderOpen } from 'lucide-react';
+import { Users, ArrowLeft, LogOut, Search, Plus, Edit2, Trash2, Shield, ChevronLeft, ChevronRight, FolderOpen, RotateCcw, AlertTriangle } from 'lucide-react';
 
 const UsersList = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -8,6 +8,7 @@ const UsersList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+    const [trashedFilter, setTrashedFilter] = useState(searchParams.get('trashed') || '');
     const [pagination, setPagination] = useState({
         current_page: 1,
         last_page: 1,
@@ -30,10 +31,14 @@ const UsersList = () => {
             setLoading(true);
             const page = searchParams.get('page') || 1;
             const search = searchParams.get('search') || '';
+            const trashed = searchParams.get('trashed') || '';
             
             const params = new URLSearchParams({ page, per_page: 20 });
             if (search) {
                 params.append('search', search);
+            }
+            if (trashed) {
+                params.append('trashed', trashed);
             }
 
             const response = await fetch(`/api/helpdesk/admin/users?${params}`, {
@@ -83,6 +88,18 @@ const UsersList = () => {
         setSearchParams(params);
     };
 
+    const handleTrashedFilter = (value) => {
+        setTrashedFilter(value);
+        const params = new URLSearchParams(searchParams);
+        if (value) {
+            params.set('trashed', value);
+        } else {
+            params.delete('trashed');
+        }
+        params.set('page', '1');
+        setSearchParams(params);
+    };
+
     const handlePageChange = (page) => {
         const params = new URLSearchParams(searchParams);
         params.set('page', page.toString());
@@ -107,7 +124,7 @@ const UsersList = () => {
     };
 
     const handleDeleteUser = async (userId) => {
-        if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        if (!confirm('Are you sure you want to delete this user? They can be restored later.')) {
             return;
         }
 
@@ -125,6 +142,56 @@ const UsersList = () => {
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.message || 'Failed to delete user');
+            }
+
+            fetchUsers();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleRestoreUser = async (userId) => {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch(`/api/helpdesk/admin/users/${userId}/restore`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to restore user');
+            }
+
+            fetchUsers();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleForceDeleteUser = async (userId) => {
+        if (!confirm('Are you sure you want to PERMANENTLY delete this user? This action cannot be undone!')) {
+            return;
+        }
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch(`/api/helpdesk/admin/users/${userId}/force`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to permanently delete user');
             }
 
             fetchUsers();
@@ -219,9 +286,9 @@ const UsersList = () => {
                         </Link>
                     </div>
 
-                    {/* Search */}
-                    <div className="mb-6">
-                        <form onSubmit={handleSearch} className="flex gap-2">
+                    {/* Search and Filters */}
+                    <div className="mb-6 flex flex-wrap gap-4">
+                        <form onSubmit={handleSearch} className="flex gap-2 flex-1">
                             <div className="relative flex-1 max-w-md">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                 <input
@@ -239,7 +306,28 @@ const UsersList = () => {
                                 Search
                             </button>
                         </form>
+                        <select
+                            value={trashedFilter}
+                            onChange={(e) => handleTrashedFilter(e.target.value)}
+                            className="bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-purple-500"
+                        >
+                            <option value="">Active Users</option>
+                            <option value="with">All Users (incl. deleted)</option>
+                            <option value="only">Deleted Users Only</option>
+                        </select>
                     </div>
+
+                    {/* Deleted users notice */}
+                    {trashedFilter && (
+                        <div className="mb-4 flex items-center gap-2 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300">
+                            <AlertTriangle className="w-5 h-5" />
+                            <span>
+                                {trashedFilter === 'only' 
+                                    ? 'Showing deleted users only. These users can be restored or permanently deleted.'
+                                    : 'Showing all users including deleted ones. Deleted users are highlighted.'}
+                            </span>
+                        </div>
+                    )}
 
                     {/* Users Table */}
                     <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
@@ -249,7 +337,7 @@ const UsersList = () => {
                                     <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">User</th>
                                     <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Email</th>
                                     <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Projects</th>
-                                    <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">Created</th>
+                                    <th className="text-left px-6 py-4 text-sm font-medium text-slate-400">{trashedFilter ? 'Status' : 'Created'}</th>
                                     <th className="text-right px-6 py-4 text-sm font-medium text-slate-400">Actions</th>
                                 </tr>
                             </thead>
@@ -257,28 +345,28 @@ const UsersList = () => {
                                 {users.length === 0 ? (
                                     <tr>
                                         <td colSpan="5" className="px-6 py-12 text-center text-slate-400">
-                                            No users found
+                                            {trashedFilter === 'only' ? 'No deleted users found' : 'No users found'}
                                         </td>
                                     </tr>
                                 ) : (
                                     users.map((user) => (
-                                        <tr key={user.id} className="hover:bg-slate-700/50 transition">
+                                        <tr key={user.id} className={`hover:bg-slate-700/50 transition ${user.deleted_at ? 'opacity-60 bg-red-900/10' : ''}`}>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                                                        <span className="text-purple-300 font-medium">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${user.deleted_at ? 'bg-red-500/20' : 'bg-purple-500/20'}`}>
+                                                        <span className={`font-medium ${user.deleted_at ? 'text-red-300' : 'text-purple-300'}`}>
                                                             {user.name?.charAt(0)?.toUpperCase() || '?'}
                                                         </span>
                                                     </div>
                                                     <div>
-                                                        <div className="font-medium text-white">{user.name}</div>
+                                                        <div className={`font-medium ${user.deleted_at ? 'text-slate-400 line-through' : 'text-white'}`}>{user.name}</div>
                                                         {user.is_admin && (
                                                             <span className="text-xs text-purple-400">Admin</span>
                                                         )}
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-300">{user.email}</td>
+                                            <td className={`px-6 py-4 ${user.deleted_at ? 'text-slate-500' : 'text-slate-300'}`}>{user.email}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-wrap gap-2">
                                                     {user.helpdesk_projects && user.helpdesk_projects.length > 0 ? (
@@ -300,33 +388,62 @@ const UsersList = () => {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-slate-400 text-sm">
-                                                {new Date(user.created_at).toLocaleDateString()}
+                                            <td className="px-6 py-4 text-sm">
+                                                {user.deleted_at ? (
+                                                    <span className="text-red-400">
+                                                        Deleted {new Date(user.deleted_at).toLocaleDateString()}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-400">
+                                                        {new Date(user.created_at).toLocaleDateString()}
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Link
-                                                        to={`/admin/helpdesk/users/${user.id}`}
-                                                        className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition"
-                                                        title="View & Edit User"
-                                                    >
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </Link>
-                                                    <Link
-                                                        to={`/admin/helpdesk/users/${user.id}/projects`}
-                                                        className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition"
-                                                        title="Manage Project Access"
-                                                    >
-                                                        <FolderOpen className="w-4 h-4" />
-                                                    </Link>
-                                                    {!user.is_admin && (
-                                                        <button
-                                                            onClick={() => handleDeleteUser(user.id)}
-                                                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition"
-                                                            title="Delete User"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
+                                                    {user.deleted_at ? (
+                                                        <>
+                                                            <button
+                                                                onClick={() => handleRestoreUser(user.id)}
+                                                                className="p-2 text-slate-400 hover:text-green-400 hover:bg-slate-700 rounded-lg transition"
+                                                                title="Restore User"
+                                                            >
+                                                                <RotateCcw className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleForceDeleteUser(user.id)}
+                                                                className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition"
+                                                                title="Permanently Delete"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Link
+                                                                to={`/admin/helpdesk/users/${user.id}`}
+                                                                className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition"
+                                                                title="View & Edit User"
+                                                            >
+                                                                <Edit2 className="w-4 h-4" />
+                                                            </Link>
+                                                            <Link
+                                                                to={`/admin/helpdesk/users/${user.id}/projects`}
+                                                                className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition"
+                                                                title="Manage Project Access"
+                                                            >
+                                                                <FolderOpen className="w-4 h-4" />
+                                                            </Link>
+                                                            {!user.is_admin && (
+                                                                <button
+                                                                    onClick={() => handleDeleteUser(user.id)}
+                                                                    className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition"
+                                                                    title="Delete User"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
                                             </td>

@@ -54,7 +54,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => 'Login successful',
-                'redirect' => '/admin/discovery',
+                'redirect' => '/admin',
                 'is_admin' => true,
             ]);
         }
