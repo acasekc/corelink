@@ -20,7 +20,10 @@ jobs:
             set -e
             cd /var/www/corelink.dev
             
-            echo "📥 Pulling latest changes..."
+            echo "� Fixing permissions for git..."
+            sudo chown -R ec2-user:ec2-user .
+            
+            echo "�📥 Pulling latest changes..."
             git fetch origin
             git reset --hard origin/corelink
             
@@ -49,7 +52,7 @@ jobs:
             php artisan event:cache
             
             echo "� Setting permissions..."
-            sudo chown -R nginx:nginx storage bootstrap/cache
+            sudo chown -R nginx:nginx storage bootstrap/cache public/build
             sudo chmod -R 775 storage bootstrap/cache
             
             echo "🔄 Restarting services..."
