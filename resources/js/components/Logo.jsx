@@ -9,7 +9,7 @@ export const Logo = () => {
       transition={{ duration: 0.5 }}
       className="flex items-center"
     >
-      <img src="/images/logo_100_h.png" alt="CoreLink" className="h-24 w-auto" />
+      <img src="/images/logo_100_h.png" alt="CoreLink" className="h-12 sm:h-16 md:h-20 w-auto" />
     </motion.div>
   );
 };
