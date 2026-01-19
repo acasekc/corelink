@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Helpdesk\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Helpdesk\Attachment;
 use App\Models\Helpdesk\Project;
 use App\Models\Helpdesk\Ticket;
 use App\Models\Helpdesk\TicketPriority;
@@ -12,6 +13,8 @@ use App\Services\Helpdesk\NotificationService;
 use App\Services\Helpdesk\WebhookService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class TicketApiController extends Controller
 {
@@ -70,6 +73,15 @@ class TicketApiController extends Controller
             'submitter_email' => 'required|email|max:255',
             'submitter_user_id' => 'nullable|string|max:255',
             'metadata' => 'nullable|array',
+            'attachments' => ['nullable', 'array', 'max:10'],
+            'attachments.*' => [
+                'file',
+                'max:'.(Attachment::MAX_FILE_SIZE / 1024),
+                'mimetypes:'.implode(',', Attachment::ALLOWED_MIME_TYPES),
+            ],
+        ], [
+            'attachments.*.mimetypes' => 'Only images and documents (PDF, Word, Excel, TXT, CSV) are allowed.',
+            'attachments.*.max' => 'File size must not exceed 10MB.',
         ]);
 
         $status = TicketStatus::getDefaultForProject($project->id);
@@ -118,6 +130,55 @@ class TicketApiController extends Controller
 
         $ticket->logActivity('created', null, null, null);
 
+        // Handle file attachments
+        $attachmentData = [];
+        if ($request->hasFile('attachments')) {
+            $disk = config('filesystems.default') === 's3' ? 's3' : 'local';
+
+            foreach ($request->file('attachments') as $file) {
+                if (! $file->isValid()) {
+                    continue;
+                }
+
+                $originalName = $file->getClientOriginalName();
+                $extension = $file->getClientOriginalExtension();
+                $mimeType = $file->getMimeType();
+                $size = $file->getSize();
+
+                $filename = Str::uuid().'.'.$extension;
+                $directory = 'helpdesk/attachments/'.now()->format('Y/m');
+                $path = $directory.'/'.$filename;
+
+                $stream = fopen($file->getPathname(), 'r');
+                if (! $stream) {
+                    continue;
+                }
+
+                Storage::disk($disk)->put($path, $stream);
+
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+
+                $attachment = $ticket->attachments()->create([
+                    'uploaded_by' => null,
+                    'filename' => $originalName,
+                    'path' => $path,
+                    'disk' => $disk,
+                    'mime_type' => $mimeType,
+                    'size' => $size,
+                ]);
+
+                $attachmentData[] = [
+                    'id' => $attachment->id,
+                    'filename' => $attachment->filename,
+                    'mime_type' => $attachment->mime_type,
+                    'size' => $attachment->size,
+                    'is_image' => $attachment->isImage(),
+                ];
+            }
+        }
+
         // Load relationships for webhook/notification
         $ticket->load(['status', 'priority', 'type', 'project']);
 
@@ -129,6 +190,7 @@ class TicketApiController extends Controller
 
         return response()->json([
             'data' => $this->formatTicket($ticket),
+            'attachments' => $attachmentData,
             'message' => 'Ticket created successfully',
         ], 201);
     }

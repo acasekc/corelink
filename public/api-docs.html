@@ -43,7 +43,7 @@
                     <span class="px-3 py-1 bg-emerald-600 text-white text-sm font-semibold rounded">POST</span>
                     <code class="text-lg text-white">/tickets</code>
                 </div>
-                <p class="text-slate-300 mb-4">Create a new support ticket.</p>
+                <p class="text-slate-300 mb-4">Create a new support ticket. Supports file attachments via <code class="text-amber-400">multipart/form-data</code>.</p>
 
                 <h4 class="text-white font-semibold mb-3">Request Body</h4>
                 <div class="overflow-x-auto mb-4">
@@ -99,17 +99,23 @@
                                 <td class="py-2 pr-4"><span class="text-slate-500">No</span></td>
                                 <td class="py-2"><code>bug</code>, <code>feature</code>, <code>question</code>, <code>task</code></td>
                             </tr>
-                            <tr>
+                            <tr class="border-b border-slate-700/50">
                                 <td class="py-2 pr-4"><code class="text-amber-400">metadata</code></td>
                                 <td class="py-2 pr-4">object</td>
                                 <td class="py-2 pr-4"><span class="text-slate-500">No</span></td>
-                                <td class="py-2">Any additional structured data</td>
+                                <td class="py-2">Any additional structured data (JSON)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 pr-4"><code class="text-amber-400">attachments[]</code></td>
+                                <td class="py-2 pr-4">file[]</td>
+                                <td class="py-2 pr-4"><span class="text-slate-500">No</span></td>
+                                <td class="py-2">Up to 10 files (images, PDF, Word, Excel, TXT, CSV). Max 10MB each.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <h4 class="text-white font-semibold mb-3">Example Request</h4>
+                <h4 class="text-white font-semibold mb-3">Example Request (JSON)</h4>
                 <pre><code class="text-slate-300">{
   "title": "Unable to export inventory report",
   "content": "When I click the Export button on the inventory page, nothing happens.",
@@ -122,6 +128,32 @@
     "browser": "Chrome 120",
     "page_url": "/inventory/reports"
   }
+}</code></pre>
+
+                <h4 class="text-white font-semibold mb-3 mt-6">Example Request with Attachments (multipart/form-data)</h4>
+                <pre><code class="text-slate-300">curl -X POST https://corelink.dev/api/helpdesk/v1/tickets \
+  -H "X-API-Key: your-api-key" \
+  -F "title=Bug with screenshot" \
+  -F "content=See attached screenshot for the error." \
+  -F "submitter_name=John Smith" \
+  -F "submitter_email=john@example.com" \
+  -F "priority=high" \
+  -F "attachments[]=@screenshot.png" \
+  -F "attachments[]=@error-log.txt"</code></pre>
+
+                <h4 class="text-white font-semibold mb-3 mt-6">Response (with attachments)</h4>
+                <pre><code class="text-slate-300">{
+  "data": { ... ticket data ... },
+  "attachments": [
+    {
+      "id": 1,
+      "filename": "screenshot.png",
+      "mime_type": "image/png",
+      "size": 45678,
+      "is_image": true
+    }
+  ],
+  "message": "Ticket created successfully"
 }</code></pre>
             </div>
 
@@ -307,7 +339,8 @@ $ticket = $response->json('data');</code></pre>
             <!-- JavaScript -->
             <div class="mb-8">
                 <h3 class="text-lg font-semibold text-white mb-4">JavaScript (Fetch)</h3>
-                <pre><code class="text-slate-300">const response = await fetch('https://corelink.dev/api/helpdesk/v1/tickets', {
+                <pre><code class="text-slate-300">// JSON request (no attachments)
+const response = await fetch('https://corelink.dev/api/helpdesk/v1/tickets', {
   method: 'POST',
   headers: {
     'X-API-Key': process.env.CORELINK_API_KEY,
@@ -326,6 +359,36 @@ $ticket = $response->json('data');</code></pre>
 });
 
 const { data: ticket } = await response.json();</code></pre>
+            </div>
+
+            <!-- JavaScript with Files -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-white mb-4">JavaScript (with File Attachments)</h3>
+                <pre><code class="text-slate-300">// FormData request (with attachments)
+const formData = new FormData();
+formData.append('title', 'Bug with screenshot');
+formData.append('content', 'See attached screenshot for the error.');
+formData.append('submitter_name', user.name);
+formData.append('submitter_email', user.email);
+formData.append('priority', 'high');
+
+// Add files from file input
+const fileInput = document.getElementById('attachments');
+for (const file of fileInput.files) {
+  formData.append('attachments[]', file);
+}
+
+const response = await fetch('https://corelink.dev/api/helpdesk/v1/tickets', {
+  method: 'POST',
+  headers: {
+    'X-API-Key': process.env.CORELINK_API_KEY,
+    'Accept': 'application/json',
+    // Note: Don't set Content-Type - browser sets it with boundary
+  },
+  body: formData,
+});
+
+const { data: ticket, attachments } = await response.json();</code></pre>
             </div>
         </section>
 
