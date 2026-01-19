@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Ticket, ArrowLeft, LogOut, Search, Filter, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Ticket, ArrowLeft, LogOut, Search, Filter, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 
 const TicketsList = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -8,6 +8,8 @@ const TicketsList = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [deleting, setDeleting] = useState(false);
     const [filters, setFilters] = useState({
         status: searchParams.get('status') || '',
         priority: searchParams.get('priority') || '',
@@ -102,6 +104,54 @@ const TicketsList = () => {
             window.location.href = '/admin/login';
         } catch (error) {
             console.error('Logout failed:', error);
+        }
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === tickets.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(tickets.map((t) => t.id));
+        }
+    };
+
+    const toggleSelect = (id) => {
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+        );
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) return;
+        if (!confirm(`Are you sure you want to delete ${selectedIds.length} ticket(s)? This action cannot be undone.`)) {
+            return;
+        }
+
+        setDeleting(true);
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/api/helpdesk/admin/tickets/bulk-delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ ids: selectedIds }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to delete tickets');
+            }
+
+            setSelectedIds([]);
+            fetchTickets();
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -218,6 +268,23 @@ const TicketsList = () => {
                         </div>
                     </div>
 
+                    {/* Bulk Actions */}
+                    {selectedIds.length > 0 && (
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-4 flex items-center justify-between">
+                            <span className="text-slate-300">
+                                {selectedIds.length} ticket{selectedIds.length !== 1 ? 's' : ''} selected
+                            </span>
+                            <button
+                                onClick={handleBulkDelete}
+                                disabled={deleting}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                {deleting ? 'Deleting...' : 'Delete Selected'}
+                            </button>
+                        </div>
+                    )}
+
                     {/* Tickets Table */}
                     {loading ? (
                         <div className="text-center py-12 text-slate-400">Loading tickets...</div>
@@ -229,6 +296,14 @@ const TicketsList = () => {
                                 <table className="w-full">
                                     <thead className="bg-slate-700/50">
                                         <tr>
+                                            <th className="px-4 py-3 w-10">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={tickets.length > 0 && selectedIds.length === tickets.length}
+                                                    onChange={toggleSelectAll}
+                                                    className="w-4 h-4 rounded border-slate-500 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                                                />
+                                            </th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Ticket</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Project</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Submitter</th>
@@ -241,13 +316,21 @@ const TicketsList = () => {
                                     <tbody className="divide-y divide-slate-700">
                                         {tickets.length === 0 ? (
                                             <tr>
-                                                <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
+                                                <td colSpan={8} className="px-6 py-8 text-center text-slate-500">
                                                     No tickets found matching your filters.
                                                 </td>
                                             </tr>
                                         ) : (
                                             tickets.map((ticket) => (
-                                                <tr key={ticket.id} className="hover:bg-slate-700/30">
+                                                <tr key={ticket.id} className={`hover:bg-slate-700/30 ${selectedIds.includes(ticket.id) ? 'bg-slate-700/20' : ''}`}>
+                                                    <td className="px-4 py-4">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedIds.includes(ticket.id)}
+                                                            onChange={() => toggleSelect(ticket.id)}
+                                                            className="w-4 h-4 rounded border-slate-500 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                                                        />
+                                                    </td>
                                                     <td className="px-6 py-4">
                                                         <Link
                                                             to={`/admin/helpdesk/tickets/${ticket.id}`}

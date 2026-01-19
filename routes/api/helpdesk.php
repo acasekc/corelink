@@ -128,6 +128,7 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     Route::get('tickets/{ticket}', [TicketController::class, 'show']);
     Route::patch('tickets/{ticket}', [TicketController::class, 'update']);
     Route::delete('tickets/{ticket}', [TicketController::class, 'destroy']);
+    Route::post('tickets/bulk-delete', [TicketController::class, 'bulkDestroy']);
     Route::post('tickets/{ticket}/assign', [TicketController::class, 'assign']);
     Route::post('tickets/{ticket}/status', [TicketController::class, 'changeStatus']);
     Route::post('tickets/{ticket}/priority', [TicketController::class, 'changePriority']);

@@ -177,6 +177,27 @@ class TicketController extends Controller
         ]);
     }
 
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer', 'exists:helpdesk_tickets,id'],
+        ]);
+
+        $tickets = Ticket::whereIn('id', $validated['ids'])->get();
+        $count = $tickets->count();
+
+        foreach ($tickets as $ticket) {
+            $ticket->logActivity('deleted');
+            $ticket->delete();
+        }
+
+        return response()->json([
+            'message' => "{$count} ticket(s) deleted successfully",
+            'count' => $count,
+        ]);
+    }
+
     public function assign(Request $request, Ticket $ticket): JsonResponse
     {
         $validated = $request->validate([
