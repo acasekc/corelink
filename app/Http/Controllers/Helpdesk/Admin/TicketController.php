@@ -140,7 +140,7 @@ class TicketController extends Controller
 
     public function show(Ticket $ticket): JsonResponse
     {
-        $ticket->load(['project', 'status', 'priority', 'type', 'assignee', 'labels', 'comments.user', 'activities.user']);
+        $ticket->load(['project', 'status', 'priority', 'type', 'assignee', 'labels', 'attachments', 'comments.user', 'comments.attachments', 'activities.user']);
 
         return response()->json([
             'data' => $this->formatTicket($ticket, true),
@@ -328,6 +328,16 @@ class TicketController extends Controller
         ];
 
         if ($full) {
+            $data['attachments'] = $ticket->attachments->map(fn ($attachment) => [
+                'id' => $attachment->id,
+                'filename' => $attachment->filename,
+                'mime_type' => $attachment->mime_type,
+                'size' => $attachment->size,
+                'human_size' => $attachment->human_size,
+                'is_image' => $attachment->isImage(),
+                'url' => route('helpdesk.attachments.download', $attachment),
+            ]);
+
             $data['comments'] = $ticket->comments->map(fn ($comment) => [
                 'id' => $comment->id,
                 'content' => $comment->content,
@@ -338,6 +348,15 @@ class TicketController extends Controller
                 ] : null,
                 'is_internal' => $comment->is_internal,
                 'is_from_admin' => $comment->isFromAdmin(),
+                'attachments' => $comment->attachments->map(fn ($attachment) => [
+                    'id' => $attachment->id,
+                    'filename' => $attachment->filename,
+                    'mime_type' => $attachment->mime_type,
+                    'size' => $attachment->size,
+                    'human_size' => $attachment->human_size,
+                    'is_image' => $attachment->isImage(),
+                    'url' => route('helpdesk.attachments.download', $attachment),
+                ]),
                 'created_at' => $comment->created_at->toIso8601String(),
             ]);
 

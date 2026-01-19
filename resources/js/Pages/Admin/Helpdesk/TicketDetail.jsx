@@ -328,6 +328,40 @@ const TicketDetail = () => {
                                 <div className="prose prose-invert max-w-none">
                                     <div className="whitespace-pre-wrap text-slate-300">{ticket?.content}</div>
                                 </div>
+
+                                {/* Ticket Attachments */}
+                                {ticket?.attachments?.length > 0 && (
+                                    <div className="mt-6 pt-6 border-t border-slate-700">
+                                        <h3 className="text-sm font-medium text-slate-400 mb-3 flex items-center gap-2">
+                                            <Paperclip className="w-4 h-4" />
+                                            Attachments ({ticket.attachments.length})
+                                        </h3>
+                                        <div className="flex flex-wrap gap-3">
+                                            {ticket.attachments.map((attachment) => (
+                                                <a
+                                                    key={attachment.id}
+                                                    href={attachment.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition group"
+                                                >
+                                                    {attachment.is_image ? (
+                                                        <Image className="w-4 h-4 text-purple-400" />
+                                                    ) : (
+                                                        <FileText className="w-4 h-4 text-blue-400" />
+                                                    )}
+                                                    <span className="text-sm text-slate-300 group-hover:text-white">
+                                                        {attachment.filename}
+                                                    </span>
+                                                    <span className="text-xs text-slate-500">
+                                                        ({attachment.human_size})
+                                                    </span>
+                                                    <Download className="w-3 h-3 text-slate-500 group-hover:text-slate-300" />
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Comments Section */}
