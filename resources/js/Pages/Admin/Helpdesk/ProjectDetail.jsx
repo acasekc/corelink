@@ -238,22 +238,34 @@ const ProjectDetail = () => {
                     {/* Stats */}
                     {dashboard?.stats && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center">
+                            <Link
+                                to={`/admin/helpdesk/tickets?project=${projectId}`}
+                                className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center hover:bg-slate-700/50 transition"
+                            >
                                 <p className="text-2xl font-bold">{dashboard.stats.total}</p>
                                 <p className="text-sm text-slate-400">Total Tickets</p>
-                            </div>
-                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center">
+                            </Link>
+                            <Link
+                                to={`/admin/helpdesk/tickets?project=${projectId}&status=open`}
+                                className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center hover:bg-slate-700/50 transition"
+                            >
                                 <p className="text-2xl font-bold text-yellow-400">{dashboard.stats.open}</p>
                                 <p className="text-sm text-slate-400">Open</p>
-                            </div>
-                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center">
+                            </Link>
+                            <Link
+                                to={`/admin/helpdesk/tickets?project=${projectId}&status=in-progress`}
+                                className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center hover:bg-slate-700/50 transition"
+                            >
                                 <p className="text-2xl font-bold text-purple-400">{dashboard.stats.in_progress}</p>
                                 <p className="text-sm text-slate-400">In Progress</p>
-                            </div>
-                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center">
+                            </Link>
+                            <Link
+                                to={`/admin/helpdesk/tickets?project=${projectId}&status=resolved`}
+                                className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 text-center hover:bg-slate-700/50 transition"
+                            >
                                 <p className="text-2xl font-bold text-green-400">{dashboard.stats.resolved}</p>
                                 <p className="text-sm text-slate-400">Resolved</p>
-                            </div>
+                            </Link>
                         </div>
                     )}
 
@@ -281,13 +293,16 @@ const ProjectDetail = () => {
                                                     to={`/admin/helpdesk/tickets/${ticket.id}`}
                                                     className="text-purple-400 hover:text-purple-300 font-medium"
                                                 >
-                                                    #{ticket.ticket_number}
+                                                    #{ticket.number}
                                                 </Link>
                                             </td>
-                                            <td className="px-4 py-3 text-slate-300">{ticket.subject}</td>
+                                            <td className="px-4 py-3 text-slate-300">{ticket.title}</td>
                                             <td className="px-4 py-3">
-                                                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(ticket.status?.slug)}`}>
-                                                    {ticket.status?.name}
+                                                <span
+                                                    className="px-2 py-1 rounded text-xs font-medium"
+                                                    style={{ backgroundColor: `${ticket.status?.color}30`, color: ticket.status?.color }}
+                                                >
+                                                    {ticket.status?.title}
                                                 </span>
                                             </td>
                                         </tr>
