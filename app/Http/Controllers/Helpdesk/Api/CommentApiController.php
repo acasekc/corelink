@@ -20,6 +20,7 @@ class CommentApiController extends Controller
         // External API only sees non-internal comments
         $comments = $ticket->comments()
             ->where('is_internal', false)
+            ->with('attachments')
             ->orderBy('created_at')
             ->get();
 
@@ -29,6 +30,14 @@ class CommentApiController extends Controller
                 'content' => $comment->content,
                 'author' => $comment->author_name,
                 'is_from_admin' => $comment->isFromAdmin(),
+                'attachments' => $comment->attachments->map(fn ($att) => [
+                    'id' => $att->id,
+                    'filename' => $att->filename,
+                    'mime_type' => $att->mime_type,
+                    'size' => $att->size,
+                    'is_image' => $att->isImage(),
+                    'url' => $att->url,
+                ])->values()->all(),
                 'created_at' => $comment->created_at->toIso8601String(),
             ]),
         ]);
@@ -62,6 +71,7 @@ class CommentApiController extends Controller
                 'content' => $comment->content,
                 'author' => $comment->author_name,
                 'is_from_admin' => false,
+                'attachments' => [],
                 'created_at' => $comment->created_at->toIso8601String(),
             ],
             'message' => 'Comment added successfully',

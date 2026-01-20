@@ -7,6 +7,7 @@ use App\Http\Controllers\Helpdesk\Admin\ProjectController;
 use App\Http\Controllers\Helpdesk\Admin\ProjectUserController;
 use App\Http\Controllers\Helpdesk\Admin\ReferenceDataController;
 use App\Http\Controllers\Helpdesk\Admin\TicketController;
+use App\Http\Controllers\Helpdesk\Admin\TimeEntryController;
 use App\Http\Controllers\Helpdesk\Admin\UserController;
 use App\Http\Controllers\Helpdesk\Api\CommentApiController;
 use App\Http\Controllers\Helpdesk\Api\ReferenceDataApiController;
@@ -133,6 +134,12 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     Route::post('tickets/{ticket}/status', [TicketController::class, 'changeStatus']);
     Route::post('tickets/{ticket}/priority', [TicketController::class, 'changePriority']);
     Route::post('tickets/{ticket}/labels', [TicketController::class, 'addLabels']);
+
+    // Time Entries
+    Route::get('tickets/{ticket}/time-entries', [TimeEntryController::class, 'index']);
+    Route::post('tickets/{ticket}/time-entries', [TimeEntryController::class, 'store']);
+    Route::patch('tickets/{ticket}/time-entries/{timeEntry}', [TimeEntryController::class, 'update']);
+    Route::delete('tickets/{ticket}/time-entries/{timeEntry}', [TimeEntryController::class, 'destroy']);
 
     // Comments
     Route::get('tickets/{ticket}/comments', [CommentController::class, 'index']);

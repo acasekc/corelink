@@ -8,6 +8,7 @@ use App\Models\Helpdesk\Ticket;
 use App\Models\Helpdesk\TicketPriority;
 use App\Models\Helpdesk\TicketStatus;
 use App\Models\Helpdesk\TicketType;
+use App\Models\Helpdesk\TimeEntry;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -77,12 +78,13 @@ class TicketController extends Controller
             'submitter_user_id' => ['nullable', 'exists:users,id'],
             'submitter_name' => ['nullable', 'string', 'max:255'],
             'submitter_email' => ['nullable', 'email', 'max:255'],
+            'time_estimate' => ['nullable', 'string', 'max:50'],
         ]);
 
         $project = Project::findOrFail($validated['project_id']);
 
         // Get default status (project-specific or global fallback)
-        $defaultStatus = $validated['status_id']
+        $defaultStatus = ($validated['status_id'] ?? null)
             ? TicketStatus::find($validated['status_id'])
             : $project->statuses()->where('slug', 'open')->first()
                 ?? $project->statuses()->first()
@@ -90,7 +92,7 @@ class TicketController extends Controller
                 ?? TicketStatus::whereNull('project_id')->first();
 
         // Get priority (explicit or default)
-        $priority = $validated['priority_id']
+        $priority = ($validated['priority_id'] ?? null)
             ? TicketPriority::find($validated['priority_id'])
             : $project->priorities()->where('slug', 'medium')->first()
                 ?? $project->priorities()->first()
@@ -98,7 +100,7 @@ class TicketController extends Controller
                 ?? TicketPriority::whereNull('project_id')->first();
 
         // Get type (explicit or default)
-        $type = $validated['type_id']
+        $type = ($validated['type_id'] ?? null)
             ? TicketType::find($validated['type_id'])
             : $project->types()->where('slug', 'question')->first()
                 ?? $project->types()->first()
@@ -114,6 +116,12 @@ class TicketController extends Controller
         $submitterName = $validated['submitter_name'] ?? $submitterUser?->name ?? $user->name;
         $submitterEmail = $validated['submitter_email'] ?? $submitterUser?->email ?? $user->email;
 
+        // Parse time estimate if provided
+        $timeEstimateMinutes = null;
+        if (! empty($validated['time_estimate'])) {
+            $timeEstimateMinutes = TimeEntry::parseTimeString($validated['time_estimate']);
+        }
+
         $ticket = Ticket::create([
             'project_id' => $project->id,
             'number' => $project->getNextTicketNumber(),
@@ -126,6 +134,7 @@ class TicketController extends Controller
             'submitter_name' => $submitterName,
             'submitter_email' => $submitterEmail,
             'submitter_user_id' => $submitterUser?->id ?? $validated['submitter_user_id'] ?? null,
+            'time_estimate_minutes' => $timeEstimateMinutes,
         ]);
 
         $ticket->logActivity('created', null, null, $user->id);
@@ -140,7 +149,7 @@ class TicketController extends Controller
 
     public function show(Ticket $ticket): JsonResponse
     {
-        $ticket->load(['project', 'status', 'priority', 'type', 'assignee', 'labels', 'attachments', 'comments.user', 'comments.attachments', 'activities.user']);
+        $ticket->load(['project', 'status', 'priority', 'type', 'assignee', 'labels', 'attachments', 'comments.user', 'comments.attachments', 'activities.user', 'timeEntries.user']);
 
         return response()->json([
             'data' => $this->formatTicket($ticket, true),
@@ -153,10 +162,29 @@ class TicketController extends Controller
             'title' => 'sometimes|string|max:255',
             'content' => 'sometimes|string',
             'github_issue_url' => 'nullable|url',
+            'time_estimate' => 'nullable|string|max:50',
         ]);
 
         if (isset($validated['title']) && $validated['title'] !== $ticket->title) {
             $ticket->logActivity('title_changed', $ticket->title, $validated['title']);
+        }
+
+        // Handle time estimate
+        if (array_key_exists('time_estimate', $validated)) {
+            $newEstimate = $validated['time_estimate']
+                ? TimeEntry::parseTimeString($validated['time_estimate'])
+                : null;
+
+            if ($newEstimate !== $ticket->time_estimate_minutes) {
+                $ticket->logActivity(
+                    'time_estimate_changed',
+                    $ticket->formatted_time_estimate ?? 'None',
+                    $newEstimate ? TimeEntry::formatMinutes($newEstimate) : 'None'
+                );
+            }
+
+            unset($validated['time_estimate']);
+            $validated['time_estimate_minutes'] = $newEstimate;
         }
 
         $ticket->update($validated);
@@ -323,6 +351,12 @@ class TicketController extends Controller
                 'color' => $label->color,
             ]),
             'github_issue_url' => $ticket->github_issue_url,
+            'time_tracking' => [
+                'estimate' => $ticket->formatted_time_estimate,
+                'estimate_minutes' => $ticket->time_estimate_minutes,
+                'time_spent' => $ticket->formatted_time_spent,
+                'time_spent_minutes' => $ticket->total_time_spent,
+            ],
             'created_at' => $ticket->created_at->toIso8601String(),
             'updated_at' => $ticket->updated_at->toIso8601String(),
         ];
@@ -370,6 +404,19 @@ class TicketController extends Controller
                     'name' => $activity->user->name,
                 ] : null,
                 'created_at' => $activity->created_at->toIso8601String(),
+            ]);
+
+            $data['time_entries'] = $ticket->timeEntries->map(fn ($entry) => [
+                'id' => $entry->id,
+                'minutes' => $entry->minutes,
+                'formatted_time' => $entry->formatted_time,
+                'description' => $entry->description,
+                'date_worked' => $entry->date_worked?->toDateString(),
+                'user' => $entry->user ? [
+                    'id' => $entry->user->id,
+                    'name' => $entry->user->name,
+                ] : null,
+                'created_at' => $entry->created_at->toIso8601String(),
             ]);
 
             $data['metadata'] = $ticket->metadata;

@@ -43,6 +43,7 @@ POST /tickets
 | `submitter_user_id` | string | No | Your application's user ID (for reference) |
 | `priority` | string | No | Priority slug: `low`, `medium`, `high`, `critical` |
 | `type` | string | No | Type slug: `bug`, `feature`, `question`, `task` |
+| `time_estimate` | string | No | Estimated time (format: `2w 4d 6h 45m`) |
 | `metadata` | object | No | Any additional structured data |
 
 **Example Request:**
@@ -202,6 +203,12 @@ GET /tickets/{id}
     "labels": [
       { "id": 1, "name": "needs-info", "color": "#8b5cf6" }
     ],
+    "time_tracking": {
+      "estimate": "4h",
+      "estimate_minutes": 240,
+      "time_spent": "2h 30m",
+      "time_spent_minutes": 150
+    },
     "created_at": "2026-01-17T10:30:00+00:00",
     "updated_at": "2026-01-17T11:00:00+00:00"
   }
@@ -224,6 +231,7 @@ PATCH /tickets/{id}
 |-------|------|----------|-------------|
 | `title` | string | No | Updated title |
 | `content` | string | No | Updated description |
+| `time_estimate` | string | No | Estimated time (format: `2w 4d 6h 45m`) |
 
 **Example Request:**
 

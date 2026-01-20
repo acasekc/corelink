@@ -30,6 +30,7 @@ class Ticket extends Model
         'submitter_user_id',
         'metadata',
         'github_issue_url',
+        'time_estimate_minutes',
     ];
 
     protected function casts(): array
@@ -82,6 +83,39 @@ class Ticket extends Model
     public function attachments(): MorphMany
     {
         return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    public function timeEntries(): HasMany
+    {
+        return $this->hasMany(TimeEntry::class)->orderByDesc('created_at');
+    }
+
+    /**
+     * Get the total time spent on this ticket in minutes
+     */
+    public function getTotalTimeSpentAttribute(): int
+    {
+        return $this->timeEntries()->sum('minutes');
+    }
+
+    /**
+     * Get the formatted time estimate (e.g., "2w 4d 6h 45m")
+     */
+    public function getFormattedTimeEstimateAttribute(): ?string
+    {
+        if ($this->time_estimate_minutes === null) {
+            return null;
+        }
+
+        return TimeEntry::formatMinutes($this->time_estimate_minutes);
+    }
+
+    /**
+     * Get the formatted total time spent (e.g., "2w 4d 6h 45m")
+     */
+    public function getFormattedTimeSpentAttribute(): string
+    {
+        return TimeEntry::formatMinutes($this->total_time_spent);
     }
 
     public function getTicketNumberAttribute(): string

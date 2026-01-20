@@ -29,7 +29,7 @@ class TicketApiController extends Controller
         $project = $request->attributes->get('helpdesk_project');
 
         $query = $project->tickets()
-            ->with(['status', 'priority', 'type', 'assignee'])
+            ->with(['status', 'priority', 'type', 'assignee', 'attachments'])
             ->orderByDesc('created_at');
 
         // Filter by submitter
@@ -201,8 +201,8 @@ class TicketApiController extends Controller
         $project = $request->attributes->get('helpdesk_project');
 
         $ticket = $project->tickets()
-            ->with(['status', 'priority', 'type', 'assignee', 'labels', 'comments' => function ($q) {
-                $q->where('is_internal', false);
+            ->with(['status', 'priority', 'type', 'assignee', 'labels', 'attachments', 'comments' => function ($q) {
+                $q->where('is_internal', false)->with('attachments');
             }])
             ->findOrFail($id);
 
@@ -276,8 +276,13 @@ class TicketApiController extends Controller
                 'content' => $comment->content,
                 'author' => $comment->author_name,
                 'is_from_admin' => $comment->isFromAdmin(),
+                'attachments' => $comment->attachments->map(fn ($att) => $this->formatAttachment($att))->values()->all(),
                 'created_at' => $comment->created_at->toIso8601String(),
             ]);
+        }
+
+        if ($ticket->relationLoaded('attachments')) {
+            $data['attachments'] = $ticket->attachments->map(fn ($att) => $this->formatAttachment($att))->values()->all();
         }
 
         if ($ticket->relationLoaded('labels')) {
@@ -289,5 +294,17 @@ class TicketApiController extends Controller
         }
 
         return $data;
+    }
+
+    private function formatAttachment(Attachment $attachment): array
+    {
+        return [
+            'id' => $attachment->id,
+            'filename' => $attachment->filename,
+            'mime_type' => $attachment->mime_type,
+            'size' => $attachment->size,
+            'is_image' => $attachment->isImage(),
+            'url' => $attachment->url,
+        ];
     }
 }

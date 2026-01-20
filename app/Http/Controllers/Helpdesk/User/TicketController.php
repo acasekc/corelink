@@ -100,6 +100,7 @@ class TicketController extends Controller
             'labels',
             'comments' => fn ($q) => $q->with(['user:id,name,email', 'attachments']),
             'activities' => fn ($q) => $q->with('user:id,name')->latest()->limit(20),
+            'timeEntries' => fn ($q) => $q->with('user:id,name'),
         ]);
 
         // Filter internal comments for non-staff
@@ -133,6 +134,21 @@ class TicketController extends Controller
                 ],
                 'comments' => $formattedComments,
                 'activities' => $ticket->activities,
+                'time_tracking' => [
+                    'estimate' => $ticket->formatted_time_estimate,
+                    'estimate_minutes' => $ticket->time_estimate_minutes,
+                    'time_spent' => $ticket->formatted_time_spent,
+                    'time_spent_minutes' => $ticket->total_time_spent,
+                ],
+                'time_entries' => $ticket->timeEntries->map(fn ($entry) => [
+                    'id' => $entry->id,
+                    'minutes' => $entry->minutes,
+                    'formatted_time' => $entry->formatted_time,
+                    'description' => $entry->description,
+                    'date_worked' => $entry->date_worked?->toDateString(),
+                    'user' => $entry->user,
+                    'created_at' => $entry->created_at,
+                ]),
                 'metadata' => $ticket->metadata,
                 'created_at' => $ticket->created_at,
                 'updated_at' => $ticket->updated_at,
