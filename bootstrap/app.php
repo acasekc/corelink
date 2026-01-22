@@ -37,6 +37,29 @@ return Application::configure(basePath: dirname(__DIR__))
             // Otherwise redirect to admin login
             return route('admin.login');
         });
+
+        // Configure redirect for authenticated users trying to access guest-only routes (like login pages)
+        $middleware->redirectUsersTo(function (Request $request) {
+            $user = $request->user();
+
+            // If accessing helpdesk login and user is admin, redirect to admin helpdesk
+            if ($request->is('helpdesk/login') && $user?->is_admin) {
+                return '/admin/helpdesk';
+            }
+
+            // If accessing helpdesk login as regular user, redirect to helpdesk dashboard
+            if ($request->is('helpdesk/login')) {
+                return '/helpdesk';
+            }
+
+            // For admin login page, redirect to admin dashboard
+            if ($request->is('admin/login')) {
+                return '/admin';
+            }
+
+            // Default redirect
+            return '/';
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
