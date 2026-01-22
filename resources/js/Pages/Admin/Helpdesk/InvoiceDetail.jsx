@@ -598,10 +598,10 @@ const InvoiceDetail = () => {
                                             <div className="flex items-center gap-3">
                                                 <span className="text-green-400 font-medium">{formatCurrency(payment.amount)}</span>
                                                 <span className="text-xs px-2 py-0.5 bg-slate-600 rounded text-slate-300">
-                                                    {payment.payment_method?.replace('_', ' ')}
+                                                    {payment.method_name || payment.payment_method?.replace('_', ' ') || 'Unknown'}
                                                 </span>
-                                                {payment.reference && (
-                                                    <span className="text-xs text-slate-500">Ref: {payment.reference}</span>
+                                                {payment.reference_number && (
+                                                    <span className="text-xs text-slate-500">Ref: {payment.reference_number}</span>
                                                 )}
                                             </div>
                                             <p className="text-xs text-slate-500 mt-1">

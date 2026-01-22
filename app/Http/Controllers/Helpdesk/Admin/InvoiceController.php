@@ -637,7 +637,8 @@ class InvoiceController extends Controller
             'payments' => $invoice->payments->map(fn ($payment) => [
                 'id' => $payment->id,
                 'amount' => $payment->amount,
-                'method' => $payment->method,
+                'payment_method' => $payment->payment_method,
+                'method_name' => $payment->method_name,
                 'reference_number' => $payment->reference_number,
                 'notes' => $payment->notes,
                 'paid_at' => $payment->created_at->toIso8601String(),
