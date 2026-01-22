@@ -5,9 +5,12 @@ namespace App\Models\Helpdesk;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class InvoicePayment extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'helpdesk_invoice_payments';
 
     public const METHOD_STRIPE = 'stripe';
@@ -32,6 +35,8 @@ class InvoicePayment extends Model
         'payment_date',
         'notes',
         'recorded_by',
+        'deleted_reason',
+        'deleted_by',
     ];
 
     protected function casts(): array
@@ -50,6 +55,11 @@ class InvoicePayment extends Model
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function deletedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
     /**
@@ -73,6 +83,7 @@ class InvoicePayment extends Model
             $payment->invoice->updatePaymentStatus();
         });
 
+        // When soft-deleted, still update invoice status
         static::deleted(function (InvoicePayment $payment) {
             $payment->invoice->updatePaymentStatus();
         });

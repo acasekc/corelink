@@ -71,20 +71,22 @@ class InvoicePaymentController extends Controller
     }
 
     /**
-     * Delete a payment (admin only, use with caution)
+     * Delete (soft-delete) a payment with a reason
      */
-    public function destroy(Invoice $invoice, InvoicePayment $payment): JsonResponse
+    public function destroy(Request $request, Invoice $invoice, InvoicePayment $payment): JsonResponse
     {
         if ($payment->invoice_id !== $invoice->id) {
             return response()->json(['message' => 'Payment not found'], 404);
         }
 
-        // Don't allow deleting Stripe payments - those must be refunded through Stripe
-        if ($payment->method === InvoicePayment::METHOD_STRIPE) {
-            return response()->json([
-                'message' => 'Stripe payments must be refunded through Stripe',
-            ], 422);
-        }
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:3', 'max:1000'],
+        ]);
+
+        $payment->update([
+            'deleted_reason' => $validated['reason'],
+            'deleted_by' => $request->user()?->id,
+        ]);
 
         $payment->delete();
 
@@ -98,7 +100,7 @@ class InvoicePaymentController extends Controller
                 'balance_due' => $invoice->fresh()->balance_due,
                 'is_paid' => $invoice->fresh()->is_paid,
             ],
-            'message' => 'Payment deleted successfully',
+            'message' => 'Payment removed successfully',
         ]);
     }
 }

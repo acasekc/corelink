@@ -634,7 +634,7 @@ class InvoiceController extends Controller
                     'date_worked' => $entry->date_worked->toDateString(),
                 ]) ?? [],
             ]),
-            'payments' => $invoice->payments->map(fn ($payment) => [
+            'payments' => $invoice->payments()->withTrashed()->get()->map(fn ($payment) => [
                 'id' => $payment->id,
                 'amount' => $payment->amount,
                 'payment_method' => $payment->payment_method,
@@ -642,6 +642,10 @@ class InvoiceController extends Controller
                 'reference_number' => $payment->reference_number,
                 'notes' => $payment->notes,
                 'paid_at' => $payment->created_at->toIso8601String(),
+                'is_deleted' => $payment->trashed(),
+                'deleted_at' => $payment->deleted_at?->toIso8601String(),
+                'deleted_reason' => $payment->deleted_reason,
+                'deleted_by' => $payment->deletedByUser?->name,
             ]),
             'created_at' => $invoice->created_at->toIso8601String(),
             'updated_at' => $invoice->updated_at->toIso8601String(),

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FileText, ArrowLeft, LogOut, Send, Download, Eye, DollarSign, Plus, Trash2, Edit2, CheckCircle, XCircle, Clock, CreditCard, AlertTriangle } from 'lucide-react';
+import { FileText, ArrowLeft, LogOut, Send, Download, Eye, DollarSign, Plus, Trash2, Edit2, CheckCircle, XCircle, Clock, CreditCard, AlertTriangle, X } from 'lucide-react';
 
 const InvoiceDetail = () => {
     const { invoiceId } = useParams();
@@ -19,6 +19,7 @@ const InvoiceDetail = () => {
     const [sending, setSending] = useState(false);
     const [resending, setResending] = useState(false);
     const [voiding, setVoiding] = useState(false);
+    const [deleteModal, setDeleteModal] = useState({ open: false, paymentId: null, reason: '', submitting: false });
 
     useEffect(() => {
         fetchInvoice();
@@ -163,20 +164,35 @@ const InvoiceDetail = () => {
     };
 
     const handleDeletePayment = async (paymentId) => {
-        if (!confirm('Delete this payment record?')) return;
+        setDeleteModal({ open: true, paymentId, reason: '', submitting: false });
+    };
+
+    const confirmDeletePayment = async () => {
+        if (deleteModal.reason.trim().length < 3) {
+            alert('Please enter a reason (at least 3 characters)');
+            return;
+        }
+        setDeleteModal(prev => ({ ...prev, submitting: true }));
         try {
-            const response = await fetch(`/api/helpdesk/admin/payments/${paymentId}`, {
+            const response = await fetch(`/api/helpdesk/admin/invoices/${invoiceId}/payments/${deleteModal.paymentId}`, {
                 method: 'DELETE',
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': getCsrfToken(),
                     'Accept': 'application/json',
                 },
                 credentials: 'same-origin',
+                body: JSON.stringify({ reason: deleteModal.reason }),
             });
-            if (!response.ok) throw new Error('Failed to delete payment');
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to delete payment');
+            }
             await fetchInvoice();
+            setDeleteModal({ open: false, paymentId: null, reason: '', submitting: false });
         } catch (err) {
             alert('Failed to delete payment: ' + err.message);
+            setDeleteModal(prev => ({ ...prev, submitting: false }));
         }
     };
 
@@ -593,13 +609,20 @@ const InvoiceDetail = () => {
                         {invoice?.payments?.length > 0 ? (
                             <div className="divide-y divide-slate-700">
                                 {invoice.payments.map((payment) => (
-                                    <div key={payment.id} className="p-4 flex items-center justify-between">
+                                    <div key={payment.id} className={`p-4 flex items-center justify-between ${payment.is_deleted ? 'opacity-50 bg-slate-800/30' : ''}`}>
                                         <div>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-green-400 font-medium">{formatCurrency(payment.amount)}</span>
+                                                <span className={`font-medium ${payment.is_deleted ? 'line-through text-slate-400' : 'text-green-400'}`}>
+                                                    {formatCurrency(payment.amount)}
+                                                </span>
                                                 <span className="text-xs px-2 py-0.5 bg-slate-600 rounded text-slate-300">
                                                     {payment.method_name || payment.payment_method?.replace('_', ' ') || 'Unknown'}
                                                 </span>
+                                                {payment.is_deleted && (
+                                                    <span className="text-xs px-2 py-0.5 bg-red-500/20 border border-red-500/50 rounded text-red-400">
+                                                        Deleted
+                                                    </span>
+                                                )}
                                                 {payment.reference_number && (
                                                     <span className="text-xs text-slate-500">Ref: {payment.reference_number}</span>
                                                 )}
@@ -608,11 +631,18 @@ const InvoiceDetail = () => {
                                                 {new Date(payment.paid_at || payment.created_at).toLocaleString()}
                                                 {payment.recorded_by && ` by ${payment.recorded_by.name}`}
                                             </p>
+                                            {payment.is_deleted && (
+                                                <div className="mt-2 text-xs text-red-400/80">
+                                                    <p>Deleted {payment.deleted_at && `on ${new Date(payment.deleted_at).toLocaleString()}`}{payment.deleted_by && ` by ${payment.deleted_by}`}</p>
+                                                    {payment.deleted_reason && <p className="italic mt-0.5">Reason: {payment.deleted_reason}</p>}
+                                                </div>
+                                            )}
                                         </div>
-                                        {invoice.status !== 'voided' && (
+                                        {!payment.is_deleted && invoice.status !== 'voided' && (
                                             <button
                                                 onClick={() => handleDeletePayment(payment.id)}
                                                 className="p-2 text-slate-400 hover:text-red-400 transition"
+                                                title="Delete payment"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -661,6 +691,60 @@ const InvoiceDetail = () => {
                     )}
                 </div>
             </main>
+
+            {/* Delete Payment Modal */}
+            {deleteModal.open && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-xl w-full max-w-md mx-4">
+                        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+                            <h3 className="font-semibold text-lg text-slate-200">Delete Payment</h3>
+                            <button
+                                onClick={() => setDeleteModal({ open: false, paymentId: null, reason: '', submitting: false })}
+                                className="text-slate-400 hover:text-white transition"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-4">
+                            <p className="text-sm text-slate-400 mb-4">
+                                Please provide a reason for deleting this payment. The payment will be marked as deleted but will remain visible for audit purposes.
+                            </p>
+                            <label className="block text-sm text-slate-300 mb-2">Reason for deletion *</label>
+                            <textarea
+                                value={deleteModal.reason}
+                                onChange={(e) => setDeleteModal(prev => ({ ...prev, reason: e.target.value }))}
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+                                rows={3}
+                                placeholder="e.g., Duplicate payment entry, payment was reversed by bank..."
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2 p-4 border-t border-slate-700">
+                            <button
+                                onClick={() => setDeleteModal({ open: false, paymentId: null, reason: '', submitting: false })}
+                                disabled={deleteModal.submitting}
+                                className="px-4 py-2 bg-slate-600 hover:bg-slate-500 disabled:opacity-50 rounded-lg text-sm transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDeletePayment}
+                                disabled={deleteModal.submitting || deleteModal.reason.trim().length < 3}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg text-sm transition flex items-center gap-2"
+                            >
+                                {deleteModal.submitting ? (
+                                    <>Deleting...</>
+                                ) : (
+                                    <>
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete Payment
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
