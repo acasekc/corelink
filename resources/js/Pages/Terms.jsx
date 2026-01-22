@@ -197,7 +197,7 @@ const Terms = () => {
                             </p>
                             <div className="mt-4 p-4 bg-muted/20 rounded-lg">
                                 <p className="text-foreground font-medium">CoreLink Development LLC</p>
-                                <p className="text-muted-foreground">Email: hello@corelink.dev</p>
+                                <p className="text-muted-foreground">Email: info@corelink.dev</p>
                                 <p className="text-muted-foreground">Website: corelink.dev</p>
                             </div>
                         </section>
