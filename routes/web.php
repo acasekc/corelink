@@ -20,6 +20,8 @@ Route::get('/projects', [PageController::class, 'projects']);
 Route::get('/process', [PageController::class, 'process']);
 Route::get('/about', [PageController::class, 'about']);
 Route::get('/contact', [PageController::class, 'contact']);
+Route::get('/terms', [PageController::class, 'terms']);
+Route::get('/privacy', [PageController::class, 'privacy']);
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 
 // Case Studies

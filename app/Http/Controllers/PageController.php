@@ -38,6 +38,16 @@ class PageController extends Controller
         return view('app');
     }
 
+    public function terms()
+    {
+        return view('app');
+    }
+
+    public function privacy()
+    {
+        return view('app');
+    }
+
     public function caseStudyDustiesDelights()
     {
         return view('app');

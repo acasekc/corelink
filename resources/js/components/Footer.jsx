@@ -18,6 +18,20 @@ const Footer = () => {
             </Link>
           </motion.div>
           
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="flex items-center gap-6"
+          >
+            <Link to="/terms" className="text-muted-foreground hover:text-foreground text-sm transition">
+              Terms of Service
+            </Link>
+            <Link to="/privacy" className="text-muted-foreground hover:text-foreground text-sm transition">
+              Privacy Policy
+            </Link>
+          </motion.div>
+          
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}

@@ -9,6 +9,8 @@ import Process from "./Pages/Process";
 import Contact from "./Pages/Contact";
 import CaseStudies from "./Pages/CaseStudies";
 import CaseStudyDetail from "./Pages/CaseStudyDetail";
+import Terms from "./Pages/Terms";
+import Privacy from "./Pages/Privacy";
 import Login from "./Pages/Admin/Login";
 import AdminDashboard from "./Pages/Admin/Dashboard";
 import DiscoveryDashboard from "./Pages/Admin/DiscoveryDashboard";
@@ -63,6 +65,8 @@ export default function App() {
 				<Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
 				<Route path="/case-studies" element={<PublicLayout><CaseStudies /></PublicLayout>} />
 				<Route path="/case-studies/:case_study" element={<PublicLayout><CaseStudyDetail /></PublicLayout>} />
+				<Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
+				<Route path="/privacy" element={<PublicLayout><Privacy /></PublicLayout>} />
 				<Route path="/discovery" element={<PublicLayout><DiscoveryChat /></PublicLayout>} />
 				<Route path="/discovery/:sessionId/summary" element={<PublicLayout><DiscoverySummary /></PublicLayout>} />
 
