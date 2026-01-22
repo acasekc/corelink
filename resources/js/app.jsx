@@ -35,6 +35,11 @@ import HelpdeskProjectForm from "./Pages/Admin/Helpdesk/ProjectForm";
 import HelpdeskUsersList from "./Pages/Admin/Helpdesk/UsersList";
 import HelpdeskUserForm from "./Pages/Admin/Helpdesk/UserForm";
 import HelpdeskUserDetail from "./Pages/Admin/Helpdesk/UserDetail";
+import HelpdeskInvoicesList from "./Pages/Admin/Helpdesk/InvoicesList";
+import HelpdeskInvoiceDetail from "./Pages/Admin/Helpdesk/InvoiceDetail";
+import HelpdeskInvoiceCreate from "./Pages/Admin/Helpdesk/InvoiceCreate";
+import HelpdeskInvoiceEdit from "./Pages/Admin/Helpdesk/InvoiceEdit";
+import HelpdeskSettings from "./Pages/Admin/Helpdesk/Settings";
 // User Helpdesk imports
 import UserHelpdeskDashboard from "./Pages/Helpdesk/Dashboard";
 import UserHelpdeskTicketsList from "./Pages/Helpdesk/TicketsList";
@@ -102,6 +107,11 @@ export default function App() {
 				<Route path="/admin/helpdesk/users/create" element={<AdminLayout><HelpdeskUserForm /></AdminLayout>} />
 				<Route path="/admin/helpdesk/users/:userId" element={<AdminLayout><HelpdeskUserDetail /></AdminLayout>} />
 				<Route path="/admin/helpdesk/users/:userId/edit" element={<AdminLayout><HelpdeskUserForm /></AdminLayout>} />
+				<Route path="/admin/helpdesk/invoices" element={<AdminLayout><HelpdeskInvoicesList /></AdminLayout>} />
+				<Route path="/admin/helpdesk/invoices/create" element={<AdminLayout><HelpdeskInvoiceCreate /></AdminLayout>} />
+				<Route path="/admin/helpdesk/invoices/:invoiceId" element={<AdminLayout><HelpdeskInvoiceDetail /></AdminLayout>} />
+				<Route path="/admin/helpdesk/invoices/:invoiceId/edit" element={<AdminLayout><HelpdeskInvoiceEdit /></AdminLayout>} />
+				<Route path="/admin/helpdesk/settings" element={<AdminLayout><HelpdeskSettings /></AdminLayout>} />
 			</Routes>
 		</Router>
 	);

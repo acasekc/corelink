@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Ticket,
     LogOut,
@@ -15,6 +15,8 @@ import {
 
 export default function AdminCreateTicket() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const preselectedProjectId = searchParams.get('project');
     const [projects, setProjects] = useState([]);
     const [priorities, setPriorities] = useState([]);
     const [types, setTypes] = useState([]);
@@ -29,7 +31,7 @@ export default function AdminCreateTicket() {
     const [showUserDropdown, setShowUserDropdown] = useState(false);
 
     const [form, setForm] = useState({
-        project_id: '',
+        project_id: preselectedProjectId || '',
         title: '',
         content: '',
         priority_id: '',
@@ -349,24 +351,35 @@ export default function AdminCreateTicket() {
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Project */}
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Project <span className="text-red-400">*</span>
-                                </label>
-                                <select
-                                    value={form.project_id}
-                                    onChange={(e) => setForm(prev => ({ ...prev, project_id: e.target.value }))}
-                                    required
-                                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                >
-                                    <option value="">Select a project...</option>
-                                    {projects.map((project) => (
-                                        <option key={project.id} value={project.id}>
-                                            {project.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            {preselectedProjectId ? (
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Project
+                                    </label>
+                                    <div className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-slate-300">
+                                        {projects.find(p => String(p.id) === preselectedProjectId)?.name || 'Loading...'}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">
+                                        Project <span className="text-red-400">*</span>
+                                    </label>
+                                    <select
+                                        value={form.project_id}
+                                        onChange={(e) => setForm(prev => ({ ...prev, project_id: e.target.value }))}
+                                        required
+                                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    >
+                                        <option value="">Select a project...</option>
+                                        {projects.map((project) => (
+                                            <option key={project.id} value={project.id}>
+                                                {project.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             {/* Submitter (User Search) */}
                             <div className="relative">

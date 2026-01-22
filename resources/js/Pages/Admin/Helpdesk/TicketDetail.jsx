@@ -1,12 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Ticket, ArrowLeft, LogOut, User, Clock, Tag, MessageSquare, Send, Lock, Unlock, Paperclip, X, FileText, Image, Download, Trash2 } from 'lucide-react';
+import { Ticket, ArrowLeft, LogOut, User, Clock, Tag, MessageSquare, Send, Lock, Unlock, Paperclip, X, FileText, Image, Download, Trash2, Plus, Play, Square, Edit2, DollarSign } from 'lucide-react';
 
 const TicketDetail = () => {
     const { ticketId } = useParams();
     const navigate = useNavigate();
     const [ticket, setTicket] = useState(null);
     const [comments, setComments] = useState([]);
+    const [timeEntries, setTimeEntries] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [referenceData, setReferenceData] = useState({ statuses: [], priorities: [], admins: [] });
@@ -15,6 +17,14 @@ const TicketDetail = () => {
     const [submitting, setSubmitting] = useState(false);
     const [commentAttachments, setCommentAttachments] = useState([]);
     const commentFileInputRef = useRef(null);
+    
+    // Time tracking state
+    const [showTimeForm, setShowTimeForm] = useState(false);
+    const [timeFormData, setTimeFormData] = useState({ hours: '', minutes: '', hourly_rate_category_id: '', description: '', is_billable: true });
+    const [editingTimeEntry, setEditingTimeEntry] = useState(null);
+    const [timeSubmitting, setTimeSubmitting] = useState(false);
+    const [activeTimer, setActiveTimer] = useState(null);
+    const [timerSeconds, setTimerSeconds] = useState(0);
 
     const ALLOWED_TYPES = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
@@ -30,7 +40,20 @@ const TicketDetail = () => {
         fetchReferenceData();
         fetchTicket();
         fetchComments();
+        fetchTimeEntries();
+        fetchCategories();
     }, [ticketId]);
+
+    // Timer effect
+    useEffect(() => {
+        let interval;
+        if (activeTimer) {
+            interval = setInterval(() => {
+                setTimerSeconds(s => s + 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [activeTimer]);
 
     const fetchReferenceData = async () => {
         try {
@@ -79,6 +102,32 @@ const TicketDetail = () => {
             setComments(json.data || json);
         } catch (err) {
             console.error('Failed to fetch comments:', err);
+        }
+    };
+
+    const fetchTimeEntries = async () => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/tickets/${ticketId}/time-entries`, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Failed to fetch time entries');
+            const json = await response.json();
+            setTimeEntries(json.data || json);
+        } catch (err) {
+            console.error('Failed to fetch time entries:', err);
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch('/api/helpdesk/admin/time-entries/categories', {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Failed to fetch categories');
+            const json = await response.json();
+            setCategories(json.data || json);
+        } catch (err) {
+            console.error('Failed to fetch categories:', err);
         }
     };
 
@@ -232,6 +281,147 @@ const TicketDetail = () => {
         } catch (error) {
             console.error('Logout failed:', error);
         }
+    };
+
+    // Time Entry Handlers
+    const formatTimerDisplay = (seconds) => {
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const startTimer = () => {
+        setActiveTimer(new Date());
+        setTimerSeconds(0);
+    };
+
+    const stopTimer = () => {
+        if (!activeTimer) return;
+        const hours = Math.floor(timerSeconds / 3600);
+        const minutes = Math.floor((timerSeconds % 3600) / 60);
+        setTimeFormData(prev => ({
+            ...prev,
+            hours: hours.toString(),
+            minutes: minutes.toString(),
+        }));
+        setActiveTimer(null);
+        setTimerSeconds(0);
+        setShowTimeForm(true);
+    };
+
+    const handleAddTimeEntry = async (e) => {
+        e.preventDefault();
+        setTimeSubmitting(true);
+        try {
+            const hours = parseInt(timeFormData.hours || 0);
+            const mins = parseInt(timeFormData.minutes || 0);
+            const timeSpent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+            const response = await fetch(`/api/helpdesk/admin/tickets/${ticketId}/time-entries`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    time_spent: timeSpent,
+                    hourly_rate_category_id: timeFormData.hourly_rate_category_id || null,
+                    description: timeFormData.description,
+                    is_billable: timeFormData.is_billable,
+                }),
+            });
+            if (!response.ok) throw new Error('Failed to add time entry');
+            await fetchTimeEntries();
+            setShowTimeForm(false);
+            setTimeFormData({ hours: '', minutes: '', hourly_rate_category_id: '', description: '', is_billable: true });
+        } catch (err) {
+            alert('Failed to add time entry: ' + err.message);
+        } finally {
+            setTimeSubmitting(false);
+        }
+    };
+
+    const handleUpdateTimeEntry = async (e) => {
+        e.preventDefault();
+        if (!editingTimeEntry) return;
+        setTimeSubmitting(true);
+        try {
+            const hours = parseInt(timeFormData.hours || 0);
+            const mins = parseInt(timeFormData.minutes || 0);
+            const timeSpent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+            const response = await fetch(`/api/helpdesk/admin/tickets/${ticketId}/time-entries/${editingTimeEntry.id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    time_spent: timeSpent,
+                    hourly_rate_category_id: timeFormData.hourly_rate_category_id || null,
+                    description: timeFormData.description,
+                    is_billable: timeFormData.is_billable,
+                }),
+            });
+            if (!response.ok) throw new Error('Failed to update time entry');
+            await fetchTimeEntries();
+            setEditingTimeEntry(null);
+            setShowTimeForm(false);
+            setTimeFormData({ hours: '', minutes: '', hourly_rate_category_id: '', description: '', is_billable: true });
+        } catch (err) {
+            alert('Failed to update time entry: ' + err.message);
+        } finally {
+            setTimeSubmitting(false);
+        }
+    };
+
+    const handleDeleteTimeEntry = async (entryId) => {
+        if (!confirm('Delete this time entry?')) return;
+        try {
+            const response = await fetch(`/api/helpdesk/admin/tickets/${ticketId}/time-entries/${entryId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Failed to delete time entry');
+            await fetchTimeEntries();
+        } catch (err) {
+            alert('Failed to delete time entry: ' + err.message);
+        }
+    };
+
+    const editTimeEntry = (entry) => {
+        const hours = Math.floor(entry.minutes / 60);
+        const mins = entry.minutes % 60;
+        setTimeFormData({
+            hours: hours.toString(),
+            minutes: mins.toString(),
+            hourly_rate_category_id: entry.hourly_rate_category_id || '',
+            description: entry.description || '',
+            is_billable: entry.is_billable,
+        });
+        setEditingTimeEntry(entry);
+        setShowTimeForm(true);
+    };
+
+    const cancelTimeForm = () => {
+        setShowTimeForm(false);
+        setEditingTimeEntry(null);
+        setTimeFormData({ hours: '', minutes: '', hourly_rate_category_id: '', description: '', is_billable: true });
+    };
+
+    const formatTimeEntryMinutes = (mins) => {
+        const hours = Math.floor(mins / 60);
+        const minutes = mins % 60;
+        if (hours === 0) return `${minutes}m`;
+        if (minutes === 0) return `${hours}h`;
+        return `${hours}h ${minutes}m`;
     };
 
     const handleCommentFileSelect = (e) => {
@@ -621,6 +811,189 @@ const TicketDetail = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Time Tracking */}
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                                <h3 className="font-semibold mb-4 flex items-center justify-between">
+                                    <span className="flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-purple-400" />
+                                        Time Tracking
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {activeTimer ? (
+                                            <button
+                                                onClick={stopTimer}
+                                                className="flex items-center gap-1 px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs font-medium"
+                                            >
+                                                <Square className="w-3 h-3" />
+                                                {formatTimerDisplay(timerSeconds)}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={startTimer}
+                                                className="flex items-center gap-1 px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs font-medium"
+                                            >
+                                                <Play className="w-3 h-3" />
+                                                Start
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => setShowTimeForm(true)}
+                                            className="flex items-center gap-1 px-2 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs font-medium"
+                                        >
+                                            <Plus className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                </h3>
+
+                                {/* Time Entry Form */}
+                                {showTimeForm && (
+                                    <form onSubmit={editingTimeEntry ? handleUpdateTimeEntry : handleAddTimeEntry} className="mb-4 p-3 bg-slate-700/50 rounded-lg space-y-3">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-1">Hours</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={timeFormData.hours}
+                                                    onChange={(e) => setTimeFormData(prev => ({ ...prev, hours: e.target.value }))}
+                                                    className="w-full bg-slate-600 border border-slate-500 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-slate-400 mb-1">Minutes</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max="59"
+                                                    value={timeFormData.minutes}
+                                                    onChange={(e) => setTimeFormData(prev => ({ ...prev, minutes: e.target.value }))}
+                                                    className="w-full bg-slate-600 border border-slate-500 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="0"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1">Category</label>
+                                            <select
+                                                value={timeFormData.hourly_rate_category_id}
+                                                onChange={(e) => setTimeFormData(prev => ({ ...prev, hourly_rate_category_id: e.target.value }))}
+                                                className="w-full bg-slate-600 border border-slate-500 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            >
+                                                <option value="">No category</option>
+                                                {categories.map((cat) => (
+                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1">Description</label>
+                                            <textarea
+                                                value={timeFormData.description}
+                                                onChange={(e) => setTimeFormData(prev => ({ ...prev, description: e.target.value }))}
+                                                rows={2}
+                                                className="w-full bg-slate-600 border border-slate-500 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                                                placeholder="What did you work on?"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                id="is_billable"
+                                                checked={timeFormData.is_billable}
+                                                onChange={(e) => setTimeFormData(prev => ({ ...prev, is_billable: e.target.checked }))}
+                                                className="rounded bg-slate-600 border-slate-500 text-purple-600 focus:ring-purple-500"
+                                            />
+                                            <label htmlFor="is_billable" className="text-xs text-slate-300 flex items-center gap-1">
+                                                <DollarSign className="w-3 h-3" />
+                                                Billable
+                                            </label>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="submit"
+                                                disabled={timeSubmitting}
+                                                className="flex-1 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded text-xs font-medium"
+                                            >
+                                                {timeSubmitting ? 'Saving...' : (editingTimeEntry ? 'Update' : 'Add Time')}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={cancelTimeForm}
+                                                className="px-3 py-1.5 bg-slate-600 hover:bg-slate-500 rounded text-xs font-medium"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {/* Time Entries List */}
+                                {timeEntries.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {timeEntries.map((entry) => (
+                                            <div key={entry.id} className="flex items-start justify-between p-2 bg-slate-700/30 rounded-lg text-sm">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-medium text-purple-400">
+                                                            {entry.formatted_time || formatTimeEntryMinutes(entry.minutes)}
+                                                        </span>
+                                                        {entry.is_billable && (
+                                                            <DollarSign className="w-3 h-3 text-green-400" />
+                                                        )}
+                                                        {entry.hourly_rate_category && (
+                                                            <span className="text-xs px-1.5 py-0.5 bg-slate-600 rounded text-slate-300">
+                                                                {entry.hourly_rate_category.name}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {entry.description && (
+                                                        <p className="text-xs text-slate-400 mt-1 truncate">
+                                                            {entry.description}
+                                                        </p>
+                                                    )}
+                                                    <p className="text-xs text-slate-500 mt-1">
+                                                        {entry.user?.name} • {new Date(entry.created_at).toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-1 ml-2">
+                                                    <button
+                                                        onClick={() => editTimeEntry(entry)}
+                                                        className="p-1 hover:bg-slate-600 rounded"
+                                                    >
+                                                        <Edit2 className="w-3 h-3 text-slate-400" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteTimeEntry(entry.id)}
+                                                        className="p-1 hover:bg-slate-600 rounded"
+                                                    >
+                                                        <Trash2 className="w-3 h-3 text-red-400" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <div className="pt-2 border-t border-slate-700 text-sm">
+                                            <div className="flex justify-between text-slate-400">
+                                                <span>Total Time:</span>
+                                                <span className="font-medium text-slate-200">
+                                                    {formatTimeEntryMinutes(timeEntries.reduce((sum, e) => sum + e.minutes, 0))}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between text-slate-400">
+                                                <span>Billable:</span>
+                                                <span className="font-medium text-green-400">
+                                                    {formatTimeEntryMinutes(timeEntries.filter(e => e.is_billable).reduce((sum, e) => sum + e.minutes, 0))}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-slate-500 text-center py-4">
+                                        No time logged yet
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

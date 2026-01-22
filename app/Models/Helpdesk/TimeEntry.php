@@ -21,12 +21,18 @@ class TimeEntry extends Model
         'minutes',
         'description',
         'date_worked',
+        'hourly_rate_category_id',
+        'is_billable',
+        'billable_minutes',
+        'invoice_line_item_id',
     ];
 
     protected function casts(): array
     {
         return [
             'date_worked' => 'date',
+            'is_billable' => 'boolean',
+            'billable_minutes' => 'integer',
         ];
     }
 
@@ -38,6 +44,66 @@ class TimeEntry extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function hourlyRateCategory(): BelongsTo
+    {
+        return $this->belongsTo(HourlyRateCategory::class, 'hourly_rate_category_id');
+    }
+
+    public function invoiceLineItem(): BelongsTo
+    {
+        return $this->belongsTo(InvoiceLineItem::class, 'invoice_line_item_id');
+    }
+
+    /**
+     * Check if this time entry has been invoiced.
+     */
+    public function getIsInvoicedAttribute(): bool
+    {
+        return $this->invoice_line_item_id !== null;
+    }
+
+    /**
+     * Check if this time entry is locked (on a sent/paid invoice).
+     */
+    public function getIsLockedAttribute(): bool
+    {
+        if (! $this->invoice_line_item_id) {
+            return false;
+        }
+
+        $invoice = $this->invoiceLineItem?->invoice;
+
+        return $invoice && $invoice->status !== Invoice::STATUS_DRAFT;
+    }
+
+    /**
+     * Calculate billable minutes with 15-min rounding and 1-hour minimum.
+     */
+    public static function calculateBillableMinutes(int $minutes): int
+    {
+        if ($minutes <= 0) {
+            return 0;
+        }
+
+        // Apply 1-hour minimum
+        $minutes = max($minutes, 60);
+
+        // Round up to nearest 15 minutes
+        return (int) ceil($minutes / 15) * 15;
+    }
+
+    /**
+     * Get billable minutes for this instance.
+     */
+    public function getBillableMinutesCalculated(): int
+    {
+        if (! $this->is_billable) {
+            return 0;
+        }
+
+        return self::calculateBillableMinutes($this->minutes);
     }
 
     /**

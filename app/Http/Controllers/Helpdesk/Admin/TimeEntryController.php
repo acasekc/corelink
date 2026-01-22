@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Helpdesk\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Helpdesk\HourlyRateCategory;
 use App\Models\Helpdesk\Ticket;
 use App\Models\Helpdesk\TimeEntry;
 use Illuminate\Http\JsonResponse;
@@ -15,7 +16,7 @@ class TimeEntryController extends Controller
      */
     public function index(Ticket $ticket): JsonResponse
     {
-        $ticket->load('timeEntries.user');
+        $ticket->load('timeEntries.user', 'timeEntries.hourlyRateCategory');
 
         return response()->json([
             'data' => $ticket->timeEntries->map(fn ($entry) => $this->formatTimeEntry($entry)),
@@ -29,6 +30,23 @@ class TimeEntryController extends Controller
     }
 
     /**
+     * Get available rate categories for time entry billing
+     */
+    public function categories(): JsonResponse
+    {
+        $categories = HourlyRateCategory::active()->ordered()->get();
+
+        return response()->json([
+            'data' => $categories->map(fn ($category) => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'description' => $category->description,
+            ]),
+        ]);
+    }
+
+    /**
      * Add a new time entry
      */
     public function store(Request $request, Ticket $ticket): JsonResponse
@@ -37,6 +55,8 @@ class TimeEntryController extends Controller
             'time_spent' => ['required', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:1000'],
             'date_worked' => ['nullable', 'date'],
+            'hourly_rate_category_id' => ['nullable', 'exists:helpdesk_hourly_rate_categories,id'],
+            'is_billable' => ['nullable', 'boolean'],
         ]);
 
         $minutes = TimeEntry::parseTimeString($validated['time_spent']);
@@ -47,11 +67,17 @@ class TimeEntryController extends Controller
             ], 422);
         }
 
+        $isBillable = $validated['is_billable'] ?? true;
+        $billableMinutes = $isBillable ? TimeEntry::calculateBillableMinutes($minutes) : 0;
+
         $timeEntry = $ticket->timeEntries()->create([
             'user_id' => $request->user()->id,
             'minutes' => $minutes,
             'description' => $validated['description'] ?? null,
             'date_worked' => $validated['date_worked'] ?? now()->toDateString(),
+            'hourly_rate_category_id' => $validated['hourly_rate_category_id'] ?? null,
+            'is_billable' => $isBillable,
+            'billable_minutes' => $billableMinutes,
         ]);
 
         $ticket->logActivity(
@@ -62,7 +88,7 @@ class TimeEntryController extends Controller
         );
 
         return response()->json([
-            'data' => $this->formatTimeEntry($timeEntry->load('user')),
+            'data' => $this->formatTimeEntry($timeEntry->load('user', 'hourlyRateCategory')),
             'message' => 'Time entry added successfully',
             'summary' => [
                 'total_minutes' => $ticket->fresh()->total_time_spent,
@@ -82,10 +108,19 @@ class TimeEntryController extends Controller
             ], 404);
         }
 
+        // Cannot edit invoiced time entries
+        if ($timeEntry->is_invoiced) {
+            return response()->json([
+                'message' => 'Cannot edit time entries that have been invoiced',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'time_spent' => ['sometimes', 'string', 'max:50'],
             'description' => ['nullable', 'string', 'max:1000'],
             'date_worked' => ['nullable', 'date'],
+            'hourly_rate_category_id' => ['nullable', 'exists:helpdesk_hourly_rate_categories,id'],
+            'is_billable' => ['nullable', 'boolean'],
         ]);
 
         $updateData = [];
@@ -108,10 +143,25 @@ class TimeEntryController extends Controller
             $updateData['date_worked'] = $validated['date_worked'];
         }
 
+        if (array_key_exists('hourly_rate_category_id', $validated)) {
+            $updateData['hourly_rate_category_id'] = $validated['hourly_rate_category_id'];
+        }
+
+        if (array_key_exists('is_billable', $validated)) {
+            $updateData['is_billable'] = $validated['is_billable'];
+        }
+
+        // Recalculate billable minutes if time or billable status changed
+        if (isset($updateData['minutes']) || isset($updateData['is_billable'])) {
+            $minutes = $updateData['minutes'] ?? $timeEntry->minutes;
+            $isBillable = $updateData['is_billable'] ?? $timeEntry->is_billable;
+            $updateData['billable_minutes'] = $isBillable ? TimeEntry::calculateBillableMinutes($minutes) : 0;
+        }
+
         $timeEntry->update($updateData);
 
         return response()->json([
-            'data' => $this->formatTimeEntry($timeEntry->fresh('user')),
+            'data' => $this->formatTimeEntry($timeEntry->fresh('user', 'hourlyRateCategory')),
             'message' => 'Time entry updated successfully',
             'summary' => [
                 'total_minutes' => $ticket->fresh()->total_time_spent,
@@ -129,6 +179,13 @@ class TimeEntryController extends Controller
             return response()->json([
                 'message' => 'Time entry does not belong to this ticket',
             ], 404);
+        }
+
+        // Cannot delete invoiced time entries
+        if ($timeEntry->is_invoiced) {
+            return response()->json([
+                'message' => 'Cannot delete time entries that have been invoiced',
+            ], 422);
         }
 
         $formattedTime = $timeEntry->formatted_time;
@@ -162,6 +219,15 @@ class TimeEntryController extends Controller
                 'id' => $entry->user->id,
                 'name' => $entry->user->name,
             ] : null,
+            'hourly_rate_category' => $entry->hourlyRateCategory ? [
+                'id' => $entry->hourlyRateCategory->id,
+                'name' => $entry->hourlyRateCategory->name,
+                'slug' => $entry->hourlyRateCategory->slug,
+            ] : null,
+            'is_billable' => $entry->is_billable,
+            'billable_minutes' => $entry->billable_minutes,
+            'formatted_billable_time' => $entry->billable_minutes ? TimeEntry::formatMinutes($entry->billable_minutes) : null,
+            'is_invoiced' => $entry->is_invoiced,
             'created_at' => $entry->created_at->toIso8601String(),
             'updated_at' => $entry->updated_at->toIso8601String(),
         ];

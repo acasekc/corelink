@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FolderOpen, ArrowLeft, LogOut, Plus, Key, Trash2, RefreshCw } from 'lucide-react';
+import { FolderOpen, ArrowLeft, LogOut, Plus, Key, Trash2, RefreshCw, Ticket } from 'lucide-react';
 
 const ProjectsList = () => {
     const [projects, setProjects] = useState([]);
@@ -187,6 +187,13 @@ const ProjectsList = () => {
                                                 className="flex-1 text-center px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition text-sm"
                                             >
                                                 View Details
+                                            </Link>
+                                            <Link
+                                                to={`/admin/helpdesk/tickets/create?project=${project.id}`}
+                                                className="flex items-center justify-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition text-sm"
+                                                title="Create Ticket"
+                                            >
+                                                <Ticket className="w-4 h-4" />
                                             </Link>
                                             <Link
                                                 to={`/admin/helpdesk/projects/${project.id}/keys`}

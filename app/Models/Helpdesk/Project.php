@@ -9,12 +9,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
     use HasFactory;
+
     use SoftDeletes;
 
     protected $table = 'helpdesk_projects';
@@ -23,6 +25,9 @@ class Project extends Model
         'name',
         'slug',
         'description',
+        'client_name',
+        'client_email',
+        'client_address',
         'ticket_prefix',
         'github_repo',
         'color',
@@ -72,6 +77,34 @@ class Project extends Model
     public function types(): HasMany
     {
         return $this->hasMany(TicketType::class);
+    }
+
+    public function hourlyRates(): HasMany
+    {
+        return $this->hasMany(ProjectHourlyRate::class);
+    }
+
+    public function billableItems(): HasMany
+    {
+        return $this->hasMany(BillableItem::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function invoiceSettings(): HasOne
+    {
+        return $this->hasOne(ProjectInvoiceSettings::class);
+    }
+
+    /**
+     * Get or create invoice settings for this project.
+     */
+    public function getInvoiceSettings(): ProjectInvoiceSettings
+    {
+        return ProjectInvoiceSettings::getOrCreateForProject($this->id);
     }
 
     public function users(): BelongsToMany

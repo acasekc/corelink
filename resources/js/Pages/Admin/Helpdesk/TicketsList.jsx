@@ -13,7 +13,7 @@ const TicketsList = () => {
     const [filters, setFilters] = useState({
         status: searchParams.get('status') || '',
         priority: searchParams.get('priority') || '',
-        project_id: searchParams.get('project') || '',
+        project: searchParams.get('project') || '',
         search: searchParams.get('search') || '',
     });
     const [referenceData, setReferenceData] = useState({ statuses: [], priorities: [], projects: [] });
@@ -54,7 +54,7 @@ const TicketsList = () => {
             const params = new URLSearchParams();
             if (searchParams.get('status')) params.append('status', searchParams.get('status'));
             if (searchParams.get('priority')) params.append('priority', searchParams.get('priority'));
-            if (searchParams.get('project')) params.append('project_id', searchParams.get('project'));
+            if (searchParams.get('project')) params.append('project', searchParams.get('project'));
             if (searchParams.get('search')) params.append('search', searchParams.get('search'));
             if (searchParams.get('page')) params.append('page', searchParams.get('page'));
 
@@ -82,7 +82,9 @@ const TicketsList = () => {
 
         const newParams = new URLSearchParams();
         Object.entries(newFilters).forEach(([k, v]) => {
-            if (v) newParams.set(k, v);
+            if (v) {
+                newParams.set(k, v);
+            }
         });
         setSearchParams(newParams);
     };
@@ -243,13 +245,13 @@ const TicketsList = () => {
                                     ))}
                                 </select>
                                 <select
-                                    value={filters.project_id}
+                                    value={filters.project}
                                     onChange={(e) => handleFilterChange('project', e.target.value)}
                                     className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 >
                                     <option value="">All Projects</option>
                                     {referenceData.projects.map((project) => (
-                                        <option key={project.id} value={project.id}>
+                                        <option key={project.id} value={project.slug}>
                                             {project.name}
                                         </option>
                                     ))}

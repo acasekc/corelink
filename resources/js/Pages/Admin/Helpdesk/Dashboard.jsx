@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Ticket, FolderOpen, Clock, CheckCircle, AlertCircle, LogOut, ArrowLeft } from 'lucide-react';
+import { Ticket, FolderOpen, Clock, CheckCircle, AlertCircle, LogOut, ArrowLeft, FileText } from 'lucide-react';
 
 const HelpdeskDashboard = () => {
     const [dashboard, setDashboard] = useState(null);
@@ -109,8 +109,14 @@ const HelpdeskDashboard = () => {
                             <Link to="/admin/helpdesk/projects" className="text-slate-300 hover:text-white transition">
                                 Projects
                             </Link>
+                            <Link to="/admin/helpdesk/invoices" className="text-slate-300 hover:text-white transition">
+                                Invoices
+                            </Link>
                             <Link to="/admin/helpdesk/users" className="text-slate-300 hover:text-white transition">
                                 Users
+                            </Link>
+                            <Link to="/admin/helpdesk/settings" className="text-slate-300 hover:text-white transition">
+                                Settings
                             </Link>
                         </nav>
                         <button

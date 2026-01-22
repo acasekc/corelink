@@ -1,9 +1,15 @@
 <?php
 
 use App\Http\Controllers\Helpdesk\Admin\ApiKeyController;
+use App\Http\Controllers\Helpdesk\Admin\BillableItemController;
 use App\Http\Controllers\Helpdesk\Admin\CommentController;
 use App\Http\Controllers\Helpdesk\Admin\DashboardController;
+use App\Http\Controllers\Helpdesk\Admin\HourlyRateCategoryController;
+use App\Http\Controllers\Helpdesk\Admin\InvoiceController;
+use App\Http\Controllers\Helpdesk\Admin\InvoicePaymentController;
 use App\Http\Controllers\Helpdesk\Admin\ProjectController;
+use App\Http\Controllers\Helpdesk\Admin\ProjectHourlyRateController;
+use App\Http\Controllers\Helpdesk\Admin\ProjectInvoiceSettingsController;
 use App\Http\Controllers\Helpdesk\Admin\ProjectUserController;
 use App\Http\Controllers\Helpdesk\Admin\ReferenceDataController;
 use App\Http\Controllers\Helpdesk\Admin\TicketController;
@@ -136,10 +142,56 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     Route::post('tickets/{ticket}/labels', [TicketController::class, 'addLabels']);
 
     // Time Entries
+    Route::get('time-entries/categories', [TimeEntryController::class, 'categories']);
     Route::get('tickets/{ticket}/time-entries', [TimeEntryController::class, 'index']);
     Route::post('tickets/{ticket}/time-entries', [TimeEntryController::class, 'store']);
     Route::patch('tickets/{ticket}/time-entries/{timeEntry}', [TimeEntryController::class, 'update']);
     Route::delete('tickets/{ticket}/time-entries/{timeEntry}', [TimeEntryController::class, 'destroy']);
+
+    // Hourly Rate Categories (global, admin managed)
+    Route::get('hourly-rate-categories', [HourlyRateCategoryController::class, 'index']);
+    Route::post('hourly-rate-categories', [HourlyRateCategoryController::class, 'store']);
+    Route::get('hourly-rate-categories/{hourlyRateCategory}', [HourlyRateCategoryController::class, 'show']);
+    Route::patch('hourly-rate-categories/{hourlyRateCategory}', [HourlyRateCategoryController::class, 'update']);
+    Route::delete('hourly-rate-categories/{hourlyRateCategory}', [HourlyRateCategoryController::class, 'destroy']);
+    Route::post('hourly-rate-categories/reorder', [HourlyRateCategoryController::class, 'reorder']);
+
+    // Project Billable Items
+    Route::get('projects/{project}/billable-items', [BillableItemController::class, 'index']);
+    Route::post('projects/{project}/billable-items', [BillableItemController::class, 'store']);
+    Route::get('projects/{project}/billable-items/{billableItem}', [BillableItemController::class, 'show']);
+    Route::patch('projects/{project}/billable-items/{billableItem}', [BillableItemController::class, 'update']);
+    Route::delete('projects/{project}/billable-items/{billableItem}', [BillableItemController::class, 'destroy']);
+
+    // Project Hourly Rates
+    Route::get('projects/{project}/hourly-rates', [ProjectHourlyRateController::class, 'index']);
+    Route::post('projects/{project}/hourly-rates', [ProjectHourlyRateController::class, 'store']);
+    Route::patch('projects/{project}/hourly-rates/{hourlyRate}', [ProjectHourlyRateController::class, 'update']);
+    Route::delete('projects/{project}/hourly-rates/{hourlyRate}', [ProjectHourlyRateController::class, 'destroy']);
+    Route::get('projects/{project}/hourly-rates/category/{category}', [ProjectHourlyRateController::class, 'getEffectiveRate']);
+
+    // Project Invoice Settings
+    Route::get('projects/{project}/invoice-settings', [ProjectInvoiceSettingsController::class, 'show']);
+    Route::patch('projects/{project}/invoice-settings', [ProjectInvoiceSettingsController::class, 'update']);
+
+    // Invoices
+    Route::get('invoices', [InvoiceController::class, 'index']);
+    Route::get('projects/{project}/uninvoiced-time', [InvoiceController::class, 'uninvoicedTimeEntries']);
+    Route::post('projects/{project}/invoices', [InvoiceController::class, 'store']);
+    Route::get('invoices/{invoice}', [InvoiceController::class, 'show']);
+    Route::patch('invoices/{invoice}', [InvoiceController::class, 'update']);
+    Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy']);
+    Route::post('invoices/{invoice}/line-items', [InvoiceController::class, 'addLineItem']);
+    Route::delete('invoices/{invoice}/line-items/{lineItem}', [InvoiceController::class, 'removeLineItem']);
+    Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send']);
+    Route::post('invoices/{invoice}/resend', [InvoiceController::class, 'resend']);
+    Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void']);
+    Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'viewPdf']);
+    Route::get('invoices/{invoice}/pdf/download', [InvoiceController::class, 'downloadPdf']);
+
+    // Invoice Payments (manual payments)
+    Route::post('invoices/{invoice}/payments', [InvoicePaymentController::class, 'store']);
+    Route::delete('invoices/{invoice}/payments/{payment}', [InvoicePaymentController::class, 'destroy']);
 
     // Comments
     Route::get('tickets/{ticket}/comments', [CommentController::class, 'index']);

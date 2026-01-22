@@ -24,6 +24,7 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
         <!-- Scripts -->
+        @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/main.jsx'])
     </head>
     <body class="font-sans antialiased">

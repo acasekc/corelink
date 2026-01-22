@@ -9,6 +9,8 @@ use App\Http\Controllers\CaseStudyController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DiscoveryController;
 use App\Http\Controllers\Helpdesk\AuthController as HelpdeskAuthController;
+use App\Http\Controllers\Helpdesk\Public\InvoiceController as PublicInvoiceController;
+use App\Http\Controllers\Helpdesk\StripeWebhookController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Route;
@@ -127,6 +129,29 @@ Route::middleware(['auth', 'force-password-change'])->prefix('admin')->name('adm
         ->where('any', '.*')
         ->name('helpdesk');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Public Invoice Access (by UUID, no signature required)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('invoice')->name('invoice.public.')->group(function () {
+    Route::get('/{invoice:uuid}', [PublicInvoiceController::class, 'showByUuid'])->name('show');
+    Route::get('/{invoice:uuid}/pdf', [PublicInvoiceController::class, 'pdfByUuid'])->name('pdf');
+    Route::post('/{invoice:uuid}/pay', [PublicInvoiceController::class, 'createCheckoutSessionByUuid'])->name('pay');
+    Route::get('/{invoice:uuid}/payment-success', [PublicInvoiceController::class, 'paymentSuccessByUuid'])->name('payment-success');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Stripe Webhooks (no CSRF verification)
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('stripe.webhook');
 
 /*
 |--------------------------------------------------------------------------
