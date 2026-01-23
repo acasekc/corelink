@@ -18,6 +18,7 @@ import {
     Image,
     X,
 } from 'lucide-react';
+import Markdown from '../../components/Markdown';
 
 export default function HelpdeskUserTicketDetail() {
     const { ticketId } = useParams();
@@ -347,9 +348,7 @@ export default function HelpdeskUserTicketDetail() {
                                         {new Date(ticket.created_at).toLocaleString()}
                                     </span>
                                 </div>
-                                <div className="prose prose-invert max-w-none">
-                                    <p className="whitespace-pre-wrap">{ticket.content}</p>
-                                </div>
+                                <Markdown>{ticket.content}</Markdown>
                             </div>
 
                             {/* Attachments */}
@@ -449,7 +448,7 @@ export default function HelpdeskUserTicketDetail() {
                                                         {new Date(comment.created_at).toLocaleString()}
                                                     </span>
                                                 </div>
-                                                <p className="text-slate-300 whitespace-pre-wrap">{comment.content}</p>
+                                                <Markdown>{comment.content}</Markdown>
                                                 
                                                 {/* Comment Attachments */}
                                                 {comment.attachments?.length > 0 && (

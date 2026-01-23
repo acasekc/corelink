@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Ticket, ArrowLeft, LogOut, User, Clock, Tag, MessageSquare, Send, Lock, Unlock, Paperclip, X, FileText, Image, Download, Trash2, Plus, Play, Square, Edit2, DollarSign } from 'lucide-react';
+import Markdown from '../../../components/Markdown';
 
 const TicketDetail = () => {
     const { ticketId } = useParams();
@@ -515,9 +516,7 @@ const TicketDetail = () => {
                                         <span>{new Date(ticket?.created_at).toLocaleString()}</span>
                                     </div>
                                 </div>
-                                <div className="prose prose-invert max-w-none">
-                                    <div className="whitespace-pre-wrap text-slate-300">{ticket?.content}</div>
-                                </div>
+                                <Markdown>{ticket?.content}</Markdown>
 
                                 {/* Ticket Attachments */}
                                 {ticket?.attachments?.length > 0 && (
@@ -587,7 +586,7 @@ const TicketDetail = () => {
                                                         {new Date(comment.created_at).toLocaleString()}
                                                     </span>
                                                 </div>
-                                                <div className="text-slate-300 whitespace-pre-wrap">{comment.content}</div>
+                                                <Markdown>{comment.content}</Markdown>
                                                 {/* Comment Attachments */}
                                                 {comment.attachments?.length > 0 && (
                                                     <div className="mt-3 flex flex-wrap gap-2">
