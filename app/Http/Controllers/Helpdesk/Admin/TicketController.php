@@ -262,6 +262,10 @@ class TicketController extends Controller
 
         $ticket->logActivity('status_changed', $oldStatus->title, $newStatus->title);
 
+        // Send notification
+        app(\App\Services\Helpdesk\TicketNotificationService::class)
+            ->notifyStatusChanged($ticket, $oldStatus, $newStatus);
+
         return response()->json([
             'data' => $this->formatTicket($ticket->fresh(['project', 'status', 'priority', 'type', 'assignee', 'labels'])),
             'message' => 'Status changed successfully',

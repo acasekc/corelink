@@ -41,6 +41,10 @@ class CommentController extends Controller
             auth()->user()->name.' commented'
         );
 
+        // Send notification (service handles internal comment exclusion)
+        app(\App\Services\Helpdesk\TicketNotificationService::class)
+            ->notifyCommentAdded($ticket, $comment);
+
         return response()->json([
             'data' => $this->formatComment($comment->load('attachments')),
             'message' => 'Comment added successfully',

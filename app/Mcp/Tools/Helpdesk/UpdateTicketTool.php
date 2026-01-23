@@ -6,6 +6,7 @@ use App\Mcp\McpContext;
 use App\Models\Helpdesk\TicketPriority;
 use App\Models\Helpdesk\TicketStatus;
 use App\Models\Helpdesk\TicketType;
+use App\Services\Helpdesk\TicketNotificationService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -31,6 +32,8 @@ class UpdateTicketTool extends Tool
         }
 
         $updates = [];
+        $oldStatus = null;
+        $newStatus = null;
 
         if ($statusId = $request->get('status_id')) {
             $status = TicketStatus::where('id', $statusId)
@@ -39,9 +42,10 @@ class UpdateTicketTool extends Tool
             if (! $status) {
                 return Response::error("Invalid status_id: {$statusId}");
             }
-            $oldStatus = $ticket->status?->title;
+            $oldStatus = $ticket->status;
+            $newStatus = $status;
             $ticket->status_id = $statusId;
-            $updates[] = "status: {$oldStatus} → {$status->title}";
+            $updates[] = "status: {$oldStatus?->title} → {$status->title}";
         }
 
         if ($priorityId = $request->get('priority_id')) {
@@ -98,6 +102,11 @@ class UpdateTicketTool extends Tool
         }
 
         $ticket->save();
+
+        // Send notification if status changed
+        if ($oldStatus && $newStatus) {
+            app(TicketNotificationService::class)->notifyStatusChanged($ticket, $oldStatus, $newStatus);
+        }
 
         // Log activity for significant changes
         if ($request->get('status_id')) {

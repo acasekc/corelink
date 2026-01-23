@@ -47,6 +47,10 @@ class CommentController extends Controller
 
         $ticket->logActivity('commented', null, $isInternal ? 'internal' : 'public', $user->id);
 
+        // Send notification (service handles internal comment exclusion)
+        app(\App\Services\Helpdesk\TicketNotificationService::class)
+            ->notifyCommentAdded($ticket, $comment);
+
         $comment->load(['user:id,name,email', 'attachments']);
 
         return response()->json([

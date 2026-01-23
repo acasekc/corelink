@@ -3,6 +3,7 @@
 namespace App\Mcp\Tools\Helpdesk;
 
 use App\Mcp\McpContext;
+use App\Services\Helpdesk\TicketNotificationService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -42,6 +43,9 @@ class AddCommentTool extends Tool
 
         // Log activity
         $ticket->logActivity('comment_added');
+
+        // Send notification (service handles internal comment exclusion)
+        app(TicketNotificationService::class)->notifyCommentAdded($ticket, $comment);
 
         return Response::text(json_encode([
             'success' => true,
