@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // Helpdesk routes (handles its own middleware per group)
             require base_path('routes/api/helpdesk.php');
+
+            // MCP AI routes
+            require base_path('routes/ai.php');
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
