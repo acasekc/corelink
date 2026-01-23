@@ -54,10 +54,18 @@ class HelpdeskServer extends Server
         - `add_comment` - Add a comment to a ticket (can be internal or public)
         - `add_time_entry` - Log time worked on a ticket
         
-        ## Tips:
+        ## Guidelines:
         - Use `list_statuses` first to get valid status IDs for filtering or updating
         - Time can be logged using shorthand like "1h 30m" or just minutes
         - Internal comments are only visible to staff
+        
+        ## Comment Style:
+        - Keep comments brief and factual - avoid lengthy explanations
+        - Use simple language, not overly formal or robotic
+        - Focus on what was done, not how you did it
+        - Good: "Fixed the login redirect issue"
+        - Bad: "I have analyzed the codebase and implemented a comprehensive solution to address the authentication redirect problem by modifying the middleware configuration"
+        - Markdown is supported but use sparingly - plain text is preferred for most comments
     MARKDOWN;
 
     /**
