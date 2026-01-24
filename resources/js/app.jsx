@@ -52,6 +52,16 @@ import UserHelpdeskLogin from "./Pages/Helpdesk/Login";
 import UserHelpdeskProfile from "./Pages/Helpdesk/Profile";
 import UserHelpdeskChangePassword from "./Pages/Helpdesk/ChangePassword";
 import AdminChangePassword from "./Pages/Admin/ChangePassword";
+// Blog imports
+import BlogIndex from "./Pages/Blog/Index";
+import BlogCategory from "./Pages/Blog/Category";
+import BlogShow from "./Pages/Blog/Show";
+// Admin Blog imports
+import AdminArticlesIndex from "./Pages/Admin/Articles/Index";
+import AdminArticlesCreate from "./Pages/Admin/Articles/Create";
+import AdminArticlesEdit from "./Pages/Admin/Articles/Edit";
+import AdminArticlesCategories from "./Pages/Admin/Articles/Categories/Index";
+import AdminArticlesSettings from "./Pages/Admin/Articles/Settings";
 
 export default function App() {
 	return (
@@ -69,6 +79,11 @@ export default function App() {
 				<Route path="/privacy" element={<PublicLayout><Privacy /></PublicLayout>} />
 				<Route path="/discovery" element={<PublicLayout><DiscoveryChat /></PublicLayout>} />
 				<Route path="/discovery/:sessionId/summary" element={<PublicLayout><DiscoverySummary /></PublicLayout>} />
+
+				{/* Blog Routes */}
+				<Route path="/blog" element={<PublicLayout><BlogIndex /></PublicLayout>} />
+				<Route path="/blog/category/:slug" element={<PublicLayout><BlogCategory /></PublicLayout>} />
+				<Route path="/blog/:slug" element={<PublicLayout><BlogShow /></PublicLayout>} />
 
 				{/* User Helpdesk Routes - Authenticated users (not admin-only) */}
 				<Route path="/helpdesk/login" element={<AdminLayout><UserHelpdeskLogin /></AdminLayout>} />
@@ -97,6 +112,13 @@ export default function App() {
 				<Route path="/admin/projects" element={<AdminLayout><ProjectsList /></AdminLayout>} />
 				<Route path="/admin/projects/create" element={<AdminLayout><ProjectForm /></AdminLayout>} />
 				<Route path="/admin/projects/:id/edit" element={<AdminLayout><ProjectForm /></AdminLayout>} />
+
+				{/* Admin Blog/Articles Routes */}
+				<Route path="/admin/articles" element={<AdminLayout><AdminArticlesIndex /></AdminLayout>} />
+				<Route path="/admin/articles/create" element={<AdminLayout><AdminArticlesCreate /></AdminLayout>} />
+				<Route path="/admin/articles/:id/edit" element={<AdminLayout><AdminArticlesEdit /></AdminLayout>} />
+				<Route path="/admin/articles/categories" element={<AdminLayout><AdminArticlesCategories /></AdminLayout>} />
+				<Route path="/admin/articles/settings" element={<AdminLayout><AdminArticlesSettings /></AdminLayout>} />
 
 				{/* Admin Helpdesk Routes */}
 				<Route path="/admin/helpdesk" element={<AdminLayout><HelpdeskDashboard /></AdminLayout>} />

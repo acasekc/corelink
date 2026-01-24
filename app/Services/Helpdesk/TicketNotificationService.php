@@ -7,21 +7,30 @@ use App\Mail\Helpdesk\TicketStatusChanged;
 use App\Models\Helpdesk\Comment;
 use App\Models\Helpdesk\Ticket;
 use App\Models\Helpdesk\TicketStatus;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 
 class TicketNotificationService
 {
+    /**
+     * Minimum time between notifications to the same recipient for the same ticket.
+     * Prevents email spam when multiple actions happen in quick succession.
+     */
+    private const THROTTLE_MINUTES = 5;
+
     /**
      * Send notification when ticket status changes.
      */
     public function notifyStatusChanged(Ticket $ticket, TicketStatus $oldStatus, TicketStatus $newStatus): void
     {
         $recipients = $this->getNotificationRecipients($ticket);
+        $recipients = $this->filterThrottledRecipients($ticket, $recipients);
 
         if (empty($recipients)) {
             return;
         }
 
+        $this->markRecipientsNotified($ticket, $recipients);
         Mail::to($recipients)->queue(new TicketStatusChanged($ticket, $oldStatus, $newStatus));
     }
 
@@ -37,12 +46,50 @@ class TicketNotificationService
         }
 
         $recipients = $this->getNotificationRecipients($ticket, $comment);
+        $recipients = $this->filterThrottledRecipients($ticket, $recipients);
 
         if (empty($recipients)) {
             return;
         }
 
+        $this->markRecipientsNotified($ticket, $recipients);
         Mail::to($recipients)->queue(new TicketCommentAdded($ticket, $comment));
+    }
+
+    /**
+     * Filter out recipients who were recently notified about this ticket.
+     *
+     * @param  array<string>  $recipients
+     * @return array<string>
+     */
+    private function filterThrottledRecipients(Ticket $ticket, array $recipients): array
+    {
+        return array_values(array_filter($recipients, function (string $email) use ($ticket): bool {
+            $cacheKey = $this->getThrottleCacheKey($ticket, $email);
+
+            return ! Cache::has($cacheKey);
+        }));
+    }
+
+    /**
+     * Mark recipients as having been notified (for throttling).
+     *
+     * @param  array<string>  $recipients
+     */
+    private function markRecipientsNotified(Ticket $ticket, array $recipients): void
+    {
+        foreach ($recipients as $email) {
+            $cacheKey = $this->getThrottleCacheKey($ticket, $email);
+            Cache::put($cacheKey, true, now()->addMinutes(self::THROTTLE_MINUTES));
+        }
+    }
+
+    /**
+     * Generate a unique cache key for throttling notifications.
+     */
+    private function getThrottleCacheKey(Ticket $ticket, string $email): string
+    {
+        return sprintf('ticket_notification_throttle:%d:%s', $ticket->id, strtolower($email));
     }
 
     /**

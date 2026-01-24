@@ -1,10 +1,15 @@
 <?php
 
+use App\Http\Controllers\Admin\ArticleCategoryController;
+use App\Http\Controllers\Admin\ArticleController;
+use App\Http\Controllers\Admin\ArticleSettingsController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\CaseStudyController as AdminCaseStudyController;
 use App\Http\Controllers\Admin\DiscoveryController as AdminDiscoveryController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\ProjectController as AdminProjectController;
+use App\Http\Controllers\Api\UploadController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CaseStudyController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DiscoveryController;
@@ -41,6 +46,9 @@ Route::middleware(['auth'])->prefix('api/admin')->group(function () {
 
 // Admin Case Studies API (requires authentication)
 Route::middleware(['auth', 'force-password-change'])->prefix('api/admin')->group(function () {
+    // Image Upload for Editor
+    Route::post('/upload/image', [UploadController::class, 'image']);
+
     Route::get('/case-studies', [AdminCaseStudyController::class, 'index']);
     Route::get('/case-studies/{id}', [AdminCaseStudyController::class, 'show']);
     Route::post('/case-studies', [AdminCaseStudyController::class, 'store']);
@@ -65,6 +73,29 @@ Route::middleware(['auth', 'force-password-change'])->prefix('api/admin')->group
 Route::get('/discovery', [DiscoveryController::class, 'chat'])->name('discovery.chat');
 Route::get('/discovery/{sessionId}/summary', [DiscoveryController::class, 'summary'])->name('discovery.summary');
 Route::get('/api/discovery/{sessionId}/summary', [DiscoveryController::class, 'getSummaryData']);
+
+/*
+|--------------------------------------------------------------------------
+| Blog Routes (Public)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('blog')->name('blog.')->group(function () {
+    Route::get('/', [BlogController::class, 'index'])->name('index');
+    Route::get('/category/{slug}', [BlogController::class, 'category'])->name('category');
+    Route::get('/{slug}', [BlogController::class, 'show'])->name('show');
+});
+
+// Sitemap
+Route::get('/sitemap.xml', [BlogController::class, 'sitemap'])->name('sitemap');
+
+// Blog API Routes (for SPA)
+Route::prefix('api/blog')->group(function () {
+    Route::get('/', [BlogController::class, 'apiIndex']);
+    Route::get('/categories', [BlogController::class, 'apiCategories']);
+    Route::get('/category/{slug}', [BlogController::class, 'apiCategory']);
+    Route::get('/article/{slug}', [BlogController::class, 'apiShow']);
+});
 
 // Admin Auth Routes (guest only)
 Route::middleware(['guest'])->prefix('admin')->group(function () {
@@ -124,6 +155,57 @@ Route::middleware(['auth', 'force-password-change'])->prefix('admin')->name('adm
         Route::get('/', [PageController::class, 'projects'])->name('index');
         Route::get('/create', [PageController::class, 'projects'])->name('create');
         Route::get('/{id}/edit', [PageController::class, 'projects'])->name('edit');
+    });
+
+    // Blog Articles Management
+    Route::prefix('articles')->name('articles.')->group(function () {
+        // Article CRUD (SPA views)
+        Route::get('/', [ArticleController::class, 'index'])->name('index');
+        Route::get('/create', [ArticleController::class, 'create'])->name('create');
+        Route::post('/', [ArticleController::class, 'store'])->name('store');
+
+        // API endpoints for SPA data fetching (must be before {article} routes)
+        Route::get('/api/list', [ArticleController::class, 'apiIndex'])->name('api.index');
+        Route::get('/api/create-data', [ArticleController::class, 'apiCreate'])->name('api.create');
+
+        // AI Generation
+        Route::post('/generate', [ArticleController::class, 'generate'])->name('generate');
+
+        // Settings (must be before {article} routes)
+        Route::get('/settings', [ArticleSettingsController::class, 'index'])->name('settings');
+        Route::put('/settings', [ArticleSettingsController::class, 'update'])->name('settings.update');
+        Route::post('/settings/test-connection', [ArticleSettingsController::class, 'testConnection'])->name('settings.test');
+
+        // Categories (must be before {article} routes)
+        Route::prefix('categories')->name('categories.')->group(function () {
+            Route::get('/', [ArticleCategoryController::class, 'index'])->name('index');
+            Route::get('/create', [ArticleCategoryController::class, 'create'])->name('create');
+            Route::post('/', [ArticleCategoryController::class, 'store'])->name('store');
+            Route::get('/api/list', [ArticleCategoryController::class, 'apiIndex'])->name('api.index');
+            Route::post('/reorder', [ArticleCategoryController::class, 'reorder'])->name('reorder');
+            Route::get('/{category}', [ArticleCategoryController::class, 'show'])->name('show');
+            Route::get('/{category}/edit', [ArticleCategoryController::class, 'edit'])->name('edit');
+            Route::put('/{category}', [ArticleCategoryController::class, 'update'])->name('update');
+            Route::delete('/{category}', [ArticleCategoryController::class, 'destroy'])->name('destroy');
+        });
+
+        // API endpoints for single article (must be before {article} routes)
+        Route::get('/api/{article}/data', [ArticleController::class, 'apiShow'])->name('api.show');
+        Route::get('/api/{article}/edit-data', [ArticleController::class, 'apiEdit'])->name('api.edit');
+
+        // Article single routes (must be last - catches all)
+        Route::get('/{article}', [ArticleController::class, 'show'])->name('show');
+        Route::get('/{article}/edit', [ArticleController::class, 'edit'])->name('edit');
+        Route::put('/{article}', [ArticleController::class, 'update'])->name('update');
+        Route::delete('/{article}', [ArticleController::class, 'destroy'])->name('destroy');
+
+        // Article Actions
+        Route::post('/{article}/publish', [ArticleController::class, 'publish'])->name('publish');
+        Route::post('/{article}/schedule', [ArticleController::class, 'schedule'])->name('schedule');
+        Route::post('/{article}/submit-for-review', [ArticleController::class, 'submitForReview'])->name('submit-for-review');
+        Route::post('/{article}/approve', [ArticleController::class, 'approve'])->name('approve');
+        Route::post('/{article}/reject', [ArticleController::class, 'reject'])->name('reject');
+        Route::post('/{article}/generate-image', [ArticleController::class, 'generateImage'])->name('generate-image');
     });
 
     // Admin Helpdesk (SPA - React handles routing)

@@ -45,11 +45,15 @@ return [
     ],
 
     'openai' => [
-        'key' => env('OPENAI_API_KEY'),
-        'model' => env('OPENAI_MODEL', 'gpt-4'),
+        'api_key' => env('OPENAI_API_KEY'),
+        'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o'),
         'whisper_model' => env('OPENAI_WHISPER_MODEL', 'whisper-1'),
         'tts_model' => env('OPENAI_TTS_MODEL', 'tts-1'),
         'tts_voice' => env('OPENAI_TTS_VOICE', 'alloy'),
+        'dalle_model' => env('OPENAI_DALLE_MODEL', 'dall-e-3'),
+        'dalle_size' => env('OPENAI_DALLE_SIZE', '1792x1024'),
+        'dalle_quality' => env('OPENAI_DALLE_QUALITY', 'standard'),
     ],
 
     'stripe' => [

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, MessageSquare, LogOut, Briefcase, Ticket } from 'lucide-react';
+import { FileText, MessageSquare, LogOut, Briefcase, Ticket, Sparkles } from 'lucide-react';
 
 const Dashboard = () => {
   const handleLogout = async () => {
@@ -48,6 +48,13 @@ const Dashboard = () => {
       icon: Ticket,
       link: '/admin/helpdesk',
       color: 'from-orange-500 to-amber-500',
+    },
+    {
+      title: 'Blog Articles',
+      description: 'AI-powered blog with automated article generation',
+      icon: Sparkles,
+      link: '/admin/articles',
+      color: 'from-violet-500 to-purple-500',
     },
   ];
 
