@@ -202,7 +202,7 @@ Return your response as a valid JSON object with this exact structure (output ON
 {
     "title": "SEO-optimized article title (50-60 characters ideal)",
     "meta_title": "SEO meta title for search results (can be same as title or slightly different, 50-60 characters)",
-    "meta_description": "Compelling meta description for search results (150-160 characters)",
+    "meta_description": "MUST be under 155 characters - this is a hard limit for Google search results",
     "meta_keywords": "comma, separated, seo, keywords, relevant, to, article, topic",
     "excerpt": "A 2-3 sentence summary for article previews",
     "content": "Full article content in clean HTML format (800-1200 words)",

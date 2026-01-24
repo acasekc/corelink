@@ -248,12 +248,18 @@ class ArticleService
         $articleData = $result['article'];
         $metadata = $result['metadata'];
 
+        // Truncate meta_description to 155 chars for SEO (Google's limit)
+        $metaDescription = $articleData['meta_description'] ?? '';
+        if (strlen($metaDescription) > 155) {
+            $metaDescription = substr($metaDescription, 0, 152).'...';
+        }
+
         // Create the article
         $article = Article::create([
             'title' => $articleData['title'],
             'slug' => $articleData['suggested_slug'],
             'meta_title' => $articleData['meta_title'] ?? null,
-            'meta_description' => $articleData['meta_description'],
+            'meta_description' => $metaDescription,
             'meta_keywords' => $articleData['meta_keywords'] ?? null,
             'excerpt' => $articleData['excerpt'],
             'content' => $articleData['content'],
