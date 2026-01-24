@@ -50,7 +50,7 @@ class ArticleCategoryController extends Controller
             'slug' => 'nullable|string|max:255|unique:article_categories,slug',
             'description' => 'nullable|string|max:500',
             'prompt_guidance' => 'nullable|string|max:2000',
-            'image_prompt' => 'nullable|string|max:500',
+            'image_prompt' => 'nullable|string|max:2000',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
         ]);
@@ -89,7 +89,7 @@ class ArticleCategoryController extends Controller
             'slug' => 'sometimes|nullable|string|max:255|unique:article_categories,slug,'.$category->id,
             'description' => 'nullable|string|max:500',
             'prompt_guidance' => 'nullable|string|max:2000',
-            'image_prompt' => 'nullable|string|max:500',
+            'image_prompt' => 'nullable|string|max:2000',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
         ]);
