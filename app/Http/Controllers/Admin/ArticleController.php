@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\ArticleCategory;
+use App\Models\ArticleGenerationSettings;
 use App\Services\ArticleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -282,6 +283,14 @@ class ArticleController extends Controller
      */
     public function generateImage(Article $article): JsonResponse
     {
+        $settings = ArticleGenerationSettings::getSettings();
+
+        if (! $settings->dalle_enabled) {
+            return response()->json([
+                'message' => 'DALL-E image generation is disabled in settings',
+            ], 422);
+        }
+
         $success = $this->articleService->generateArticleImage($article);
 
         if (! $success) {
