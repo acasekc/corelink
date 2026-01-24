@@ -329,6 +329,16 @@ class ArticleService
         }
 
         $imagePath = $imageResult['path'];
+
+        if (empty($imagePath)) {
+            Log::warning('Image generation returned empty path', [
+                'article_id' => $article->id,
+                'result' => $imageResult,
+            ]);
+
+            return false;
+        }
+
         $imageAlt = $article->featured_image_alt ?? $article->title;
 
         // Build the image HTML tag

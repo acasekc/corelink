@@ -112,11 +112,15 @@ class ImageGenerationService
             $savedPath = $this->saveImage($imageUrl, $articleSlug);
 
             if (! $savedPath) {
-                return [
-                    'success' => true,
+                Log::error('Image generated but failed to save locally', [
                     'url' => $imageUrl,
-                    'path' => null,
-                    'error' => 'Image generated but failed to save locally',
+                    'disk' => $this->storageDisk,
+                ]);
+
+                return [
+                    'success' => false,
+                    'url' => $imageUrl,
+                    'error' => 'Image generated but failed to save to storage',
                 ];
             }
 
@@ -144,7 +148,19 @@ class ImageGenerationService
     private function saveImage(string $url, ?string $articleSlug = null): ?string
     {
         try {
+            Log::info('Attempting to save generated image', [
+                'url' => substr($url, 0, 100).'...',
+                'disk' => $this->storageDisk,
+                'slug' => $articleSlug,
+            ]);
+
             $imageContent = Http::timeout(60)->get($url)->body();
+
+            if (empty($imageContent)) {
+                Log::error('Downloaded image content is empty');
+
+                return null;
+            }
 
             $filename = $articleSlug
                 ? Str::slug($articleSlug).'-'.time().'.png'
@@ -152,13 +168,27 @@ class ImageGenerationService
 
             $path = "articles/images/{$filename}";
 
-            Storage::disk($this->storageDisk)->put($path, $imageContent, 'public');
+            $saved = Storage::disk($this->storageDisk)->put($path, $imageContent, 'public');
+
+            if (! $saved) {
+                Log::error('Storage::put returned false', ['path' => $path]);
+
+                return null;
+            }
 
             // Return the full URL for the stored file
-            return Storage::disk($this->storageDisk)->url($path);
+            $fullUrl = Storage::disk($this->storageDisk)->url($path);
+
+            Log::info('Image saved successfully', [
+                'path' => $path,
+                'url' => $fullUrl,
+            ]);
+
+            return $fullUrl;
         } catch (\Exception $e) {
             Log::error('Failed to save generated image', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'url' => $url,
                 'disk' => $this->storageDisk,
             ]);
