@@ -26,16 +26,16 @@ const ArticleCard = ({ article, featured = false }) => {
             />
           </div>
         )}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {article.category && (
-            <span className="inline-block px-3 py-1 bg-cyan-100 text-cyan-700 text-sm font-medium rounded-full mb-3">
+            <span className="inline-block px-2 py-0.5 sm:px-3 sm:py-1 bg-cyan-100 text-cyan-700 text-xs sm:text-sm font-medium rounded-full mb-2 sm:mb-3">
               {article.category.name}
             </span>
           )}
-          <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-cyan-600 transition-colors">
+          <h3 className="text-base sm:text-xl font-bold text-slate-900 mb-2 group-hover:text-cyan-600 transition-colors line-clamp-2">
             {article.title}
           </h3>
-          <p className="text-slate-600 mb-4 line-clamp-2">{article.excerpt}</p>
+          <p className="text-sm sm:text-base text-slate-600 mb-3 sm:mb-4 line-clamp-2">{article.excerpt}</p>
           <div className="flex items-center text-sm text-slate-500 gap-4">
             <span className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
@@ -56,10 +56,10 @@ const ArticleCard = ({ article, featured = false }) => {
   return (
     <Link
       to={`/blog/${article.slug}`}
-      className="group flex gap-4 p-4 bg-white rounded-xl hover:bg-slate-50 transition-colors"
+      className="group flex gap-3 sm:gap-4 p-3 sm:p-4 bg-white rounded-xl hover:bg-slate-50 transition-colors"
     >
       {article.featured_image && (
-        <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
+        <div className="w-16 h-16 sm:w-24 sm:h-24 shrink-0 rounded-lg overflow-hidden">
           <img
             src={article.featured_image}
             alt={article.title}
@@ -73,11 +73,11 @@ const ArticleCard = ({ article, featured = false }) => {
             {article.category.name}
           </span>
         )}
-        <h4 className="font-semibold text-slate-900 group-hover:text-cyan-600 transition-colors truncate">
+        <h4 className="font-semibold text-sm sm:text-base text-slate-900 group-hover:text-cyan-600 transition-colors line-clamp-2">
           {article.title}
         </h4>
-        <p className="text-sm text-slate-500 line-clamp-2">{article.excerpt}</p>
-        <span className="text-xs text-slate-400 mt-1">
+        <p className="text-xs sm:text-sm text-slate-500 line-clamp-2 hidden sm:block">{article.excerpt}</p>
+        <span className="text-xs text-slate-400 mt-1 block">
           {formatDate(article.published_at)}
         </span>
       </div>
@@ -158,12 +158,12 @@ export default function BlogIndex() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Hero Section */}
-      <div className="bg-white border-b border-slate-200 py-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+      <div className="bg-white border-b border-slate-200 py-8 sm:py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-2 sm:mb-4">
             Blog & Insights
           </h1>
-          <p className="text-xl text-slate-600 max-w-2xl">
+          <p className="text-base sm:text-xl text-slate-600 max-w-2xl">
             Expert articles on web development, business software, and digital
             strategy for small businesses.
           </p>
@@ -171,17 +171,17 @@ export default function BlogIndex() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Articles */}
           <div className="lg:col-span-2 space-y-8">
             {/* Featured Articles */}
             {featuredArticles && featuredArticles.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-6">
                   Featured Articles
                 </h2>
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                   {featuredArticles.slice(0, 2).map((article) => (
                     <ArticleCard
                       key={article.id}
@@ -195,7 +195,7 @@ export default function BlogIndex() {
 
             {/* All Articles */}
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-4 sm:mb-6">
                 Latest Articles
               </h2>
               {articles.data?.length > 0 ? (

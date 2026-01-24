@@ -6,11 +6,22 @@ import {
   ArrowLeft,
   ArrowRight,
   Share2,
-  Twitter,
   Linkedin,
   Facebook,
   Loader2,
 } from "lucide-react";
+
+// Custom X (formerly Twitter) icon
+const XIcon = ({ className }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
 
 const ShareButton = ({ icon: Icon, label, onClick, className }) => (
   <button
@@ -119,11 +130,11 @@ export default function BlogShow() {
     });
   };
 
-  const shareOnTwitter = () => {
+  const shareOnX = () => {
     const url = encodeURIComponent(window.location.href);
     const text = encodeURIComponent(data.article?.title || "");
     window.open(
-      `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
+      `https://x.com/intent/tweet?url=${url}&text=${text}`,
       "_blank"
     );
   };
@@ -222,10 +233,10 @@ export default function BlogShow() {
           <div className="flex items-center gap-2 mt-6">
             <span className="text-sm text-slate-500 mr-2">Share:</span>
             <ShareButton
-              icon={Twitter}
-              label="Share on Twitter"
-              onClick={shareOnTwitter}
-              className="bg-slate-800 hover:bg-blue-500 hover:text-white text-slate-400"
+              icon={XIcon}
+              label="Share on X"
+              onClick={shareOnX}
+              className="bg-slate-800 hover:bg-slate-900 hover:text-white text-slate-400"
             />
             <ShareButton
               icon={Linkedin}

@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X } from "lucide-react";
 import Logo from "./Logo";
 
 /**
@@ -8,6 +9,12 @@ import Logo from "./Logo";
  */
 export default function BlogLayout({ children }) {
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   // Update canonical tag on route change
   useEffect(() => {
@@ -32,7 +39,7 @@ export default function BlogLayout({ children }) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Dark Header */}
       <header
         className="sticky top-0 z-50"
@@ -85,7 +92,51 @@ export default function BlogLayout({ children }) {
             >
               Get In Touch
             </Link>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-slate-400 hover:text-white transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </nav>
+
+          {/* Mobile Menu */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="md:hidden overflow-hidden"
+              >
+                <div className="py-4 space-y-2 border-t border-slate-700 mt-3">
+                  {navItems.map((item) => (
+                    <Link
+                      key={item.label}
+                      to={item.href}
+                      className={`block px-3 py-2 rounded-lg transition-colors ${
+                        location.pathname === item.href ||
+                        (item.href === "/blog" && location.pathname.startsWith("/blog"))
+                          ? "text-cyan-400 bg-slate-800"
+                          : "text-slate-400 hover:text-white hover:bg-slate-800"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                  <Link
+                    to="/contact"
+                    className="block mt-3 text-center px-4 py-2 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-400 transition-colors"
+                  >
+                    Get In Touch
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </header>
 
