@@ -38,7 +38,20 @@ class BlogController extends Controller
      */
     public function show(string $slug): View
     {
-        return view('app');
+        $article = Article::where('slug', $slug)
+            ->published()
+            ->with('category')
+            ->first();
+
+        return view('app', [
+            'ogMeta' => $article ? [
+                'title' => $article->meta_title ?? $article->title,
+                'description' => $article->meta_description ?? $article->excerpt,
+                'image' => $article->featured_image,
+                'url' => url("/blog/{$article->slug}"),
+                'type' => 'article',
+            ] : null,
+        ]);
     }
 
     /**
