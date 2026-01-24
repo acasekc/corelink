@@ -283,7 +283,7 @@ class ArticleController extends Controller
      */
     public function generateImage(Article $article): JsonResponse
     {
-        $settings = ArticleGenerationSettings::getSettings();
+        $settings = ArticleGenerationSettings::get();
 
         if (! $settings->dalle_enabled) {
             return response()->json([
