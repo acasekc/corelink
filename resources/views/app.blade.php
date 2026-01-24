@@ -13,22 +13,14 @@
         <meta property="og:url" content="{{ $ogMeta['url'] ?? url()->current() }}">
         <meta property="og:title" content="{{ $ogMeta['title'] ?? config('app.name') }}">
         <meta property="og:description" content="{{ $ogMeta['description'] ?? 'CoreLink Development specializes in crafting intelligent, scalable web and mobile applications using cutting-edge AI technology.' }}">
-        @if(isset($ogMeta['image']) && $ogMeta['image'])
-        <meta property="og:image" content="{{ $ogMeta['image'] }}">
-        @else
-        <meta property="og:image" content="{{ url('/images/og-default.png') }}">
-        @endif
+        <meta property="og:image" content="{{ (isset($ogMeta['image']) && $ogMeta['image']) ? $ogMeta['image'] : url('/images/og-default.png') }}">
 
         <!-- Twitter -->
         <meta property="twitter:card" content="summary_large_image">
         <meta property="twitter:url" content="{{ $ogMeta['url'] ?? url()->current() }}">
         <meta property="twitter:title" content="{{ $ogMeta['title'] ?? config('app.name') }}">
         <meta property="twitter:description" content="{{ $ogMeta['description'] ?? 'CoreLink Development specializes in crafting intelligent, scalable web and mobile applications using cutting-edge AI technology.' }}">
-        @if(isset($ogMeta['image']) && $ogMeta['image'])
-        <meta property="twitter:image" content="{{ $ogMeta['image'] }}">
-        @else
-        <meta property="twitter:image" content="{{ url('/images/og-default.png') }}">
-        @endif
+        <meta property="twitter:image" content="{{ (isset($ogMeta['image']) && $ogMeta['image']) ? $ogMeta['image'] : url('/images/og-default.png') }}">
 
         <!-- Favicon -->
         <link rel="icon" type="image/png" href="/images/favicon.png">
