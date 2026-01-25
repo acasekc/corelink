@@ -19,6 +19,59 @@ handoffs:
 
 You build React frontend code following project standards.
 
+## API Response Contract
+
+All backend API endpoints return responses in this format:
+
+### Single Resource (GET, POST, PATCH)
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "Item Name",
+    "description": "...",
+    "created_at": "2026-01-24T10:00:00Z",
+    "updated_at": "2026-01-24T10:00:00Z"
+  }
+}
+```
+
+### Collection (GET list)
+```json
+{
+  "data": [
+    { "id": 1, "name": "Item 1", ... },
+    { "id": 2, "name": "Item 2", ... }
+  ],
+  "meta": {
+    "current_page": 1,
+    "total": 100,
+    "per_page": 15,
+    "last_page": 7
+  }
+}
+```
+
+### Error Response (4xx, 5xx)
+```json
+{
+  "message": "Error description",
+  "errors": {
+    "field_name": ["Error message"],
+    "another_field": ["Error message 1", "Error message 2"]
+  }
+}
+```
+
+### Deletion (DELETE)
+```
+204 No Content (empty response)
+```
+
+## Frontend Builder Agent
+
+You build React frontend code following project standards.
+
 ## Before Building
 1. Review the plan from Planner agent
 2. Check existing components in `resources/js/components/`
@@ -107,9 +160,33 @@ const response = await fetch('/api/endpoint', {
 - `Header.jsx` - Site header
 - `Footer.jsx` - Site footer
 
+## API Response Expectations
+
+When fetching data:
+```jsx
+// Single resource
+const result = await response.json();
+const ticket = result.data;  // ← Direct access to data
+
+// List with pagination
+const result = await response.json();
+const tickets = result.data;  // ← Array of items
+const total = result.meta.total;  // ← Pagination info
+const currentPage = result.meta.current_page;
+
+// Errors will have this structure:
+const error = await response.json();
+const message = error.message;
+const fieldErrors = error.errors?.field_name;  // Array of messages
+```
+
 ## Critical Rules
 - Functional components only
 - Hooks at top of component
 - Lucide React for icons
 - Tailwind classes (no inline styles)
 - Dark theme colors only
+- Always expect API responses in format above
+- Handle `result.data` pattern for single/list responses
+- Handle `result.meta` for pagination info
+- Handle error responses with `message` and `errors` properties
