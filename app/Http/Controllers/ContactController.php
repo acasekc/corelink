@@ -17,7 +17,7 @@ class ContactController extends Controller
             'message' => 'required|string|max:5000',
         ]);
 
-        Mail::to(env('SALES_EMAIL'))
+        Mail::to(config('mail.sales_email'))
             ->send(new ContactFormSubmission(
                 name: $validated['name'],
                 email: $validated['email'],

@@ -129,4 +129,16 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Sales/Contact Email Address
+    |--------------------------------------------------------------------------
+    |
+    | Contact form submissions will be sent to this email address.
+    | Defaults to the from address if not specified.
+    |
+    */
+
+    'sales_email' => env('SALES_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+
 ];
