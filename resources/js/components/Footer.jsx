@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { Instagram, Facebook } from 'lucide-react';
 import Logo from './Logo';
 
 const Footer = () => {
@@ -30,6 +31,24 @@ const Footer = () => {
             <Link to="/privacy" className="text-muted-foreground hover:text-foreground text-sm transition">
               Privacy Policy
             </Link>
+            <a
+              href="https://instagram.com/Corelink.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition"
+              aria-label="Instagram"
+            >
+              <Instagram className="w-5 h-5" />
+            </a>
+            <a
+              href="https://www.facebook.com/corelink.dev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition"
+              aria-label="Facebook"
+            >
+              <Facebook className="w-5 h-5" />
+            </a>
           </motion.div>
           
           <motion.p
