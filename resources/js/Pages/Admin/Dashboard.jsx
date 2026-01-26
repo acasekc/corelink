@@ -64,7 +64,15 @@ const Dashboard = () => {
       <header className="border-b border-slate-700 bg-slate-900/80 backdrop-blur">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <img src="/images/logo_100_h.png" alt="CoreLink Logo" className="h-8" />
+            <img
+              src="/images/logo_100_h.png"
+              alt="CoreLink Logo"
+              width={400}
+              height={100}
+              decoding="async"
+              loading="lazy"
+              className="h-8 w-auto"
+            />
           </Link>
           <button
             onClick={handleLogout}
