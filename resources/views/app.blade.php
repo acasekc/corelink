@@ -25,6 +25,7 @@
         <!-- Favicon -->
         <link rel="icon" type="image/png" href="/images/favicon.png">
 
+        @unless(request()->is('admin/*') || request()->is('helpdesk/*'))
         <!-- Google Tag Manager (non-blocking) -->
         <script async defer>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
         new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -33,8 +34,11 @@
         })(window,document,'script','dataLayer','GTM-WDTLBL3P');</script>
         <!-- End Google Tag Manager -->
 
-        <!-- DNS Prefetch for external resources -->
+        <!-- DNS Prefetch for GTM -->
         <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+        @endunless
+
+        <!-- DNS Prefetch for external resources -->
         <link rel="dns-prefetch" href="https://fonts.googleapis.com">
         <link rel="dns-prefetch" href="https://fonts.gstatic.com">
 
@@ -51,10 +55,12 @@
         @vite(['resources/css/app.css', 'resources/js/main.jsx'])
     </head>
     <body class="font-sans antialiased">
+        @unless(request()->is('admin/*') || request()->is('helpdesk/*'))
         <!-- Google Tag Manager (noscript) -->
         <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WDTLBL3P"
         height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <!-- End Google Tag Manager (noscript) -->
+        @endunless
         <div id="app"></div>
     </body>
 </html>
