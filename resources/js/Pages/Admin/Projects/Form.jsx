@@ -31,7 +31,7 @@ export default function ProjectForm({ project: propProject }) {
     if (id && !propProject) {
       const fetchProject = async () => {
         try {
-          const response = await fetch(`/projects/${id}`);
+          const response = await fetch(`/api/admin/projects/${id}`);
           if (!response.ok) {
             throw new Error('Failed to fetch project');
           }
@@ -197,7 +197,7 @@ export default function ProjectForm({ project: propProject }) {
       const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
       
       const projectId = id || project?.id;
-      const url = isEditing ? `/projects/${projectId}` : '/projects';
+      const url = isEditing ? `/api/admin/projects/${projectId}` : '/api/admin/projects';
       
       // Laravel can't handle true PUT with FormData, so use POST with _method
       if (isEditing) {
