@@ -47,7 +47,7 @@ const techStack = {
   frontend: {
     icon: Monitor,
     title: "Frontend",
-    items: ["Vue 3", "Inertia.js", "Tailwind CSS", "Vite", "TypeScript"]
+    items: ["React","Vue 3", "Inertia.js", "Tailwind CSS", "Vite", "TypeScript",]
   },
   tools: {
     icon: Wrench,

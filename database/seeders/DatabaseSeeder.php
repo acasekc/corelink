@@ -2,12 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Mail\AdminCredentialsMail;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 
 class DatabaseSeeder extends Seeder
 {
@@ -31,10 +29,12 @@ class DatabaseSeeder extends Seeder
         );
 
         // Email the admin their credentials
-        Mail::to($admin->email)->send(new AdminCredentialsMail($admin, $password));
         $this->command->info("Admin user created: {$admin->email}");
         $this->command->info("Password emailed to: {$admin->email}");
         $this->command->info($password);
         $this->call(ProjectSeeder::class);
+        $this->call(HelpdeskSeeder::class);
+        $this->call(HourlyRateCategorySeeder::class);
+        $this->call(ArticleCategorySeeder::class);
     }
 }
