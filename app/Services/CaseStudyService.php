@@ -47,9 +47,18 @@ class CaseStudyService
 
     public function create(array $data): CaseStudy
     {
+        // Ensure title exists
+        if (empty($data['title'])) {
+            throw new \InvalidArgumentException('Title is required.');
+        }
+
         // Auto-generate slug if not provided
         if (empty($data['slug'])) {
-            $data['slug'] = Str::slug($data['title']);
+            $slug = Str::slug($data['title']);
+            if (empty($slug)) {
+                throw new \InvalidArgumentException('Could not generate slug from title. Please provide a valid title or explicit slug.');
+            }
+            $data['slug'] = $slug;
         }
 
         // Handle hero image upload
@@ -75,7 +84,11 @@ class CaseStudyService
     {
         // Auto-generate slug if provided in update
         if (isset($data['title']) && empty($data['slug'])) {
-            $data['slug'] = Str::slug($data['title']);
+            $slug = Str::slug($data['title']);
+            if (empty($slug)) {
+                throw new \InvalidArgumentException('Could not generate slug from title. Please provide a valid title or slug.');
+            }
+            $data['slug'] = $slug;
         }
 
         // Handle hero image upload
@@ -150,7 +163,15 @@ class CaseStudyService
 
     protected function uploadHeroImage(UploadedFile $file): string
     {
+        if (! $file || ! $file->isValid()) {
+            throw new \InvalidArgumentException('Invalid file upload. Please ensure the file is valid and not empty.');
+        }
+
         $path = $file->store('case-studies', 'public');
+
+        if (empty($path)) {
+            throw new \RuntimeException('Failed to store uploaded file. Please try again.');
+        }
 
         return '/storage/'.$path;
     }
