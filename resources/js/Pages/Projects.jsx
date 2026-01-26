@@ -39,6 +39,9 @@ const Lightbox = ({ images, currentIndex, onClose, onPrev, onNext }) => {
           exit={{ opacity: 0, scale: 0.9 }}
           src={images[currentIndex]}
           alt={`Screenshot ${currentIndex + 1}`}
+          width={1200}
+          height={800}
+          loading="eager"
           className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         />
@@ -294,6 +297,9 @@ const Projects = () => {
                                 <img
                                   src={screenshot}
                                   alt={`${project.title} screenshot ${i + 1}`}
+                                  width={400}
+                                  height={225}
+                                  loading="lazy"
                                   className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-110"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/30 transition-colors flex items-center justify-center">
