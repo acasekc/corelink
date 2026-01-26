@@ -106,23 +106,23 @@ Route::prefix('api/blog')->group(function () {
 });
 
 // Admin Auth Routes (guest only)
-Route::middleware(['guest'])->prefix('admin')->group(function () {
+Route::middleware(['guest', 'no-cache'])->prefix('admin')->group(function () {
     Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
     Route::post('/login', [AdminAuthController::class, 'login']);
 });
 
 // Admin Logout (authenticated)
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
-    ->middleware('auth')
+    ->middleware(['auth', 'no-cache'])
     ->name('admin.logout');
 
 // Admin Change Password (authenticated, exempt from force-password-change)
-Route::middleware(['auth'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'no-cache'])->prefix('admin')->group(function () {
     Route::get('/change-password', [PageController::class, 'home'])->name('admin.change-password');
 });
 
 // Admin Routes (requires authentication)
-Route::middleware(['auth', 'force-password-change'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'force-password-change', 'no-cache'])->prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
     Route::get('/', [PageController::class, 'home'])->name('dashboard');
 

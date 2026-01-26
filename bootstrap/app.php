@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'helpdesk.api-key' => \App\Http\Middleware\HelpdeskApiKeyAuth::class,
             'force-password-change' => \App\Http\Middleware\ForcePasswordChange::class,
+            'no-cache' => \App\Http\Middleware\NoCacheHeaders::class,
         ]);
 
         // Configure redirect for unauthenticated users
