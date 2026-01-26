@@ -167,9 +167,10 @@ class CaseStudyService
             throw new \InvalidArgumentException('Invalid file upload. Please ensure the file is valid and not empty.');
         }
 
-        $path = $file->store('case-studies', 'public');
+        // Use explicit disk() call to ensure 'public' disk is used, regardless of default
+        $path = Storage::disk('public')->putFile('case-studies', $file);
 
-        if (empty($path)) {
+        if (! $path) {
             throw new \RuntimeException('Failed to store uploaded file. Please try again.');
         }
 
