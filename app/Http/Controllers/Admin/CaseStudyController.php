@@ -3,134 +3,73 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\CaseStudy;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\StoreCaseStudyRequest;
+use App\Http\Requests\UpdateCaseStudyRequest;
+use App\Http\Resources\CaseStudyResource;
+use App\Services\CaseStudyService;
+use Illuminate\Http\JsonResponse;
 
 class CaseStudyController extends Controller
 {
-    public function index()
+    public function __construct(protected CaseStudyService $caseStudyService) {}
+
+    public function index(): JsonResponse
     {
-        $caseStudies = CaseStudy::orderBy('order')->get();
-        return response()->json($caseStudies);
+        $this->authorize('viewAny', \App\Models\CaseStudy::class);
+
+        $caseStudies = $this->caseStudyService->list();
+
+        return response()->json(CaseStudyResource::collection($caseStudies));
     }
 
-    public function store(Request $request)
+    public function store(StoreCaseStudyRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|unique:case_studies,slug',
-            'subtitle' => 'nullable|string',
-            'description' => 'nullable|string',
-            'client_name' => 'nullable|string',
-            'industry' => 'nullable|string',
-            'project_type' => 'nullable|string',
-            'technologies' => 'nullable|string',
-            'hero_image' => 'nullable|image|max:2048',
-            'hero_image_url' => 'nullable|string',
-            'content' => 'required|string',
-            'metrics' => 'nullable|string',
-            'is_published' => 'nullable|boolean',
-            'order' => 'nullable|integer',
-        ]);
+        $this->authorize('create', \App\Models\CaseStudy::class);
 
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['title']);
-        }
-        
-        // Decode JSON strings
-        if (isset($validated['technologies'])) {
-            $validated['technologies'] = json_decode($validated['technologies'], true);
-        }
-        if (isset($validated['metrics'])) {
-            $validated['metrics'] = json_decode($validated['metrics'], true);
-        }
-        
-        // Handle image upload
-        if ($request->hasFile('hero_image')) {
-            $path = $request->file('hero_image')->store('case-studies', 'public');
-            $validated['hero_image'] = '/storage/' . $path;
-        } elseif (isset($validated['hero_image_url'])) {
-            $validated['hero_image'] = $validated['hero_image_url'];
-        }
-        unset($validated['hero_image_url']);
+        $caseStudy = $this->caseStudyService->create($request->validated());
 
-        $caseStudy = CaseStudy::create($validated);
-        return response()->json($caseStudy, 201);
+        return response()->json(new CaseStudyResource($caseStudy), 201);
     }
 
-    public function show($id)
+    public function show(int $id): JsonResponse
     {
-        $caseStudy = CaseStudy::findOrFail($id);
-        return response()->json($caseStudy);
+        $caseStudy = $this->caseStudyService->getById($id);
+
+        $this->authorize('view', $caseStudy);
+
+        return response()->json(new CaseStudyResource($caseStudy));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateCaseStudyRequest $request, int $id): JsonResponse
     {
-        $caseStudy = CaseStudy::findOrFail($id);
+        $caseStudy = $this->caseStudyService->getById($id);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'slug' => 'nullable|string|unique:case_studies,slug,' . $id,
-            'subtitle' => 'nullable|string',
-            'description' => 'nullable|string',
-            'client_name' => 'nullable|string',
-            'industry' => 'nullable|string',
-            'project_type' => 'nullable|string',
-            'technologies' => 'nullable|string',
-            'hero_image' => 'nullable|image|max:2048',
-            'hero_image_url' => 'nullable|string',
-            'content' => 'required|string',
-            'metrics' => 'nullable|string',
-            'is_published' => 'nullable|boolean',
-            'order' => 'nullable|integer',
-        ]);
+        $this->authorize('update', $caseStudy);
 
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['title']);
-        }
-        
-        // Decode JSON strings
-        if (isset($validated['technologies'])) {
-            $validated['technologies'] = json_decode($validated['technologies'], true);
-        }
-        if (isset($validated['metrics'])) {
-            $validated['metrics'] = json_decode($validated['metrics'], true);
-        }
-        
-        // Handle image upload
-        if ($request->hasFile('hero_image')) {
-            // Delete old image if exists
-            if ($caseStudy->hero_image && str_starts_with($caseStudy->hero_image, '/storage/')) {
-                $oldPath = str_replace('/storage/', '', $caseStudy->hero_image);
-                Storage::disk('public')->delete($oldPath);
-            }
-            $path = $request->file('hero_image')->store('case-studies', 'public');
-            $validated['hero_image'] = '/storage/' . $path;
-        } elseif (isset($validated['hero_image_url'])) {
-            $validated['hero_image'] = $validated['hero_image_url'];
-        } else {
-            unset($validated['hero_image']);
-        }
-        unset($validated['hero_image_url']);
+        $updated = $this->caseStudyService->update($caseStudy, $request->validated());
 
-        $caseStudy->update($validated);
-        return response()->json($caseStudy);
+        return response()->json(new CaseStudyResource($updated));
     }
 
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
-        $caseStudy = CaseStudy::findOrFail($id);
-        $caseStudy->delete();
-        return response()->json(['message' => 'Case study deleted'], 200);
+        $caseStudy = $this->caseStudyService->getById($id);
+
+        $this->authorize('delete', $caseStudy);
+
+        $this->caseStudyService->delete($caseStudy);
+
+        return response()->json([], 204);
     }
 
-    public function togglePublish($id)
+    public function togglePublish(int $id): JsonResponse
     {
-        $caseStudy = CaseStudy::findOrFail($id);
-        $caseStudy->is_published = !$caseStudy->is_published;
-        $caseStudy->save();
-        return response()->json($caseStudy);
+        $caseStudy = $this->caseStudyService->getById($id);
+
+        $this->authorize('publish', $caseStudy);
+
+        $updated = $this->caseStudyService->togglePublish($caseStudy);
+
+        return response()->json(new CaseStudyResource($updated));
     }
 }

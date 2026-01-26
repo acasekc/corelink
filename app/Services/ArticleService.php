@@ -19,10 +19,22 @@ class ArticleService
         private ImageGenerationService $imageService
     ) {}
 
+    // ========== STANDARD CRUD INTERFACE ==========
+
     /**
-     * Get paginated articles for admin listing.
+     * Get all articles as a collection.
      */
-    public function getAdminArticles(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function list(): Collection
+    {
+        return Article::with(['category', 'reviewer'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get paginated articles with optional filters.
+     */
+    public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         $query = Article::with(['category', 'reviewer'])
             ->orderBy('created_at', 'desc');
@@ -44,6 +56,50 @@ class ArticleService
         }
 
         return $query->paginate($perPage);
+    }
+
+    /**
+     * Get a single article by ID.
+     */
+    public function getById(int $id): Article
+    {
+        return Article::with(['category', 'reviewer'])->findOrFail($id);
+    }
+
+    /**
+     * Create a new article.
+     */
+    public function create(array $data): Article
+    {
+        return Article::create($data);
+    }
+
+    /**
+     * Update an existing article.
+     */
+    public function update(Article $article, array $data): Article
+    {
+        $article->update($data);
+
+        return $article->refresh();
+    }
+
+    /**
+     * Delete an article (soft delete).
+     */
+    public function delete(Article $article): bool
+    {
+        return $article->delete();
+    }
+
+    // ========== SPECIALIZED METHODS ==========
+
+    /**
+     * Get paginated articles for admin listing (legacy alias).
+     */
+    public function getAdminArticles(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->paginate($perPage, $filters);
     }
 
     /**
@@ -70,7 +126,7 @@ class ArticleService
     }
 
     /**
-     * Get recent articles for sidebar/widgets.
+     * Get recent articles for sidebar/widgets (cached).
      */
     public function getRecentArticles(int $limit = 5): Collection
     {
@@ -84,7 +140,7 @@ class ArticleService
     }
 
     /**
-     * Get featured articles (most viewed).
+     * Get featured articles (most viewed, cached).
      */
     public function getFeaturedArticles(int $limit = 4): Collection
     {
@@ -112,32 +168,6 @@ class ArticleService
         }
 
         return $article;
-    }
-
-    /**
-     * Create a new article manually.
-     */
-    public function create(array $data): Article
-    {
-        return Article::create($data);
-    }
-
-    /**
-     * Update an article.
-     */
-    public function update(Article $article, array $data): Article
-    {
-        $article->update($data);
-
-        return $article->fresh();
-    }
-
-    /**
-     * Delete an article (soft delete).
-     */
-    public function delete(Article $article): bool
-    {
-        return $article->delete();
     }
 
     /**
@@ -421,21 +451,28 @@ class ArticleService
     public function getStatistics(): array
     {
         return Cache::remember('blog_statistics', 300, function () {
-            return [
-                'total_articles' => Article::count(),
-                'published_articles' => Article::published()->count(),
+            $statistics = [
+                'total' => Article::count(),
+                'published' => Article::published()->count(),
                 'pending_review' => Article::pendingReview()->count(),
                 'scheduled' => Article::scheduled()->count(),
-                'drafts' => Article::draft()->count(),
+                'draft' => Article::draft()->count(),
                 'total_views' => Article::sum('view_count'),
                 'categories_count' => ArticleCategory::active()->count(),
-                'ai_generated_today' => Article::where('created_at', '>=', now()->startOfDay())
+                'ai_generated' => Article::where('created_at', '>=', now()->startOfDay())
                     ->whereNotNull('ai_generation_metadata')
                     ->count(),
                 'ai_generated_this_week' => Article::where('created_at', '>=', now()->startOfWeek())
                     ->whereNotNull('ai_generation_metadata')
                     ->count(),
             ];
+
+            return array_merge($statistics, [
+                'total_articles' => $statistics['total'],
+                'published_articles' => $statistics['published'],
+                'drafts' => $statistics['draft'],
+                'ai_generated_today' => $statistics['ai_generated'],
+            ]);
         });
     }
 

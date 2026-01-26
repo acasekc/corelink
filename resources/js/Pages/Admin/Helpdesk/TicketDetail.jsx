@@ -631,7 +631,7 @@ const TicketDetail = () => {
                                         multiple
                                         onChange={handleCommentFileSelect}
                                         accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
-                                        className="hidden"
+                                        style={{ display: 'none' }}
                                     />
                                     
                                     {/* Selected Attachments Preview */}
@@ -677,7 +677,13 @@ const TicketDetail = () => {
                                             </label>
                                             <button
                                                 type="button"
-                                                onClick={() => commentFileInputRef.current?.click()}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    if (commentFileInputRef.current) {
+                                                        commentFileInputRef.current.click();
+                                                    }
+                                                }}
                                                 className="flex items-center gap-1 text-sm text-slate-400 hover:text-purple-400 transition"
                                             >
                                                 <Paperclip className="w-4 h-4" />

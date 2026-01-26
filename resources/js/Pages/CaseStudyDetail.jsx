@@ -92,6 +92,10 @@ const CaseStudyDetail = () => {
                 <img 
                   src={caseStudy.hero_image} 
                   alt={caseStudy.title}
+                  width={400}
+                  height={300}
+                  loading="eager"
+                  fetchpriority="high"
                   className="float-right w-1/2 ml-6 mb-4 rounded-lg shadow-lg"
                 />
               )}

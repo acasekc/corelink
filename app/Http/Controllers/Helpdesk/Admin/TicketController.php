@@ -24,12 +24,24 @@ class TicketController extends Controller
             $query->whereHas('project', fn ($q) => $q->where('slug', $request->input('project')));
         }
 
+        if ($request->filled('project_id')) {
+            $query->where('project_id', $request->input('project_id'));
+        }
+
         if ($request->filled('status')) {
             $query->whereHas('status', fn ($q) => $q->where('slug', $request->input('status')));
         }
 
+        if ($request->filled('status_id')) {
+            $query->where('status_id', $request->input('status_id'));
+        }
+
         if ($request->filled('priority')) {
             $query->whereHas('priority', fn ($q) => $q->where('slug', $request->input('priority')));
+        }
+
+        if ($request->filled('priority_id')) {
+            $query->where('priority_id', $request->input('priority_id'));
         }
 
         if ($request->filled('assignee_id')) {
@@ -163,6 +175,9 @@ class TicketController extends Controller
             'content' => 'sometimes|string',
             'github_issue_url' => 'nullable|url',
             'time_estimate' => 'nullable|string|max:50',
+            'status_id' => 'sometimes|exists:helpdesk_ticket_statuses,id',
+            'priority_id' => 'sometimes|exists:helpdesk_ticket_priorities,id',
+            'assignee_id' => 'nullable|sometimes|exists:users,id',
         ]);
 
         if (isset($validated['title']) && $validated['title'] !== $ticket->title) {
@@ -187,6 +202,28 @@ class TicketController extends Controller
             $validated['time_estimate_minutes'] = $newEstimate;
         }
 
+        if (array_key_exists('status_id', $validated) && $validated['status_id'] !== $ticket->status_id) {
+            $oldStatus = $ticket->status;
+            $newStatus = TicketStatus::find($validated['status_id']);
+            $ticket->logActivity('status_changed', $oldStatus?->title, $newStatus?->title);
+        }
+
+        if (array_key_exists('priority_id', $validated) && $validated['priority_id'] !== $ticket->priority_id) {
+            $oldPriority = $ticket->priority;
+            $newPriority = TicketPriority::find($validated['priority_id']);
+            $ticket->logActivity('priority_changed', $oldPriority?->title, $newPriority?->title);
+        }
+
+        if (array_key_exists('assignee_id', $validated) && $validated['assignee_id'] !== $ticket->assignee_id) {
+            $oldAssignee = $ticket->assignee;
+            $newAssignee = $validated['assignee_id'] ? User::find($validated['assignee_id']) : null;
+            $ticket->logActivity(
+                'assigned',
+                $oldAssignee?->name ?? 'Unassigned',
+                $newAssignee?->name ?? 'Unassigned'
+            );
+        }
+
         $ticket->update($validated);
 
         return response()->json([
@@ -200,9 +237,7 @@ class TicketController extends Controller
         $ticket->logActivity('deleted');
         $ticket->delete();
 
-        return response()->json([
-            'message' => 'Ticket deleted successfully',
-        ]);
+        return response()->json([], 204);
     }
 
     public function bulkDestroy(Request $request): JsonResponse
