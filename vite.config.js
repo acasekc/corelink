@@ -16,21 +16,7 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks(id) {
-                    // Vendor chunks
-                    if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
-                        return 'vendor-react';
-                    }
-                    if (id.includes('node_modules/lucide-react')) {
-                        return 'vendor-ui';
-                    }
-                    if (id.includes('node_modules/')) {
-                        return 'vendor-other';
-                    }
-                    
-                    // Layout chunks
-                    if (id.includes('components/PublicLayout') || id.includes('components/AdminLayout')) {
-                        return 'layout';
-                    }
+                    // Only split routes, let Vite handle vendor dependencies
                     
                     // Blog route chunk
                     if (id.includes('Pages/Blog/')) {
@@ -53,7 +39,7 @@ export default defineConfig({
                     }
                     
                     // Admin management routes chunk (projects, case studies)
-                    if (id.includes('Pages/Admin/')) {
+                    if (id.includes('Pages/Admin/') && !id.includes('Pages/Admin/Login')) {
                         return 'route-admin';
                     }
                     
