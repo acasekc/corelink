@@ -184,9 +184,9 @@ const Terms = () => {
                             <h2 className="text-2xl font-semibold text-foreground mb-4">11. Governing Law</h2>
                             <p className="text-muted-foreground leading-relaxed">
                                 These Terms shall be governed by and construed in accordance with the laws of 
-                                the State of Kansas, without regard to its conflict of law provisions. Any 
+                                the State of Missouri, without regard to its conflict of law provisions. Any 
                                 disputes arising under these Terms shall be resolved in the courts located 
-                                in Johnson County, Kansas.
+                                in Johnson County, Missouri.
                             </p>
                         </section>
 
