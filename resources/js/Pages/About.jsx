@@ -12,10 +12,22 @@ import {
   Cpu,
   Smartphone,
   Plug,
-  ShoppingCart
+  ShoppingCart,
+  Heart,
+  Users
 } from "lucide-react";
 
 const philosophyItems = [
+  { 
+    icon: Heart, 
+    title: "Integrity First", 
+    description: "We build trust through transparent communication, honest timelines, and delivering on our promises." 
+  },
+  { 
+    icon: Users, 
+    title: "Service-Minded", 
+    description: "We view our work as an opportunity to serve and uplift our clients and their communities." 
+  },
   { 
     icon: Sparkles, 
     title: "AI-Powered Efficiency", 
