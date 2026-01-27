@@ -54,4 +54,48 @@ class Comment extends Model
     {
         return $this->user?->name ?? $this->submitter_name ?? 'Unknown';
     }
+
+    /**
+     * Check if the comment can be edited/deleted.
+     * Returns true if within 3 minutes of creation AND user is author or admin.
+     */
+    public function canBeModifiedBy(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        // Must be within 3 minutes of creation
+        if ($this->created_at->diffInMinutes(now()) >= 3) {
+            return false;
+        }
+
+        // Admin can modify any comment
+        if ($user->is_admin) {
+            return true;
+        }
+
+        // Author can modify their own comment
+        if ($this->user_id && $this->user_id === $user->id) {
+            return true;
+        }
+
+        // Non-admin user can modify their own comment (by email match)
+        if (! $this->user_id && $this->submitter_email === $user->email) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get seconds remaining until edit window closes.
+     */
+    public function getEditWindowSecondsRemaining(): int
+    {
+        $elapsed = $this->created_at->diffInSeconds(now());
+        $remaining = (3 * 60) - $elapsed;
+
+        return max(0, $remaining);
+    }
 }

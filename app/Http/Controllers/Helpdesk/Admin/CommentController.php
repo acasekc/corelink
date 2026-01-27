@@ -53,6 +53,13 @@ class CommentController extends Controller
 
     public function update(Request $request, Comment $comment): JsonResponse
     {
+        // Check if user can modify this comment (3-minute window)
+        if (! $comment->canBeModifiedBy(auth()->user())) {
+            return response()->json([
+                'message' => 'Edit window has expired (3 minutes) or you do not have permission.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'content' => 'required|string',
         ]);
@@ -67,6 +74,13 @@ class CommentController extends Controller
 
     public function destroy(Comment $comment): JsonResponse
     {
+        // Check if user can modify this comment (3-minute window)
+        if (! $comment->canBeModifiedBy(auth()->user())) {
+            return response()->json([
+                'message' => 'Delete window has expired (3 minutes) or you do not have permission.',
+            ], 403);
+        }
+
         $comment->delete();
 
         return response()->json([
@@ -76,6 +90,8 @@ class CommentController extends Controller
 
     private function formatComment(Comment $comment): array
     {
+        $user = auth()->user();
+
         return [
             'id' => $comment->id,
             'content' => $comment->content,
@@ -87,6 +103,8 @@ class CommentController extends Controller
             'submitter_email' => $comment->submitter_email,
             'is_internal' => $comment->is_internal,
             'is_from_admin' => $comment->isFromAdmin(),
+            'can_modify' => $comment->canBeModifiedBy($user),
+            'edit_window_seconds' => $comment->getEditWindowSecondsRemaining(),
             'attachments' => $comment->attachments->map(fn ($attachment) => [
                 'id' => $attachment->id,
                 'filename' => $attachment->filename,

@@ -8,6 +8,7 @@
     },
     "devDependencies": {
         "@laravel/echo-vue": "^2.2.6",
+        "@playwright/test": "^1.58.0",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-react": "^4.7.0",
         "autoprefixer": "^10.4.23",
@@ -27,6 +28,7 @@
         "@lexical/markdown": "^0.39.0",
         "@lexical/react": "^0.39.0",
         "@lexical/rich-text": "^0.39.0",
+        "@lexical/utils": "^0.39.0",
         "@tailwindcss/typography": "^0.5.19",
         "framer-motion": "^12.26.2",
         "lexical": "^0.39.0",
@@ -34,6 +36,7 @@
         "react": "^19.2.3",
         "react-dom": "^19.2.3",
         "react-markdown": "^10.1.0",
-        "react-router-dom": "^7.12.0"
+        "react-router-dom": "^7.12.0",
+        "remark-gfm": "^4.0.1"
     }
 }

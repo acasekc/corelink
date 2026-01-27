@@ -69,7 +69,7 @@ class AddCommentTool extends Tool
                 ->description('The ID of the ticket to comment on')
                 ->required(),
             'content' => $schema->string()
-                ->description('The comment text')
+                ->description('The comment text. Markdown formatting is supported (bold, italics, strikethrough, lists, etc.)')
                 ->required(),
             'is_internal' => $schema->boolean()
                 ->description('If true, comment is only visible to staff (default: false)'),

@@ -54,7 +54,7 @@ class CommentController extends Controller
         $comment->load(['user:id,name,email', 'attachments']);
 
         return response()->json([
-            'data' => $this->formatComment($comment),
+            'data' => $this->formatComment($comment, $user),
             'message' => 'Comment added successfully',
         ], 201);
     }
@@ -66,10 +66,10 @@ class CommentController extends Controller
     {
         $user = $request->user();
 
-        // Must be comment author or have update permission
-        if ($comment->user_id !== $user->id && ! $user->hasProjectPermission($ticket->project, 'comment.update')) {
+        // Check 3-minute edit window
+        if (! $comment->canBeModifiedBy($user)) {
             return response()->json([
-                'message' => 'You do not have permission to update this comment',
+                'message' => 'Edit window has expired (3 minutes) or you do not have permission.',
             ], 403);
         }
 
@@ -82,7 +82,7 @@ class CommentController extends Controller
         $comment->load(['user:id,name,email', 'attachments']);
 
         return response()->json([
-            'data' => $this->formatComment($comment),
+            'data' => $this->formatComment($comment, $user),
             'message' => 'Comment updated successfully',
         ]);
     }
@@ -94,10 +94,10 @@ class CommentController extends Controller
     {
         $user = $request->user();
 
-        // Must be comment author or have delete permission
-        if ($comment->user_id !== $user->id && ! $user->hasProjectPermission($ticket->project, 'comment.delete')) {
+        // Check 3-minute delete window
+        if (! $comment->canBeModifiedBy($user)) {
             return response()->json([
-                'message' => 'You do not have permission to delete this comment',
+                'message' => 'Delete window has expired (3 minutes) or you do not have permission.',
             ], 403);
         }
 
@@ -111,7 +111,7 @@ class CommentController extends Controller
     /**
      * Format a comment with its attachments for API response
      */
-    private function formatComment(Comment $comment): array
+    private function formatComment(Comment $comment, $user = null): array
     {
         return [
             'id' => $comment->id,
@@ -122,6 +122,8 @@ class CommentController extends Controller
                 'name' => $comment->user->name,
                 'email' => $comment->user->email,
             ] : null,
+            'can_modify' => $user ? $comment->canBeModifiedBy($user) : false,
+            'edit_window_seconds' => $comment->getEditWindowSecondsRemaining(),
             'attachments' => $comment->attachments->map(fn ($a) => [
                 'id' => $a->id,
                 'filename' => $a->filename,

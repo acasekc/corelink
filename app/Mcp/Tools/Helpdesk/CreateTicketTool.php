@@ -137,7 +137,7 @@ class CreateTicketTool extends Tool
                 ->description('The ticket title/subject (max 255 characters)')
                 ->required(),
             'content' => $schema->string()
-                ->description('The ticket description/body')
+                ->description('The ticket description/body. Markdown formatting is supported (bold, italics, strikethrough, lists, etc.)')
                 ->required(),
             'submitter_name' => $schema->string()
                 ->description('Name of the person submitting the ticket')
