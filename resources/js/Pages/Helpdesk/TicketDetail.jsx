@@ -17,8 +17,10 @@ import {
     FileText,
     Image,
     X,
+    Timer,
 } from 'lucide-react';
 import Markdown from '../../components/Markdown';
+import LexicalMarkdownEditor from '../../components/LexicalMarkdownEditor';
 
 export default function HelpdeskUserTicketDetail() {
     const { ticketId } = useParams();
@@ -27,6 +29,7 @@ export default function HelpdeskUserTicketDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [newComment, setNewComment] = useState('');
+    const [commentKey, setCommentKey] = useState(0);
     const [isInternal, setIsInternal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [statuses, setStatuses] = useState([]);
@@ -38,6 +41,17 @@ export default function HelpdeskUserTicketDetail() {
     const [uploadingCommentFiles, setUploadingCommentFiles] = useState(false);
     const fileInputRef = useRef(null);
     const commentFileInputRef = useRef(null);
+
+    // Comment editing state
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editingCommentContent, setEditingCommentContent] = useState('');
+    const [editingCommentSubmitting, setEditingCommentSubmitting] = useState(false);
+
+    // Ticket editing state
+    const [editingTicket, setEditingTicket] = useState(false);
+    const [editingTicketTitle, setEditingTicketTitle] = useState('');
+    const [editingTicketContent, setEditingTicketContent] = useState('');
+    const [editingTicketSubmitting, setEditingTicketSubmitting] = useState(false);
 
     const ALLOWED_TYPES = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
@@ -252,6 +266,7 @@ export default function HelpdeskUserTicketDetail() {
                     comments: [...(prev.comments || []), newCommentData],
                 }));
                 setNewComment('');
+                setCommentKey(k => k + 1);
                 setIsInternal(false);
                 setCommentFiles([]);
             }
@@ -259,6 +274,123 @@ export default function HelpdeskUserTicketDetail() {
             console.error('Failed to add comment:', err);
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleEditComment = (comment) => {
+        setEditingCommentId(comment.id);
+        setEditingCommentContent(comment.content);
+    };
+
+    const handleCancelEditComment = () => {
+        setEditingCommentId(null);
+        setEditingCommentContent('');
+    };
+
+    const handleSaveComment = async (commentId) => {
+        if (!editingCommentContent.trim()) return;
+        
+        setEditingCommentSubmitting(true);
+        try {
+            const response = await fetch(`/api/helpdesk/user/comments/${commentId}`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+                body: JSON.stringify({ content: editingCommentContent }),
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update comment');
+            }
+            
+            const data = await response.json();
+            setTicket(prev => ({
+                ...prev,
+                comments: prev.comments.map(c => c.id === commentId ? data.data : c),
+            }));
+            setEditingCommentId(null);
+            setEditingCommentContent('');
+        } catch (err) {
+            alert('Failed to update comment: ' + err.message);
+        } finally {
+            setEditingCommentSubmitting(false);
+        }
+    };
+
+    const handleDeleteComment = async (commentId) => {
+        if (!confirm('Are you sure you want to delete this comment?')) return;
+        
+        try {
+            const response = await fetch(`/api/helpdesk/user/comments/${commentId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete comment');
+            }
+            
+            setTicket(prev => ({
+                ...prev,
+                comments: prev.comments.filter(c => c.id !== commentId),
+            }));
+        } catch (err) {
+            alert('Failed to delete comment: ' + err.message);
+        }
+    };
+
+    const handleEditTicket = () => {
+        setEditingTicket(true);
+        setEditingTicketTitle(ticket?.title || '');
+        setEditingTicketContent(ticket?.content || '');
+    };
+
+    const handleCancelEditTicket = () => {
+        setEditingTicket(false);
+        setEditingTicketTitle('');
+        setEditingTicketContent('');
+    };
+
+    const handleSaveTicket = async () => {
+        if (!editingTicketTitle.trim()) return;
+        
+        setEditingTicketSubmitting(true);
+        try {
+            const response = await fetch(`/api/helpdesk/user/tickets/${ticketId}`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+                body: JSON.stringify({
+                    title: editingTicketTitle,
+                    content: editingTicketContent,
+                }),
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update ticket');
+            }
+            
+            const data = await response.json();
+            setTicket(prev => ({ ...prev, ...data.data }));
+            setEditingTicket(false);
+            setEditingTicketTitle('');
+            setEditingTicketContent('');
+        } catch (err) {
+            alert('Failed to update ticket: ' + err.message);
+        } finally {
+            setEditingTicketSubmitting(false);
         }
     };
 
@@ -281,6 +413,31 @@ export default function HelpdeskUserTicketDetail() {
         } catch (err) {
             console.error('Failed to update ticket:', err);
         }
+    };
+
+    // Countdown timer component for edit window
+    const EditCountdown = ({ seconds }) => {
+        const [remaining, setRemaining] = useState(seconds);
+        
+        useEffect(() => {
+            if (remaining <= 0) return;
+            const timer = setInterval(() => {
+                setRemaining(prev => Math.max(0, prev - 1));
+            }, 1000);
+            return () => clearInterval(timer);
+        }, [remaining]);
+        
+        if (remaining <= 0) return null;
+        
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        
+        return (
+            <span className="text-xs text-slate-500 flex items-center gap-1">
+                <Timer className="w-3 h-3" />
+                {mins}:{secs.toString().padStart(2, '0')}
+            </span>
+        );
     };
 
     if (loading) {
@@ -337,18 +494,68 @@ export default function HelpdeskUserTicketDetail() {
                         <div className="lg:col-span-2 space-y-6">
                             {/* Title & Content */}
                             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-                                <h1 className="text-2xl font-bold mb-2">{ticket.title}</h1>
-                                <div className="flex items-center gap-4 text-sm text-slate-400 mb-6">
-                                    <span className="flex items-center gap-1">
-                                        <User className="w-4 h-4" />
-                                        {ticket.submitter?.name || 'Unknown'}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                        <Clock className="w-4 h-4" />
-                                        {new Date(ticket.created_at).toLocaleString()}
-                                    </span>
-                                </div>
-                                <Markdown>{ticket.content}</Markdown>
+                                {editingTicket ? (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm text-slate-400 mb-2">Title</label>
+                                            <input
+                                                type="text"
+                                                value={editingTicketTitle}
+                                                onChange={(e) => setEditingTicketTitle(e.target.value)}
+                                                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 text-lg font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-slate-400 mb-2">Description</label>
+                                            <LexicalMarkdownEditor
+                                                value={editingTicketContent}
+                                                onChange={setEditingTicketContent}
+                                                placeholder="Ticket description..."
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={handleSaveTicket}
+                                                disabled={editingTicketSubmitting || !editingTicketTitle.trim()}
+                                                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition disabled:opacity-50"
+                                            >
+                                                {editingTicketSubmitting ? 'Saving...' : 'Save Changes'}
+                                            </button>
+                                            <button
+                                                onClick={handleCancelEditTicket}
+                                                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex items-start justify-between mb-2">
+                                            <h1 className="text-2xl font-bold">{ticket.title}</h1>
+                                            {ticket.permissions?.can_update && (
+                                                <button
+                                                    onClick={handleEditTicket}
+                                                    className="p-2 text-slate-400 hover:text-purple-400 transition"
+                                                    title="Edit ticket"
+                                                >
+                                                    <Edit2 className="w-5 h-5" />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-4 text-sm text-slate-400 mb-6">
+                                            <span className="flex items-center gap-1">
+                                                <User className="w-4 h-4" />
+                                                {ticket.submitter?.name || 'Unknown'}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <Clock className="w-4 h-4" />
+                                                {new Date(ticket.created_at).toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <Markdown>{ticket.content}</Markdown>
+                                    </>
+                                )}
                             </div>
 
                             {/* Attachments */}
@@ -444,11 +651,58 @@ export default function HelpdeskUserTicketDetail() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <span className="text-sm text-slate-400">
-                                                        {new Date(comment.created_at).toLocaleString()}
-                                                    </span>
+                                                    <div className="flex items-center gap-3">
+                                                        {comment.can_modify && comment.edit_window_seconds > 0 && (
+                                                            <EditCountdown seconds={comment.edit_window_seconds} />
+                                                        )}
+                                                        <span className="text-sm text-slate-400">
+                                                            {new Date(comment.created_at).toLocaleString()}
+                                                        </span>
+                                                        {comment.can_modify && (
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    onClick={() => handleEditComment(comment)}
+                                                                    className="p-1 text-slate-500 hover:text-purple-400 transition"
+                                                                    title="Edit comment"
+                                                                >
+                                                                    <Edit2 className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteComment(comment.id)}
+                                                                    className="p-1 text-slate-500 hover:text-red-400 transition"
+                                                                    title="Delete comment"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <Markdown>{comment.content}</Markdown>
+                                                {editingCommentId === comment.id ? (
+                                                    <div className="space-y-2">
+                                                        <LexicalMarkdownEditor
+                                                            value={editingCommentContent}
+                                                            onChange={setEditingCommentContent}
+                                                        />
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => handleSaveComment(comment.id)}
+                                                                disabled={editingCommentSubmitting}
+                                                                className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm transition disabled:opacity-50"
+                                                            >
+                                                                {editingCommentSubmitting ? 'Saving...' : 'Save'}
+                                                            </button>
+                                                            <button
+                                                                onClick={handleCancelEditComment}
+                                                                className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <Markdown>{comment.content}</Markdown>
+                                                )}
                                                 
                                                 {/* Comment Attachments */}
                                                 {comment.attachments?.length > 0 && (
@@ -483,12 +737,12 @@ export default function HelpdeskUserTicketDetail() {
                                 {/* Add Comment Form */}
                                 {ticket.permissions?.can_comment && (
                                     <form onSubmit={handleAddComment}>
-                                        <textarea
+                                        <LexicalMarkdownEditor
+                                            key={commentKey}
                                             value={newComment}
-                                            onChange={(e) => setNewComment(e.target.value)}
-                                            placeholder="Write a comment..."
-                                            rows={3}
-                                            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                                            onChange={setNewComment}
+                                            placeholder="Write a comment... (Markdown supported)"
+                                            className="mb-3"
                                         />
                                         
                                         {/* Selected Files Preview */}

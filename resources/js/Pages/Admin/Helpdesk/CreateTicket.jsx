@@ -12,6 +12,7 @@ import {
     Image,
     Search,
 } from 'lucide-react';
+import LexicalMarkdownEditor from '../../../components/LexicalMarkdownEditor';
 
 export default function AdminCreateTicket() {
     const navigate = useNavigate();
@@ -454,13 +455,10 @@ export default function AdminCreateTicket() {
                                 <label className="block text-sm font-medium mb-2">
                                     Description <span className="text-red-400">*</span>
                                 </label>
-                                <textarea
+                                <LexicalMarkdownEditor
                                     value={form.content}
-                                    onChange={(e) => setForm(prev => ({ ...prev, content: e.target.value }))}
-                                    required
-                                    rows={6}
-                                    placeholder="Describe the issue in detail..."
-                                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                                    onChange={(content) => setForm(prev => ({ ...prev, content }))}
+                                    placeholder="Describe the issue in detail... (Markdown supported)"
                                 />
                             </div>
 
