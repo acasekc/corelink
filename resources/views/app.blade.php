@@ -69,6 +69,7 @@
                     },
                     "image": "https://corelink.dev/images/og-default.png",
                     "description": "CoreLink Development specializes in crafting intelligent, scalable web and mobile applications using cutting-edge AI technology with expert developer oversight.",
+                    "telephone": "+1-816-500-6093",
                     "email": "info@corelink.dev",
                     "sameAs": [
                         "https://www.facebook.com/corelink.dev",
@@ -77,6 +78,7 @@
                     "contactPoint": {
                         "@@type": "ContactPoint",
                         "contactType": "customer service",
+                        "telephone": "+1-816-500-6093",
                         "email": "info@corelink.dev",
                         "availableLanguage": "English"
                     }
@@ -90,6 +92,7 @@
                     "image": "https://corelink.dev/images/og-default.png",
                     "description": "AI-powered web and mobile application development services. We combine cutting-edge AI technology with expert developer oversight to deliver intelligent, scalable solutions.",
                     "priceRange": "$$",
+                    "telephone": "+1-816-500-6093",
                     "email": "info@corelink.dev",
                     "address": {
                         "@@type": "PostalAddress",
