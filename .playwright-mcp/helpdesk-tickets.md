@@ -1,0 +1,116 @@
+- generic [ref=e7]:
+  - banner [ref=e8]:
+    - generic [ref=e9]:
+      - link "CoreLink Admin" [ref=e10] [cursor=pointer]:
+        - /url: /admin
+        - generic [ref=e11]: CoreLink Admin
+      - navigation [ref=e12]:
+        - link "Dashboard" [ref=e13] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e14]
+          - generic [ref=e19]: Dashboard
+        - link "Discovery" [ref=e20] [cursor=pointer]:
+          - /url: /admin/discovery
+          - img [ref=e21]
+          - generic [ref=e23]: Discovery
+        - link "Case Studies" [ref=e24] [cursor=pointer]:
+          - /url: /admin/case-studies
+          - img [ref=e25]
+          - generic [ref=e27]: Case Studies
+        - link "Projects" [ref=e28] [cursor=pointer]:
+          - /url: /admin/projects
+          - img [ref=e29]
+          - generic [ref=e32]: Projects
+        - link "Articles" [ref=e33] [cursor=pointer]:
+          - /url: /admin/articles
+          - img [ref=e34]
+          - generic [ref=e37]: Articles
+        - link "Helpdesk" [ref=e38] [cursor=pointer]:
+          - /url: /admin/helpdesk
+          - img [ref=e39]
+          - generic [ref=e46]: Helpdesk
+  - main [ref=e47]:
+    - generic [ref=e48]:
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - link [ref=e52] [cursor=pointer]:
+            - /url: /admin/helpdesk
+            - img [ref=e53]
+          - generic [ref=e55]:
+            - img [ref=e56]
+            - generic [ref=e58]: Tickets
+        - generic [ref=e59]:
+          - navigation [ref=e60]:
+            - link "Dashboard" [ref=e61] [cursor=pointer]:
+              - /url: /admin/helpdesk
+            - link "Projects" [ref=e62] [cursor=pointer]:
+              - /url: /admin/helpdesk/projects
+            - link "Users" [ref=e63] [cursor=pointer]:
+              - /url: /admin/helpdesk/users
+          - button "Logout" [ref=e64]:
+            - img [ref=e65]
+            - text: Logout
+      - main [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - heading "Support Tickets" [level=1] [ref=e72]
+              - paragraph [ref=e73]: Manage support tickets from all connected projects
+            - link "New Ticket" [ref=e74] [cursor=pointer]:
+              - /url: /admin/helpdesk/tickets/create
+              - img [ref=e75]
+              - text: New Ticket
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - img [ref=e79]
+              - generic [ref=e81]: "Filters:"
+            - generic [ref=e82]:
+              - combobox [ref=e83]:
+                - option "All Statuses" [selected]
+                - option "Open"
+                - option "In Progress"
+                - option "Pending"
+                - option "Resolved"
+                - option "Closed"
+              - combobox [ref=e84]:
+                - option "All Priorities" [selected]
+                - option "Low"
+                - option "Medium"
+                - option "High"
+                - option "Critical"
+              - combobox [ref=e85]:
+                - option "All Projects" [selected]
+                - option "PantryLink"
+                - option "ChampLink"
+                - option "EcomLink"
+            - generic [ref=e86]:
+              - img [ref=e87]
+              - textbox "Search tickets..." [ref=e90]
+          - table [ref=e92]:
+            - rowgroup [ref=e93]:
+              - row "Ticket Project Submitter Status Priority Assigned Created" [ref=e94]:
+                - columnheader [ref=e95]:
+                  - checkbox [ref=e96]
+                - columnheader "Ticket" [ref=e97]
+                - columnheader "Project" [ref=e98]
+                - columnheader "Submitter" [ref=e99]
+                - columnheader "Status" [ref=e100]
+                - columnheader "Priority" [ref=e101]
+                - columnheader "Assigned" [ref=e102]
+                - columnheader "Created" [ref=e103]
+            - rowgroup [ref=e104]:
+              - row "#PANT-0001 test PantryLink Admin admin@corelink.dev Open High Unassigned 1/25/2026" [ref=e105]:
+                - cell [ref=e106]:
+                  - checkbox [ref=e107]
+                - cell "#PANT-0001 test" [ref=e108]:
+                  - link "#PANT-0001" [ref=e109] [cursor=pointer]:
+                    - /url: /admin/helpdesk/tickets/1
+                  - paragraph [ref=e110]: test
+                - cell "PantryLink" [ref=e111]
+                - cell "Admin admin@corelink.dev" [ref=e112]:
+                  - paragraph [ref=e113]: Admin
+                  - paragraph [ref=e114]: admin@corelink.dev
+                - cell "Open" [ref=e115]
+                - cell "High" [ref=e116]
+                - cell "Unassigned" [ref=e117]
+                - cell "1/25/2026" [ref=e118]

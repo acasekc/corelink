@@ -137,6 +137,9 @@ const About = () => {
             </h2>
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
+                Our mission at CoreLink is to steward technology for good, creating AI-enhanced web and mobile applications that are scalable, reliable, and transformative—rooted in Christian values of integrity, service, and innovation to uplift clients and communities.
+              </p>
+              <p>
                 CoreLink Development LLC is a forward-thinking software development company specializing in building intelligent web and mobile applications. We combine the efficiency of AI-assisted development with the expertise of senior developers to deliver exceptional results. CoreLink was fully built using Claude AI, demonstrating the power of AI-driven development when paired with expert oversight.
               </p>
               <p>

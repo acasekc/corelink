@@ -16,8 +16,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Generate a random password for the admin
-        $password = 'admin123';
+        //Only run this seeder in non-production environments
+        if (!app()->environment('production')) {
+            // Generate a random password for the admin
+            $password = 'admin123';
+        } else {
+            $password = bin2hex(random_bytes(8)); // 16 character random password
+        }
         // Create admin user
         $admin = User::updateOrCreate(
             ['email' => 'admin@corelink.dev'],
