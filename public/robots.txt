@@ -1,2 +1,7 @@
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /helpdesk/
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://corelink.dev/sitemap.xml

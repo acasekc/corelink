@@ -22,7 +22,13 @@ class BlogController extends Controller
      */
     public function index(): View
     {
-        return view('app');
+        return view('app', [
+            'ogMeta' => [
+                'title' => 'Blog',
+                'description' => 'Insights on web development, AI, Laravel, React, and building modern applications. Tips and tutorials from the CoreLink Development team.',
+                'url' => url('/blog'),
+            ],
+        ]);
     }
 
     /**
@@ -30,7 +36,15 @@ class BlogController extends Controller
      */
     public function category(string $slug): View
     {
-        return view('app');
+        $category = ArticleCategory::where('slug', $slug)->first();
+
+        return view('app', [
+            'ogMeta' => $category ? [
+                'title' => $category->name.' Articles',
+                'description' => $category->description ?? "Browse our {$category->name} articles. Insights and tutorials from CoreLink Development.",
+                'url' => url("/blog/category/{$slug}"),
+            ] : null,
+        ]);
     }
 
     /**

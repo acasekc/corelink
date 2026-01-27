@@ -12,7 +12,13 @@ class DiscoveryController extends Controller
      */
     public function chat(Request $request)
     {
-        return view('app');
+        return view('app', [
+            'ogMeta' => [
+                'title' => 'Project Discovery',
+                'description' => 'Start your project with our AI-powered discovery process. Get a detailed project plan, timeline, and estimate tailored to your business needs.',
+                'url' => url('/discovery'),
+            ],
+        ]);
     }
 
     /**
@@ -20,7 +26,13 @@ class DiscoveryController extends Controller
      */
     public function summary(string $sessionId)
     {
-        return view('app');
+        return view('app', [
+            'ogMeta' => [
+                'title' => 'Project Summary',
+                'description' => 'Review your project discovery summary including features, timeline, and next steps.',
+                'url' => url("/discovery/{$sessionId}/summary"),
+            ],
+        ]);
     }
 
     /**
