@@ -53,7 +53,7 @@ Route::middleware(['auth'])->prefix('api/admin')->group(function () {
 });
 
 // Admin Case Studies API (requires authentication)
-Route::middleware(['auth', 'force-password-change'])->prefix('api/admin')->group(function () {
+Route::middleware(['auth', 'admin', 'force-password-change'])->prefix('api/admin')->group(function () {
     // Image Upload for Editor
     Route::post('/upload/image', [UploadController::class, 'image']);
 
@@ -66,10 +66,10 @@ Route::middleware(['auth', 'force-password-change'])->prefix('api/admin')->group
 
     // Projects API
     Route::get('/projects', [AdminProjectController::class, 'index']);
-    Route::get('/projects/{project}', [AdminProjectController::class, 'show']);
+    Route::get('/projects/{adminProject}', [AdminProjectController::class, 'show']);
     Route::post('/projects', [AdminProjectController::class, 'store']);
-    Route::put('/projects/{project}', [AdminProjectController::class, 'update']);
-    Route::delete('/projects/{project}', [AdminProjectController::class, 'destroy']);
+    Route::put('/projects/{adminProject}', [AdminProjectController::class, 'update']);
+    Route::delete('/projects/{adminProject}', [AdminProjectController::class, 'destroy']);
 
     // Discovery API
     Route::prefix('discovery')->group(function () {

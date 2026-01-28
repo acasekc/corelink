@@ -41,12 +41,12 @@ class ProjectController extends Controller
         return response()->json($project, 201);
     }
 
-    public function show(Project $project): JsonResponse
+    public function show(\App\Models\Project $adminProject): JsonResponse
     {
-        return response()->json($project);
+        return response()->json($adminProject);
     }
 
-    public function update(Request $request, Project $project): JsonResponse
+    public function update(Request $request, \App\Models\Project $adminProject): JsonResponse
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -73,21 +73,21 @@ class ProjectController extends Controller
 
         unset($validated['new_screenshots'], $validated['existing_screenshots']);
 
-        $project->update($validated);
+        $adminProject->update($validated);
 
-        return response()->json($project);
+        return response()->json($adminProject);
     }
 
-    public function destroy(Project $project): JsonResponse
+    public function destroy(\App\Models\Project $adminProject): JsonResponse
     {
-        if ($project->screenshots) {
-            foreach ($project->screenshots as $screenshot) {
+        if ($adminProject->screenshots) {
+            foreach ($adminProject->screenshots as $screenshot) {
                 $path = str_replace('/storage/', '', $screenshot);
                 Storage::disk('public')->delete($path);
             }
         }
 
-        $project->delete();
+        $adminProject->delete();
 
         return response()->json(null, 204);
     }

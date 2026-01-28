@@ -29,6 +29,7 @@ export default function ProjectForm({ project: propProject }) {
   // Fetch project data if editing and not provided as prop
   useEffect(() => {
     if (id && !propProject) {
+      console.log(propProject);
       const fetchProject = async () => {
         try {
           const response = await fetch(`/api/admin/projects/${id}`);

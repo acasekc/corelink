@@ -39,5 +39,8 @@ class AppServiceProvider extends ServiceProvider
         Route::bind('apiKey', fn (string $value) => ApiKey::findOrFail($value));
         Route::bind('attachment', fn (string $value) => Attachment::findOrFail($value));
         Route::bind('comment', fn (string $value) => Comment::findOrFail($value));
+        
+        // Register Admin route model bindings
+        Route::bind('adminProject', fn (string $value) => \App\Models\Project::findOrFail($value));
     }
 }
