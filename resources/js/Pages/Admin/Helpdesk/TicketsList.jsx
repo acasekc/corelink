@@ -54,7 +54,17 @@ const TicketsList = () => {
             const params = new URLSearchParams();
             if (searchParams.get('status')) params.append('status', searchParams.get('status'));
             if (searchParams.get('priority')) params.append('priority', searchParams.get('priority'));
-            if (searchParams.get('project')) params.append('project', searchParams.get('project'));
+            if (searchParams.get('project')) {
+                // Check if project parameter looks like an ID (number) or slug (string)
+                const projectParam = searchParams.get('project');
+                if (/^\d+$/.test(projectParam)) {
+                    // It's a number, treat as project_id
+                    params.append('project_id', projectParam);
+                } else {
+                    // It's a string, treat as project slug
+                    params.append('project', projectParam);
+                }
+            }
             if (searchParams.get('search')) params.append('search', searchParams.get('search'));
             if (searchParams.get('page')) params.append('page', searchParams.get('page'));
 

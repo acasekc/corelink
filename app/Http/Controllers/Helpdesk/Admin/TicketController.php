@@ -21,7 +21,13 @@ class TicketController extends Controller
             ->orderByDesc('created_at');
 
         if ($request->filled('project')) {
-            $query->whereHas('project', fn ($q) => $q->where('slug', $request->input('project')));
+            $projectValue = $request->input('project');
+            // If project parameter is numeric, treat it as an ID, otherwise as slug
+            if (is_numeric($projectValue)) {
+                $query->where('project_id', $projectValue);
+            } else {
+                $query->whereHas('project', fn ($q) => $q->where('slug', $projectValue));
+            }
         }
 
         if ($request->filled('project_id')) {
