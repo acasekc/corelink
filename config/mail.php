@@ -63,10 +63,7 @@ return [
 
         'postmark' => [
             'transport' => 'postmark',
-            // 'message_stream_id' => env('POSTMARK_MESSAGE_STREAM_ID'),
-            // 'client' => [
-            //     'timeout' => 5,
-            // ],
+            'message_stream_id' => env('POSTMARK_MESSAGE_STREAM_ID'),
         ],
 
         'resend' => [
@@ -87,16 +84,10 @@ return [
             'transport' => 'array',
         ],
 
-        'mailjet' => [
-            'transport' => 'mailjet',
-            'key' => env('MAILJET_APIKEY'),
-            'secret' => env('MAILJET_APISECRET'),
-        ],
-
         'failover' => [
             'transport' => 'failover',
             'mailers' => [
-                'smtp',
+                'postmark',
                 'log',
             ],
             'retry_after' => 60,

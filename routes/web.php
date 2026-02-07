@@ -18,6 +18,7 @@ use App\Http\Controllers\Helpdesk\AuthController as HelpdeskAuthController;
 use App\Http\Controllers\Helpdesk\Public\InvoiceController as PublicInvoiceController;
 use App\Http\Controllers\Helpdesk\StripeWebhookController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PostmarkWebhookController;
 use App\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Route;
 
@@ -244,6 +245,16 @@ Route::prefix('invoice')->name('invoice.public.')->group(function () {
 Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->name('stripe.webhook');
+
+/*
+|--------------------------------------------------------------------------
+| Postmark Webhooks (no CSRF verification)
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/webhooks/postmark', [PostmarkWebhookController::class, 'handle'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('postmark.webhook');
 
 /*
 |--------------------------------------------------------------------------

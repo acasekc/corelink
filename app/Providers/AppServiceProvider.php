@@ -2,11 +2,16 @@
 
 namespace App\Providers;
 
+use App\Listeners\CheckEmailSuppression;
+use App\Listeners\LogSentEmail;
 use App\Models\Helpdesk\ApiKey;
 use App\Models\Helpdesk\Attachment;
 use App\Models\Helpdesk\Comment;
 use App\Models\Helpdesk\Project;
 use App\Models\Helpdesk\Ticket;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,6 +30,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Email event listeners
+        Event::listen(MessageSending::class, CheckEmailSuppression::class);
+        Event::listen(MessageSent::class, LogSentEmail::class);
+
         // Configure authentication redirects
         if (class_exists(\Illuminate\Auth\Middleware\Authenticate::class)) {
             \Illuminate\Auth\Middleware\Authenticate::redirectUsing(function () {
@@ -39,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
         Route::bind('apiKey', fn (string $value) => ApiKey::findOrFail($value));
         Route::bind('attachment', fn (string $value) => Attachment::findOrFail($value));
         Route::bind('comment', fn (string $value) => Comment::findOrFail($value));
-        
+
         // Register Admin route model bindings
         Route::bind('adminProject', fn (string $value) => \App\Models\Project::findOrFail($value));
     }
