@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import SeoHead from "@/components/SeoHead";
 
 // Lightbox component
 const Lightbox = ({ images, currentIndex, onClose, onPrev, onNext }) => {
@@ -67,31 +68,10 @@ const Lightbox = ({ images, currentIndex, onClose, onPrev, onNext }) => {
   );
 };
 
-const Projects = () => {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const Projects = ({ meta, projects = [] }) => {
   const [lightbox, setLightbox] = useState({ isOpen: false, images: [], currentIndex: 0 });
 
-  useEffect(() => {
-    fetch('/api/projects')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch projects');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setProjects(data);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching projects:', error);
-        setError(error.message);
-        setLoading(false);
-      });
-  }, []);
-
+  // Handle keyboard navigation
   const openLightbox = (images, index) => {
     setLightbox({ isOpen: true, images, currentIndex: index });
   };
@@ -128,45 +108,9 @@ const Projects = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [lightbox.isOpen]);
 
-  if (loading) {
-    return (
-      <div className="relative overflow-hidden">
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-1/4 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px]" />
-          <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px]" />
-        </div>
-        <main className="relative pt-32 pb-24">
-          <div className="container mx-auto px-6">
-            <div className="text-center">
-              <div className="animate-spin w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full mx-auto"></div>
-              <p className="mt-4 text-slate-400">Loading projects...</p>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="relative overflow-hidden">
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute top-1/4 -left-32 w-96 h-96 bg-cyan-500/10 rounded-full blur-[128px]" />
-          <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px]" />
-        </div>
-        <main className="relative pt-32 pb-24">
-          <div className="container mx-auto px-6">
-            <div className="text-center">
-              <p className="text-red-400">Error loading projects: {error}</p>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="relative overflow-hidden">
+      <SeoHead meta={meta} />
       {/* Lightbox */}
       {lightbox.isOpen && (
         <Lightbox

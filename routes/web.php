@@ -81,7 +81,6 @@ Route::middleware(['auth', 'admin', 'force-password-change'])->prefix('api/admin
 // Discovery Bot Routes
 Route::get('/discovery', [DiscoveryController::class, 'chat'])->name('discovery.chat');
 Route::get('/discovery/{sessionId}/summary', [DiscoveryController::class, 'summary'])->name('discovery.summary');
-Route::get('/api/discovery/{sessionId}/summary', [DiscoveryController::class, 'getSummaryData']);
 
 /*
 |--------------------------------------------------------------------------
@@ -119,13 +118,13 @@ Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
 
 // Admin Change Password (authenticated, exempt from force-password-change)
 Route::middleware(['auth', 'no-cache'])->prefix('admin')->group(function () {
-    Route::get('/change-password', [PageController::class, 'home'])->name('admin.change-password');
+    Route::get('/change-password', [PageController::class, 'adminSpa'])->name('admin.change-password');
 });
 
 // Admin Routes (requires authentication)
 Route::middleware(['auth', 'force-password-change', 'no-cache'])->prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
-    Route::get('/', [PageController::class, 'home'])->name('dashboard');
+    Route::get('/', [PageController::class, 'adminSpa'])->name('dashboard');
 
     // Discovery Management
     Route::prefix('discovery')->name('discovery.')->group(function () {
@@ -150,10 +149,10 @@ Route::middleware(['auth', 'force-password-change', 'no-cache'])->prefix('admin'
 
     // Case Studies Management
     Route::prefix('case-studies')->name('case-studies.')->group(function () {
-        Route::get('/', [PageController::class, 'caseStudies'])->name('index');
-        Route::get('/create', [PageController::class, 'caseStudies'])->name('create');
+        Route::get('/', [PageController::class, 'adminSpa'])->name('index');
+        Route::get('/create', [PageController::class, 'adminSpa'])->name('create');
         Route::post('/', [AdminCaseStudyController::class, 'store'])->name('store');
-        Route::get('/{id}/edit', [PageController::class, 'caseStudies'])->name('edit');
+        Route::get('/{id}/edit', [PageController::class, 'adminSpa'])->name('edit');
         Route::get('/{id}', [AdminCaseStudyController::class, 'show'])->name('show');
         Route::put('/{id}', [AdminCaseStudyController::class, 'update'])->name('update');
         Route::delete('/{id}', [AdminCaseStudyController::class, 'destroy'])->name('destroy');
@@ -161,9 +160,9 @@ Route::middleware(['auth', 'force-password-change', 'no-cache'])->prefix('admin'
 
     // Projects Management
     Route::prefix('projects')->name('projects.')->group(function () {
-        Route::get('/', [PageController::class, 'projects'])->name('index');
-        Route::get('/create', [PageController::class, 'projects'])->name('create');
-        Route::get('/{id}/edit', [PageController::class, 'projects'])->name('edit');
+        Route::get('/', [PageController::class, 'adminSpa'])->name('index');
+        Route::get('/create', [PageController::class, 'adminSpa'])->name('create');
+        Route::get('/{id}/edit', [PageController::class, 'adminSpa'])->name('edit');
     });
 
     // Blog Articles Management

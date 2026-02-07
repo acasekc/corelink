@@ -1,61 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React from 'react';
+import { Link } from '@inertiajs/react';
+import SeoHead from '@/components/SeoHead';
 
-const Summary = () => {
-  const { sessionId } = useParams();
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        const response = await fetch(`/api/discovery/${sessionId}/summary`);
-        if (response.ok) {
-          const data = await response.json();
-          setSummary(data.summary);
-        }
-      } catch (error) {
-        console.error('Error loading summary:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchSummary();
-  }, [sessionId]);
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-linear-to-b from-slate-900 to-slate-800 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-slate-300">Loading summary...</p>
-        </div>
-      </div>
-    );
-  }
-  
+const Summary = ({ meta, sessionId, summary }) => {
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-900 to-slate-800 text-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/80 backdrop-blur border-b border-slate-700">
-        <div className="container mx-auto px-4 py-4">
-          <Link to="/" className="inline-block">
-            <img
-              src="/images/logo_100_h.png"
-              alt="CoreLink Logo"
-              width={400}
-              height={100}
-              decoding="async"
-              loading="lazy"
-              className="h-8 w-auto"
-            />
-          </Link>
-        </div>
-      </header>
+      <SeoHead meta={meta} />
       
       {/* Main Content */}
-      <div className="pt-36 pb-20 px-6">
+      <div className="pt-12 pb-20 px-6">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
@@ -137,13 +90,13 @@ const Summary = () => {
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/contact"
+              href="/contact"
               className="px-8 py-4 bg-linear-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold text-center hover:opacity-90 transition"
             >
               Let's Build This Together
             </Link>
             <Link
-              to="/"
+              href="/"
               className="px-8 py-4 bg-slate-700 rounded-lg font-semibold text-center hover:bg-slate-600 transition"
             >
               Back to Home

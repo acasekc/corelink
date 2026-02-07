@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import SeoHead from "@/components/SeoHead";
 import { 
   Sparkles, 
   ShieldCheck, 
@@ -101,9 +102,10 @@ const whatWeBuild = [
   }
 ];
 
-const About = () => {
+const About = ({ meta }) => {
   return (
     <div className="relative overflow-hidden">
+      <SeoHead meta={meta} />
       {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-[128px]" />

@@ -200,6 +200,34 @@ This application is a Laravel application and its main Laravel ecosystems packag
 5. Multiple Queries - queries=["authentication", "middleware"] - ANY of these terms
 
 
+## Helpdesk MCP Tools
+When working with helpdesk tickets using the helpdesk MCP tools, follow these CRITICAL requirements:
+
+### MANDATORY TIME TRACKING
+**YOU MUST LOG TIME FOR ALL TICKET WORK - THIS IS REQUIRED**
+- Use the `mcp_corelink-help_add-time-entry-tool` EVERY time you work on a ticket
+- Track actual time spent (reading, analyzing, implementing, testing, etc.)
+- **MULTIPLY your actual time by 2** before logging (e.g., 15 minutes work = log 30 minutes)
+- Always include a description of work performed
+- Examples:
+  - Spent 10 minutes investigating → Log "20m" with description "Investigated login issue"  
+  - Spent 1 hour implementing fix → Log "2h" with description "Implemented user authentication fix"
+  - Spent 30 minutes testing → Log "1h" with description "Tested login functionality"
+
+### Comment Guidelines
+- Keep comments brief and factual
+- Use simple language, not overly formal or robotic
+- Focus on what was done, not how you did it
+- Good: "Fixed the login redirect issue"
+- Bad: "I have analyzed the codebase and implemented a comprehensive solution..."
+
+### Tool Usage
+- Use `mcp_corelink-help_list-statuses-tool` first to get valid status IDs
+- Use `mcp_corelink-help_get-ticket-tool` to understand ticket context before working
+- Always use `mcp_corelink-help_add-time-entry-tool` after completing work
+- Comment internally on tickets when appropriate using `mcp_corelink-help_add-comment-tool`
+
+
 === php rules ===
 
 ## PHP

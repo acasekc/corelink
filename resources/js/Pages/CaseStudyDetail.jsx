@@ -1,40 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "@inertiajs/react";
 import { ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import SeoHead from "@/components/SeoHead";
 
-const CaseStudyDetail = () => {
-  const { case_study } = useParams();
-  const [caseStudy, setCaseStudy] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`/api/case-studies/${case_study}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setCaseStudy(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
-  }, [case_study]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
+const CaseStudyDetail = ({ meta, caseStudy }) => {
   if (!caseStudy) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Case Study Not Found</h1>
-          <Link to="/case-studies" className="text-primary hover:underline">
+          <Link href="/case-studies" className="text-primary hover:underline">
             Back to Case Studies
           </Link>
         </div>
@@ -44,6 +21,7 @@ const CaseStudyDetail = () => {
 
   return (
     <div className="relative">
+      <SeoHead meta={meta} />
       <main className="pt-32 pb-20">
         <div className="container mx-auto px-6">
           {/* Back Link */}
@@ -54,7 +32,7 @@ const CaseStudyDetail = () => {
             className="mb-8"
           >
             <Link
-              to="/case-studies"
+              href="/case-studies"
               className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -169,7 +147,7 @@ const CaseStudyDetail = () => {
                 Let CoreLink build a custom solution that helps your business thrive.
               </p>
               <Link
-                to="/contact"
+                href="/contact"
                 className="inline-block px-8 py-4 bg-linear-to-r from-primary to-accent text-primary-foreground font-medium rounded-lg hover:opacity-90 transition-opacity"
               >
                 Get In Touch

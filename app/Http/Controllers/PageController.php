@@ -2,14 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CaseStudy;
+use App\Models\Project;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
+
 class PageController extends Controller
 {
     /**
      * Page-specific meta descriptions for SEO.
+     *
+     * @return array{title: string|null, description: string|null}
      */
     private function getPageMeta(string $page): array
     {
-        $meta = match ($page) {
+        return match ($page) {
             'home' => [
                 'title' => 'AI-Powered Web & Mobile Development',
                 'description' => 'CoreLink Development builds intelligent, scalable web and mobile applications using AI technology with expert developer oversight. Based in Missouri, serving clients nationwide.',
@@ -55,66 +62,94 @@ class PageController extends Controller
                 'description' => null,
             ],
         };
+    }
 
-        return [
-            'ogMeta' => array_filter([
-                'title' => $meta['title'],
-                'description' => $meta['description'],
-                'url' => url()->current(),
-            ]),
-        ];
+    public function home(): InertiaResponse
+    {
+        return Inertia::render('Index', [
+            'meta' => $this->getPageMeta('home'),
+        ]);
+    }
+
+    public function projects(): InertiaResponse
+    {
+        return Inertia::render('Projects', [
+            'meta' => $this->getPageMeta('projects'),
+            'projects' => Project::published()->ordered()->get(),
+        ]);
+    }
+
+    public function process(): InertiaResponse
+    {
+        return Inertia::render('Process', [
+            'meta' => $this->getPageMeta('process'),
+        ]);
+    }
+
+    public function about(): InertiaResponse
+    {
+        return Inertia::render('About', [
+            'meta' => $this->getPageMeta('about'),
+        ]);
+    }
+
+    public function contact(): InertiaResponse
+    {
+        return Inertia::render('Contact', [
+            'meta' => $this->getPageMeta('contact'),
+        ]);
+    }
+
+    public function caseStudies(?string $slug = null): InertiaResponse
+    {
+        if ($slug) {
+            $caseStudy = CaseStudy::where('slug', $slug)
+                ->where('is_published', true)
+                ->firstOrFail();
+
+            return Inertia::render('CaseStudyDetail', [
+                'meta' => [
+                    'title' => $caseStudy->title,
+                    'description' => $caseStudy->description,
+                ],
+                'caseStudy' => $caseStudy,
+            ]);
+        }
+
+        return Inertia::render('CaseStudies', [
+            'meta' => $this->getPageMeta('case-studies'),
+            'caseStudies' => CaseStudy::where('is_published', true)
+                ->orderBy('order')
+                ->get(['id', 'slug', 'title', 'subtitle', 'description', 'client_name', 'industry', 'hero_image']),
+        ]);
+    }
+
+    public function terms(): InertiaResponse
+    {
+        return Inertia::render('Terms', [
+            'meta' => $this->getPageMeta('terms'),
+        ]);
+    }
+
+    public function privacy(): InertiaResponse
+    {
+        return Inertia::render('Privacy', [
+            'meta' => $this->getPageMeta('privacy'),
+        ]);
     }
 
     /**
-     * Return the React app view for all page routes.
-     * React Router handles client-side routing.
+     * Admin/helpdesk SPA routes — unchanged.
      */
-    public function home()
-    {
-        return view('app', $this->getPageMeta('home'));
-    }
-
-    public function projects()
-    {
-        return view('app', $this->getPageMeta('projects'));
-    }
-
-    public function process()
-    {
-        return view('app', $this->getPageMeta('process'));
-    }
-
-    public function about()
-    {
-        return view('app', $this->getPageMeta('about'));
-    }
-
-    public function contact()
-    {
-        return view('app', $this->getPageMeta('contact'));
-    }
-
-    public function caseStudies()
-    {
-        return view('app', $this->getPageMeta('case-studies'));
-    }
-
-    public function terms()
-    {
-        return view('app', $this->getPageMeta('terms'));
-    }
-
-    public function privacy()
-    {
-        return view('app', $this->getPageMeta('privacy'));
-    }
-
-    public function caseStudyDustiesDelights()
-    {
-        return view('app', $this->getPageMeta('case-studies'));
-    }
-
     public function helpdesk()
+    {
+        return view('app');
+    }
+
+    /**
+     * Generic SPA view for admin routes that use React Router.
+     */
+    public function adminSpa()
     {
         return view('app');
     }

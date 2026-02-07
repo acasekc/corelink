@@ -8,7 +8,8 @@ use App\Services\ArticleService;
 use App\Services\SitemapService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class BlogController extends Controller
 {
@@ -18,53 +19,80 @@ class BlogController extends Controller
     ) {}
 
     /**
-     * Display blog index (SPA view).
+     * Display blog index via Inertia with data props.
      */
-    public function index(): View
+    public function index(): InertiaResponse
     {
-        return view('app', [
-            'ogMeta' => [
+        $articles = $this->articleService->getPublishedArticles(12);
+        $categories = ArticleCategory::active()->ordered()->withCount('articles')->get();
+        $featuredArticles = $this->articleService->getFeaturedArticles(4);
+
+        return Inertia::render('Blog/Index', [
+            'meta' => [
                 'title' => 'Blog',
                 'description' => 'Insights on web development, AI, Laravel, React, and building modern applications. Tips and tutorials from the CoreLink Development team.',
-                'url' => url('/blog'),
             ],
+            'articles' => $articles,
+            'categories' => $categories,
+            'featuredArticles' => $featuredArticles,
         ]);
     }
 
     /**
-     * Display articles by category (SPA view).
+     * Display articles by category via Inertia.
      */
-    public function category(string $slug): View
+    public function category(string $slug): InertiaResponse
     {
-        $category = ArticleCategory::where('slug', $slug)->first();
+        $category = ArticleCategory::where('slug', $slug)
+            ->where('is_active', true)
+            ->firstOrFail();
 
-        return view('app', [
-            'ogMeta' => $category ? [
+        $articles = $this->articleService->getArticlesByCategory($category, 12);
+        $categories = ArticleCategory::active()->ordered()->withCount('articles')->get();
+
+        return Inertia::render('Blog/Category', [
+            'meta' => [
                 'title' => $category->name.' Articles',
                 'description' => $category->description ?? "Browse our {$category->name} articles. Insights and tutorials from CoreLink Development.",
-                'url' => url("/blog/category/{$slug}"),
-            ] : null,
+            ],
+            'category' => $category,
+            'articles' => $articles,
+            'categories' => $categories,
         ]);
     }
 
     /**
-     * Display a single article (SPA view).
+     * Display a single article via Inertia.
      */
-    public function show(string $slug): View
+    public function show(string $slug): InertiaResponse
     {
-        $article = Article::where('slug', $slug)
-            ->published()
-            ->with('category')
-            ->first();
+        $article = $this->articleService->getPublishedArticle($slug);
 
-        return view('app', [
-            'ogMeta' => $article ? [
+        abort_unless($article, 404);
+
+        $recentArticles = $this->articleService->getRecentArticles(5);
+        $categories = ArticleCategory::active()->ordered()->withCount('articles')->get();
+
+        $relatedArticles = $article->category
+            ? $article->category->articles()
+                ->published()
+                ->where('id', '!=', $article->id)
+                ->orderBy('published_at', 'desc')
+                ->limit(3)
+                ->get()
+            : collect();
+
+        return Inertia::render('Blog/Show', [
+            'meta' => [
                 'title' => $article->meta_title ?? $article->title,
                 'description' => $article->meta_description ?? $article->excerpt,
                 'image' => $article->featured_image,
-                'url' => url("/blog/{$article->slug}"),
                 'type' => 'article',
-            ] : null,
+            ],
+            'article' => $article,
+            'recentArticles' => $recentArticles,
+            'relatedArticles' => $relatedArticles,
+            'categories' => $categories,
         ]);
     }
 

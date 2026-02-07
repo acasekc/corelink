@@ -1,4 +1,6 @@
 import { motion } from "framer-motion";
+import { Link } from '@inertiajs/react';
+import SeoHead from "@/components/SeoHead";
 import { 
   MessageSquare, 
   Compass, 
@@ -122,10 +124,11 @@ const advantages = [
   },
 ];
 
-const Process = () => {
+const Process = ({ meta }) => {
 
   return (
     <div className="relative overflow-hidden">
+      <SeoHead meta={meta} />
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-[128px]" />
         <div className="absolute bottom-1/3 -right-32 w-96 h-96 bg-accent/10 rounded-full blur-[128px]" />
@@ -317,12 +320,12 @@ const Process = () => {
               <p className="text-muted-foreground max-w-xl mx-auto mb-8">
                 Begin with our AI-powered discovery process and see how we can bring your vision to life.
               </p>
-              <a
+              <Link
                 href="/contact"
                 className="inline-block px-8 py-4 bg-gradient-to-r from-primary to-accent text-primary-foreground font-medium rounded-lg hover:opacity-90 transition-opacity"
               >
                 Get Started
-              </a>
+              </Link>
             </div>
           </motion.div>
         </div>

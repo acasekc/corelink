@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import { Calendar, Clock, ArrowRight, Loader2 } from "lucide-react";
+import React from "react";
+import { Link } from "@inertiajs/react";
+import { Calendar, Clock, ArrowRight } from "lucide-react";
+import SeoHead from "@/components/SeoHead";
 
 const ArticleCard = ({ article }) => {
   const formatDate = (date) => {
@@ -13,7 +14,7 @@ const ArticleCard = ({ article }) => {
 
   return (
     <Link
-      to={`/blog/${article.slug}`}
+      href={`/blog/${article.slug}`}
       className="group block bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-shadow"
     >
       {article.featured_image && (
@@ -55,7 +56,7 @@ const CategorySidebar = ({ categories, currentCategory }) => {
       <h3 className="font-bold text-slate-900 mb-4">Categories</h3>
       <div className="space-y-2">
         <Link
-          to="/blog"
+          href="/blog"
           className="block px-3 py-2 rounded-lg transition-colors text-slate-600 hover:bg-slate-50"
         >
           All Articles
@@ -63,7 +64,7 @@ const CategorySidebar = ({ categories, currentCategory }) => {
         {categories.map((category) => (
           <Link
             key={category.id}
-            to={`/blog/category/${category.slug}`}
+            href={`/blog/category/${category.slug}`}
             className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
               currentCategory?.slug === category.slug
                 ? "bg-cyan-50 text-cyan-700"
@@ -81,69 +82,15 @@ const CategorySidebar = ({ categories, currentCategory }) => {
   );
 };
 
-export default function BlogCategory() {
-  const { slug } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState({
-    category: null,
-    articles: { data: [] },
-    categories: [],
-  });
-
-  useEffect(() => {
-    fetchCategoryData();
-  }, [slug]);
-
-  const fetchCategoryData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/blog/category/${slug}`);
-      if (!response.ok) {
-        throw new Error("Category not found");
-      }
-      const result = await response.json();
-      setData(result);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cyan-600 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900 mb-4">
-            Category Not Found
-          </h1>
-          <Link to="/blog" className="text-cyan-600 hover:underline">
-            Back to Blog
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const { category, articles, categories } = data;
-
+export default function BlogCategory({ meta, category, articles = { data: [] }, categories = [] }) {
   return (
     <div className="min-h-screen bg-slate-50">
+      <SeoHead meta={meta} />
       {/* Hero Section */}
       <div className="bg-white border-b border-slate-200 py-12">
         <div className="max-w-6xl mx-auto px-6">
           <nav className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-            <Link to="/blog" className="hover:text-cyan-600 transition-colors">
+            <Link href="/blog" className="hover:text-cyan-600 transition-colors">
               Blog
             </Link>
             <span>/</span>
@@ -177,7 +124,7 @@ export default function BlogCategory() {
                   No articles in this category yet. Check back soon!
                 </p>
                 <Link
-                  to="/blog"
+                  href="/blog"
                   className="inline-flex items-center gap-2 mt-4 text-cyan-600 hover:text-cyan-700"
                 >
                   View all articles
@@ -222,7 +169,7 @@ export default function BlogCategory() {
                 Looking for custom solutions for your business?
               </p>
               <Link
-                to="/contact"
+                href="/contact"
                 className="flex items-center justify-center gap-2 bg-white text-cyan-600 px-4 py-2 rounded-lg font-medium hover:bg-cyan-50 transition-colors"
               >
                 Get in Touch

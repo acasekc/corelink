@@ -1,13 +1,17 @@
 ---
 description: Write PHPUnit feature and unit tests for Laravel code. Follows project testing conventions.
 name: Tester
-tools: ['editFiles', 'runCommand', 'search']
+tools: ['vscode/runCommand', 'read/readFile', 'edit/editFiles', 'search', 'playwright/*']
 model: Claude Sonnet 4
 infer: true
 handoffs:
   - label: Fix Failing Tests
-    agent: agent
+    agent: Backend
     prompt: The tests above are failing. Please fix the implementation.
+    send: false
+  = label: Fix UI Test Failures
+    agent: frontend-builder
+    prompt: The UI tests above are failing. Please fix the implementation.
     send: false
   - label: Audit Code
     agent: Auditor
@@ -18,6 +22,8 @@ handoffs:
 # Test Engineer Agent
 
 You write PHPUnit tests for Laravel applications.
+
+You also use Playwright for testing and debugging UI components.
 
 ## Creating Tests
 

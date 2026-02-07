@@ -4,41 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\BotSession;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class DiscoveryController extends Controller
 {
     /**
-     * Show the discovery chat interface
+     * Show the discovery chat interface.
      */
-    public function chat(Request $request)
+    public function chat(Request $request): InertiaResponse
     {
-        return view('app', [
-            'ogMeta' => [
+        return Inertia::render('Discovery/Chat', [
+            'meta' => [
                 'title' => 'Project Discovery',
                 'description' => 'Start your project with our AI-powered discovery process. Get a detailed project plan, timeline, and estimate tailored to your business needs.',
-                'url' => url('/discovery'),
             ],
         ]);
     }
 
     /**
-     * Show the discovery summary page
+     * Show the discovery summary page.
      */
-    public function summary(string $sessionId)
-    {
-        return view('app', [
-            'ogMeta' => [
-                'title' => 'Project Summary',
-                'description' => 'Review your project discovery summary including features, timeline, and next steps.',
-                'url' => url("/discovery/{$sessionId}/summary"),
-            ],
-        ]);
-    }
-
-    /**
-     * Get the discovery summary data as JSON
-     */
-    public function getSummaryData(string $sessionId)
+    public function summary(string $sessionId): InertiaResponse
     {
         $session = BotSession::with('discoveryPlan')->findOrFail($sessionId);
 
@@ -46,7 +33,6 @@ class DiscoveryController extends Controller
         $userSummary = $plan?->user_summary;
         $requirements = $plan?->structured_requirements;
 
-        // Transform the data to match what the Summary component expects
         $summary = $userSummary ? [
             'project_name' => $requirements['project']['name'] ?? 'Your Project',
             'overview' => $userSummary['project_overview'] ?? null,
@@ -57,7 +43,11 @@ class DiscoveryController extends Controller
             'complexity' => $userSummary['complexity'] ?? null,
         ] : null;
 
-        return response()->json([
+        return Inertia::render('Discovery/Summary', [
+            'meta' => [
+                'title' => 'Project Summary',
+                'description' => 'Review your project discovery summary including features, timeline, and next steps.',
+            ],
             'sessionId' => $sessionId,
             'summary' => $summary,
         ]);

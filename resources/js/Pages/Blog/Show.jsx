@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import React from "react";
+import { Link, usePage } from "@inertiajs/react";
 import {
   Calendar,
   Clock,
@@ -8,8 +8,8 @@ import {
   Share2,
   Linkedin,
   Facebook,
-  Loader2,
 } from "lucide-react";
+import SeoHead from "@/components/SeoHead";
 
 // Custom X (formerly Twitter) icon
 const XIcon = ({ className }) => (
@@ -44,7 +44,7 @@ const RelatedArticleCard = ({ article }) => {
 
   return (
     <Link
-      to={`/blog/${article.slug}`}
+      href={`/blog/${article.slug}`}
       className="group block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
     >
       {article.featured_image && (
@@ -93,38 +93,7 @@ const processArticleContent = (content) => {
   return processed;
 };
 
-export default function BlogShow() {
-  const { slug } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState({
-    article: null,
-    relatedArticles: [],
-    recentArticles: [],
-    categories: [],
-  });
-
-  useEffect(() => {
-    fetchArticle();
-  }, [slug]);
-
-  const fetchArticle = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/blog/article/${slug}`);
-      if (!response.ok) {
-        throw new Error("Article not found");
-      }
-      const result = await response.json();
-      setData(result);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function BlogShow({ meta, article, relatedArticles = [], recentArticles = [], categories = [] }) {
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
@@ -135,7 +104,7 @@ export default function BlogShow() {
 
   const shareOnX = () => {
     const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent(data.article?.title || "");
+    const text = encodeURIComponent(article?.title || "");
     window.open(
       `https://x.com/intent/tweet?url=${url}&text=${text}`,
       "_blank"
@@ -158,22 +127,14 @@ export default function BlogShow() {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cyan-600 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !data.article) {
+  if (!article) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-slate-900 mb-4">
             Article Not Found
           </h1>
-          <Link to="/blog" className="text-cyan-600 hover:underline">
+          <Link href="/blog" className="text-cyan-600 hover:underline">
             Back to Blog
           </Link>
         </div>
@@ -181,23 +142,22 @@ export default function BlogShow() {
     );
   }
 
-  const { article, relatedArticles, recentArticles, categories } = data;
-
   return (
     <div className="min-h-screen bg-slate-50">
+      <SeoHead meta={meta} />
       {/* Article Header */}
       <div className="bg-slate-900 pt-8 pb-16">
         <div className="max-w-7xl mx-auto px-6">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-slate-400 mb-6">
-            <Link to="/blog" className="hover:text-cyan-400 transition-colors">
+            <Link href="/blog" className="hover:text-cyan-400 transition-colors">
               Blog
             </Link>
             {article.category && (
               <>
                 <span>/</span>
                 <Link
-                  to={`/blog/category/${article.category.slug}`}
+                  href={`/blog/category/${article.category.slug}`}
                   className="hover:text-cyan-400 transition-colors"
                 >
                   {article.category.name}
@@ -313,7 +273,7 @@ export default function BlogShow() {
         {/* Back Link */}
         <div className="mt-8">
           <Link
-            to="/blog"
+            href="/blog"
             className="inline-flex items-center gap-2 text-slate-600 hover:text-cyan-600 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -351,7 +311,7 @@ export default function BlogShow() {
             Let&apos;s discuss how we can help you build powerful web solutions.
           </p>
           <Link
-            to="/contact"
+            href="/contact"
             className="inline-flex items-center gap-2 bg-cyan-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-cyan-500 transition-colors"
           >
             Get in Touch

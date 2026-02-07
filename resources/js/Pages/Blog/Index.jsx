@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Calendar, Clock, ArrowRight, Loader2 } from "lucide-react";
+import React from "react";
+import { Link } from "@inertiajs/react";
+import { Calendar, Clock, ArrowRight } from "lucide-react";
+import SeoHead from "@/components/SeoHead";
 
 const ArticleCard = ({ article, featured = false }) => {
   const formatDate = (date) => {
@@ -14,7 +15,7 @@ const ArticleCard = ({ article, featured = false }) => {
   if (featured) {
     return (
       <Link
-        to={`/blog/${article.slug}`}
+        href={`/blog/${article.slug}`}
         className="group block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
       >
         {article.featured_image && (
@@ -59,7 +60,7 @@ const ArticleCard = ({ article, featured = false }) => {
 
   return (
     <Link
-      to={`/blog/${article.slug}`}
+      href={`/blog/${article.slug}`}
       className="group flex gap-3 sm:gap-4 p-3 sm:p-4 bg-white rounded-xl hover:bg-slate-50 transition-colors"
     >
       {article.featured_image && (
@@ -98,7 +99,7 @@ const CategorySidebar = ({ categories, currentCategory = null }) => {
       <h3 className="font-bold text-slate-900 mb-4">Categories</h3>
       <div className="space-y-2">
         <Link
-          to="/blog"
+          href="/blog"
           className={`block px-3 py-2 rounded-lg transition-colors ${
             !currentCategory
               ? "bg-cyan-50 text-cyan-700"
@@ -110,7 +111,7 @@ const CategorySidebar = ({ categories, currentCategory = null }) => {
         {categories.map((category) => (
           <Link
             key={category.id}
-            to={`/blog/category/${category.slug}`}
+            href={`/blog/category/${category.slug}`}
             className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
               currentCategory?.id === category.id
                 ? "bg-cyan-50 text-cyan-700"
@@ -128,42 +129,10 @@ const CategorySidebar = ({ categories, currentCategory = null }) => {
   );
 };
 
-export default function BlogIndex() {
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState({
-    articles: { data: [] },
-    categories: [],
-    featuredArticles: [],
-  });
-
-  useEffect(() => {
-    fetchBlogData();
-  }, []);
-
-  const fetchBlogData = async () => {
-    try {
-      const response = await fetch("/api/blog");
-      const result = await response.json();
-      setData(result);
-    } catch (error) {
-      console.error("Failed to fetch blog data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-cyan-600 animate-spin" />
-      </div>
-    );
-  }
-
-  const { articles, categories, featuredArticles } = data;
-
+export default function BlogIndex({ meta, articles = { data: [] }, categories = [], featuredArticles = [] }) {
   return (
     <div className="min-h-screen bg-slate-50">
+      <SeoHead meta={meta} />
       {/* Hero Section */}
       <div className="bg-white border-b border-slate-200 py-8 sm:py-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -253,7 +222,7 @@ export default function BlogIndex() {
                 Get the latest articles and insights delivered to your inbox.
               </p>
               <Link
-                to="/contact"
+                href="/contact"
                 className="flex items-center justify-center gap-2 bg-white text-cyan-600 px-4 py-2 rounded-lg font-medium hover:bg-cyan-50 transition-colors"
               >
                 Get in Touch

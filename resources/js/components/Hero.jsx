@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link } from '@inertiajs/react';
 import { Rocket, ArrowRight } from 'lucide-react';
 
 const Hero = () => {
@@ -73,14 +73,14 @@ const Hero = () => {
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Link
-              to="/projects"
+              href="/projects"
               className="group px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
             >
               Explore Our Work
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
-              to="/contact"
+              href="/contact"
               className="px-8 py-4 bg-transparent border border-white/20 text-foreground font-medium rounded-lg hover:bg-white/5 transition-colors"
             >
               Get In Touch

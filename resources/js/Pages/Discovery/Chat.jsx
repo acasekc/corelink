@@ -1,19 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { Link, usePage } from '@inertiajs/react';
+import SeoHead from '@/components/SeoHead';
 
-const Chat = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+const Chat = ({ meta }) => {
+  const { url } = usePage();
+  const urlParams = new URLSearchParams((url || '').split('?')[1] || '');
   
   // State for invite code entry
-  const [inviteCode, setInviteCode] = useState(searchParams.get('code') || '');
+  const [inviteCode, setInviteCode] = useState(urlParams.get('code') || '');
   const [userEmail, setUserEmail] = useState('');
   const [inviteError, setInviteError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   
   // Session state
-  const [sessionId, setSessionId] = useState(searchParams.get('session') || null);
-  const [sessionToken, setSessionToken] = useState(searchParams.get('token') || null);
+  const [sessionId, setSessionId] = useState(urlParams.get('session') || null);
+  const [sessionToken, setSessionToken] = useState(urlParams.get('token') || null);
   const [sessionStatus, setSessionStatus] = useState('active');
   
   // Chat state
@@ -98,7 +99,7 @@ const Chat = () => {
   
   // Auto-fetch email when code is provided via URL
   useEffect(() => {
-    const codeFromUrl = searchParams.get('code');
+    const codeFromUrl = urlParams.get('code');
     if (codeFromUrl && !sessionId) {
       // Validate the code to get email
       fetch(`${apiBase}/auth/invite-validate`, {
@@ -370,6 +371,7 @@ const Chat = () => {
   
   return (
     <div className="relative overflow-hidden">
+      <SeoHead meta={meta} />
       {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-[128px]" />
@@ -541,7 +543,7 @@ const Chat = () => {
                 <h3 className="text-xl font-semibold text-green-300 mb-2">🎉 Discovery Complete!</h3>
                 <p className="text-slate-200 mb-4">Your project summary has been created and sent to your email.</p>
                 <Link
-                  to={`/discovery/${sessionId}/summary`}
+                  href={`/discovery/${sessionId}/summary`}
                   className="inline-block px-6 py-3 bg-green-600 rounded-lg font-semibold hover:bg-green-700 transition"
                 >
                   View Summary

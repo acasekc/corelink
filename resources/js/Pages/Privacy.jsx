@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
+import SeoHead from "@/components/SeoHead";
 import { Shield, Lock } from "lucide-react";
 
-const Privacy = () => {
+const Privacy = ({ meta }) => {
     const effectiveDate = "January 22, 2026";
 
     return (
         <div className="relative overflow-hidden">
+            <SeoHead meta={meta} />
             {/* Background effects */}
             <div className="fixed inset-0 pointer-events-none">
                 <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-[128px]" />

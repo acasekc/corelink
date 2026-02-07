@@ -1,25 +1,6 @@
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import PublicLayout from "./components/PublicLayout";
 import AdminLayout from "./components/AdminLayout";
-import Index from "./Pages/Index";
-
-// Lazy load public routes (non-critical)
-const About = React.lazy(() => import("./Pages/About"));
-const Projects = React.lazy(() => import("./Pages/Projects"));
-const Process = React.lazy(() => import("./Pages/Process"));
-const Contact = React.lazy(() => import("./Pages/Contact"));
-const CaseStudies = React.lazy(() => import("./Pages/CaseStudies"));
-const CaseStudyDetail = React.lazy(() => import("./Pages/CaseStudyDetail"));
-const Terms = React.lazy(() => import("./Pages/Terms"));
-const Privacy = React.lazy(() => import("./Pages/Privacy"));
-const DiscoveryChat = React.lazy(() => import("./Pages/Discovery/Chat"));
-const DiscoverySummary = React.lazy(() => import("./Pages/Discovery/Summary"));
-
-// Lazy load blog routes
-const BlogIndex = React.lazy(() => import("./Pages/Blog/Index"));
-const BlogCategory = React.lazy(() => import("./Pages/Blog/Category"));
-const BlogShow = React.lazy(() => import("./Pages/Blog/Show"));
 
 // Lazy load admin routes
 const Login = React.lazy(() => import("./Pages/Admin/Login"));
@@ -85,24 +66,6 @@ export default function App() {
 		<Router>
 			<Suspense fallback={<LoadingFallback />}>
 				<Routes>
-					{/* Public Routes */}
-					<Route path="/" element={<PublicLayout><Index /></PublicLayout>} />
-					<Route path="/about" element={<PublicLayout><About /></PublicLayout>} />
-					<Route path="/projects" element={<PublicLayout><Projects /></PublicLayout>} />
-					<Route path="/process" element={<PublicLayout><Process /></PublicLayout>} />
-					<Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
-					<Route path="/case-studies" element={<PublicLayout><CaseStudies /></PublicLayout>} />
-					<Route path="/case-studies/:case_study" element={<PublicLayout><CaseStudyDetail /></PublicLayout>} />
-					<Route path="/terms" element={<PublicLayout><Terms /></PublicLayout>} />
-					<Route path="/privacy" element={<PublicLayout><Privacy /></PublicLayout>} />
-					<Route path="/discovery" element={<PublicLayout><DiscoveryChat /></PublicLayout>} />
-					<Route path="/discovery/:sessionId/summary" element={<PublicLayout><DiscoverySummary /></PublicLayout>} />
-
-					{/* Blog Routes */}
-					<Route path="/blog" element={<PublicLayout><BlogIndex /></PublicLayout>} />
-					<Route path="/blog/category/:slug" element={<PublicLayout><BlogCategory /></PublicLayout>} />
-					<Route path="/blog/:slug" element={<PublicLayout><BlogShow /></PublicLayout>} />
-
 					{/* User Helpdesk Routes - Authenticated users (not admin-only) */}
 					<Route path="/helpdesk/login" element={<AdminLayout><UserHelpdeskLogin /></AdminLayout>} />
 					<Route path="/helpdesk" element={<AdminLayout><UserHelpdeskDashboard /></AdminLayout>} />

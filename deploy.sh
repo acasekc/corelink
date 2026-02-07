@@ -38,6 +38,9 @@ npm ci
 echo "🔨 Building frontend assets..."
 npm run build
 
+echo "🛑 Stopping SSR server..."
+php artisan inertia:stop-ssr 2>/dev/null || true
+
 echo "🗄️ Running database migrations..."
 php artisan migrate --force
 
@@ -61,7 +64,8 @@ sudo chmod -R 775 storage bootstrap/cache
 echo "�🔄 Restarting services..."
 php artisan queue:restart
 sudo systemctl reload php-fpm || sudo systemctl reload php8.4-fpm || echo "Could not reload PHP-FPM, please restart manually if needed"
-
+echo "🌐 Starting SSR server..."
+sudo supervisorctl restart inertia-ssr 2>/dev/null || echo "Supervisor not configured for SSR yet — start manually with: php artisan inertia:start-ssr &"
 echo "✅ Deployment complete!"
 ENDSSH
 

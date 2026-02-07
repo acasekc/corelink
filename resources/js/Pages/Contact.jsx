@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import { Send } from "lucide-react";
+import { useForm, usePage } from "@inertiajs/react";
+import SeoHead from "@/components/SeoHead";
 
-const Contact = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+const Contact = ({ meta }) => {
+  const { flash } = usePage().props;
+  const { data, setData, post, processing, errors, reset } = useForm({
     name: "",
     email: "",
     subject: "",
@@ -13,47 +15,19 @@ const Contact = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setData(name, value);
   };
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      
-      const response = await fetch("/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "X-CSRF-TOKEN": csrfToken,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.message || "Failed to send message. Please try again later.");
-      } else {
-        setSuccess("Message sent! We'll get back to you as soon as possible.");
-        setFormData({ name: "", email: "", subject: "", message: "" });
-      }
-    } catch (err) {
-      setError("Network error. Please try again later.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    post("/contact", {
+      onSuccess: () => reset(),
+    });
   };
 
   return (
     <div className="relative overflow-hidden">
+      <SeoHead meta={meta} />
       {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-[128px]" />
@@ -95,15 +69,15 @@ const Contact = () => {
             className="max-w-xl mx-auto"
           >
             <form onSubmit={handleSubmit} className="glass-card rounded-2xl p-8 md:p-10">
-              {error && (
+              {Object.keys(errors).length > 0 && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-center font-medium">
-                  {error}
+                  {Object.values(errors)[0]}
                 </div>
               )}
-              {success && (
+              {flash?.success && (
                 <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-center font-medium">
                   <div className="text-2xl mb-2">✓</div>
-                  {success}
+                  {flash.success}
                 </div>
               )}
               <div className="space-y-6">
@@ -121,7 +95,7 @@ const Contact = () => {
                     name="name"
                     type="text"
                     placeholder="Your name"
-                    value={formData.name}
+                    value={data.name}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 bg-background/50 border border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:border-primary/50 transition-colors"
@@ -142,7 +116,7 @@ const Contact = () => {
                     name="email"
                     type="email"
                     placeholder="your@email.com"
-                    value={formData.email}
+                    value={data.email}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 bg-background/50 border border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:border-primary/50 transition-colors"
@@ -163,7 +137,7 @@ const Contact = () => {
                     name="subject"
                     type="text"
                     placeholder="What's this about?"
-                    value={formData.subject}
+                    value={data.subject}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 bg-background/50 border border-white/10 rounded-lg text-foreground placeholder-muted-foreground focus:border-primary/50 transition-colors"
@@ -183,7 +157,7 @@ const Contact = () => {
                     id="message"
                     name="message"
                     placeholder="Tell us about your project..."
-                    value={formData.message}
+                    value={data.message}
                     onChange={handleChange}
                     required
                     rows={5}
@@ -199,10 +173,10 @@ const Contact = () => {
                 >
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={processing}
                     className="w-full bg-linear-to-r from-primary to-accent hover:opacity-90 transition-opacity text-primary-foreground font-medium py-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {isSubmitting ? (
+                    {processing ? (
                       <span className="flex items-center gap-2">
                         <motion.div
                           animate={{ rotate: 360 }}

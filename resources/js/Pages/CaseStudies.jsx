@@ -1,30 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link } from "@inertiajs/react";
+import SeoHead from "@/components/SeoHead";
 
-const CaseStudies = () => {
-  const [caseStudies, setCaseStudies] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/case-studies")
-      .then((res) => res.json())
-      .then((data) => {
-        setCaseStudies(data);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
+const CaseStudies = ({ meta, caseStudies = [] }) => {
   return (
     <div className="relative overflow-hidden">
+      <SeoHead meta={meta} />
       {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/10 rounded-full blur-[128px]" />
@@ -69,7 +51,7 @@ const CaseStudies = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="group"
               >
-                <Link to={`/case-studies/${study.slug}`}>
+                <Link href={`/case-studies/${study.slug}`}>
                   <div className="glass-card rounded-2xl p-8 h-full hover:border-primary/30 transition-colors cursor-pointer">
                     <span className="inline-block px-3 py-1.5 rounded-full text-xs font-medium tracking-wide uppercase bg-primary/10 text-primary border border-primary/20 mb-4">
                       {study.industry || 'Case Study'}
