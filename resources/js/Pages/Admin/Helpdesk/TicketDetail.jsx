@@ -3,6 +3,8 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Ticket, ArrowLeft, LogOut, User, Clock, Tag, MessageSquare, Send, Lock, Unlock, Paperclip, X, FileText, Image, Download, Trash2, Plus, Play, Square, Edit2, DollarSign, Timer } from 'lucide-react';
 import Markdown from '../../../components/Markdown';
 import LexicalMarkdownEditor from '../../../components/LexicalMarkdownEditor';
+import FileUploadProgress from '../../../components/FileUploadProgress';
+import useFileUpload, { validateFiles, ALLOWED_TYPES, MAX_FILE_SIZE, MAX_FILES } from '../../../hooks/useFileUpload';
 
 const TicketDetail = () => {
     const { ticketId } = useParams();
@@ -20,6 +22,7 @@ const TicketDetail = () => {
     const [submitting, setSubmitting] = useState(false);
     const [commentAttachments, setCommentAttachments] = useState([]);
     const commentFileInputRef = useRef(null);
+    const commentUpload = useFileUpload();
     
     // Time tracking state
     const [showTimeForm, setShowTimeForm] = useState(false);
@@ -39,16 +42,6 @@ const TicketDetail = () => {
     const [editingTicketTitle, setEditingTicketTitle] = useState('');
     const [editingTicketContent, setEditingTicketContent] = useState('');
     const [editingTicketSubmitting, setEditingTicketSubmitting] = useState(false);
-
-    const ALLOWED_TYPES = [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-        'application/pdf',
-        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'text/plain', 'text/csv'
-    ];
-    const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
     useEffect(() => {
         fetchReferenceData();
@@ -234,22 +227,12 @@ const TicketDetail = () => {
 
             // Upload attachments if any
             if (commentAttachments.length > 0) {
-                const formData = new FormData();
-                commentAttachments.forEach(file => formData.append('files[]', file));
-
-                const uploadResponse = await fetch(`/api/helpdesk/admin/comments/${newCommentData.id}/attachments`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': getCsrfToken(),
-                        'Accept': 'application/json',
-                    },
-                    credentials: 'same-origin',
-                    body: formData,
-                });
-
-                if (uploadResponse.ok) {
-                    const uploadData = await uploadResponse.json();
-                    newCommentData.attachments = uploadData.data;
+                const uploadResult = await commentUpload.upload(
+                    `/api/helpdesk/admin/comments/${newCommentData.id}/attachments`,
+                    commentAttachments,
+                );
+                if (uploadResult.data.length > 0) {
+                    newCommentData.attachments = uploadResult.data;
                 }
             }
 
@@ -258,6 +241,7 @@ const TicketDetail = () => {
             setCommentKey(k => k + 1);
             setIsInternal(false);
             setCommentAttachments([]);
+            commentUpload.reset();
         } catch (err) {
             alert('Failed to add comment: ' + err.message);
         } finally {
@@ -555,11 +539,9 @@ const TicketDetail = () => {
 
     const handleCommentFileSelect = (e) => {
         const files = Array.from(e.target.files);
-        const validFiles = files.filter(file => 
-            ALLOWED_TYPES.includes(file.type) && file.size <= MAX_FILE_SIZE
-        );
+        const { validFiles } = validateFiles(files, commentAttachments.length);
         if (validFiles.length > 0) {
-            setCommentAttachments(prev => [...prev, ...validFiles].slice(0, 10));
+            setCommentAttachments(prev => [...prev, ...validFiles]);
         }
         if (commentFileInputRef.current) commentFileInputRef.current.value = '';
     };
@@ -909,6 +891,18 @@ const TicketDetail = () => {
                                         </div>
                                     )}
 
+                                    {/* Upload Progress */}
+                                    {commentUpload.isUploading && commentAttachments.length > 0 && (
+                                        <div className="mb-3">
+                                            <FileUploadProgress
+                                                files={commentAttachments}
+                                                fileProgress={commentUpload.fileProgress}
+                                                isUploading={commentUpload.isUploading}
+                                                onCancel={commentUpload.cancel}
+                                            />
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <label className="flex items-center gap-2 cursor-pointer">
@@ -940,11 +934,11 @@ const TicketDetail = () => {
                                         </div>
                                         <button
                                             type="submit"
-                                            disabled={submitting || !newComment.trim()}
+                                            disabled={submitting || commentUpload.isUploading || !newComment.trim()}
                                             className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Send className="w-4 h-4" />
-                                            {submitting ? 'Sending...' : 'Send'}
+                                            {submitting || commentUpload.isUploading ? 'Sending...' : 'Send'}
                                         </button>
                                     </div>
                                 </form>

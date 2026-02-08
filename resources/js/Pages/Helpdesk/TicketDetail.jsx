@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import Markdown from '../../components/Markdown';
 import LexicalMarkdownEditor from '../../components/LexicalMarkdownEditor';
+import FileUploadProgress from '../../components/FileUploadProgress';
+import useFileUpload, { validateFiles, ALLOWED_TYPES, MAX_FILE_SIZE, MAX_FILES } from '../../hooks/useFileUpload';
 
 export default function HelpdeskUserTicketDetail() {
     const { ticketId } = useParams();
@@ -36,11 +38,13 @@ export default function HelpdeskUserTicketDetail() {
     const [priorities, setPriorities] = useState([]);
     const [assignees, setAssignees] = useState([]);
     const [attachments, setAttachments] = useState([]);
-    const [uploadingFiles, setUploadingFiles] = useState(false);
     const [commentFiles, setCommentFiles] = useState([]);
-    const [uploadingCommentFiles, setUploadingCommentFiles] = useState(false);
     const fileInputRef = useRef(null);
     const commentFileInputRef = useRef(null);
+
+    // Upload progress hooks
+    const ticketUpload = useFileUpload();
+    const commentUpload = useFileUpload();
 
     // Comment editing state
     const [editingCommentId, setEditingCommentId] = useState(null);
@@ -52,16 +56,6 @@ export default function HelpdeskUserTicketDetail() {
     const [editingTicketTitle, setEditingTicketTitle] = useState('');
     const [editingTicketContent, setEditingTicketContent] = useState('');
     const [editingTicketSubmitting, setEditingTicketSubmitting] = useState(false);
-
-    const ALLOWED_TYPES = [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-        'application/pdf',
-        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'text/plain', 'text/csv'
-    ];
-    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
     useEffect(() => {
         const fetchTicket = async () => {
@@ -132,37 +126,30 @@ export default function HelpdeskUserTicketDetail() {
         }
     };
 
+    const [uploadingTicketFiles, setUploadingTicketFiles] = useState([]);
+
     const handleFileUpload = async (e) => {
         const files = Array.from(e.target.files);
-        const validFiles = files.filter(file => 
-            ALLOWED_TYPES.includes(file.type) && file.size <= MAX_FILE_SIZE
-        );
+        const { validFiles } = validateFiles(files, attachments.length);
 
         if (validFiles.length === 0) return;
 
-        setUploadingFiles(true);
+        setUploadingTicketFiles(validFiles);
+        ticketUpload.reset();
+
         try {
-            const formData = new FormData();
-            validFiles.forEach(file => formData.append('files[]', file));
-
-            const response = await fetch(`/api/helpdesk/user/tickets/${ticketId}/attachments`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                },
-                body: formData,
-            });
-
-            if (response.ok) {
-                const result = await response.json();
+            const result = await ticketUpload.upload(
+                `/api/helpdesk/user/tickets/${ticketId}/attachments`,
+                validFiles,
+            );
+            if (result.data.length > 0) {
                 setAttachments(prev => [...prev, ...result.data]);
             }
         } catch (err) {
             console.error('Failed to upload files:', err);
         } finally {
-            setUploadingFiles(false);
+            setUploadingTicketFiles([]);
+            ticketUpload.reset();
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
@@ -189,9 +176,7 @@ export default function HelpdeskUserTicketDetail() {
 
     const handleCommentFileSelect = (e) => {
         const files = Array.from(e.target.files);
-        const validFiles = files.filter(file => 
-            ALLOWED_TYPES.includes(file.type) && file.size <= MAX_FILE_SIZE
-        );
+        const { validFiles } = validateFiles(files, commentFiles.length);
         setCommentFiles(prev => [...prev, ...validFiles]);
         if (commentFileInputRef.current) commentFileInputRef.current.value = '';
     };
@@ -203,24 +188,12 @@ export default function HelpdeskUserTicketDetail() {
     const uploadCommentAttachments = async (commentId) => {
         if (commentFiles.length === 0) return [];
 
-        const formData = new FormData();
-        commentFiles.forEach(file => formData.append('files[]', file));
-
         try {
-            const response = await fetch(`/api/helpdesk/user/comments/${commentId}/attachments`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                },
-                body: formData,
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                return result.data || [];
-            }
+            const result = await commentUpload.upload(
+                `/api/helpdesk/user/comments/${commentId}/attachments`,
+                commentFiles,
+            );
+            return result.data || [];
         } catch (err) {
             console.error('Failed to upload comment attachments:', err);
         }
@@ -252,13 +225,11 @@ export default function HelpdeskUserTicketDetail() {
 
                 // Upload attachments if any
                 if (commentFiles.length > 0) {
-                    setUploadingCommentFiles(true);
                     const uploadedAttachments = await uploadCommentAttachments(newCommentData.id);
                     newCommentData = {
                         ...newCommentData,
                         attachments: [...(newCommentData.attachments || []), ...uploadedAttachments],
                     };
-                    setUploadingCommentFiles(false);
                 }
 
                 setTicket((prev) => ({
@@ -269,6 +240,7 @@ export default function HelpdeskUserTicketDetail() {
                 setCommentKey(k => k + 1);
                 setIsInternal(false);
                 setCommentFiles([]);
+                commentUpload.reset();
             }
         } catch (err) {
             console.error('Failed to add comment:', err);
@@ -577,14 +549,26 @@ export default function HelpdeskUserTicketDetail() {
                                         <button
                                             type="button"
                                             onClick={() => fileInputRef.current?.click()}
-                                            disabled={uploadingFiles}
+                                            disabled={ticketUpload.isUploading}
                                             className="flex items-center gap-2 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition disabled:opacity-50"
                                         >
                                             <Paperclip className="w-4 h-4" />
-                                            {uploadingFiles ? 'Uploading...' : 'Add Files'}
+                                            {ticketUpload.isUploading ? 'Uploading...' : 'Add Files'}
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Upload Progress */}
+                                {ticketUpload.isUploading && uploadingTicketFiles.length > 0 && (
+                                    <div className="mb-4">
+                                        <FileUploadProgress
+                                            files={uploadingTicketFiles}
+                                            fileProgress={ticketUpload.fileProgress}
+                                            isUploading={ticketUpload.isUploading}
+                                            onCancel={ticketUpload.cancel}
+                                        />
+                                    </div>
+                                )}
 
                                 {attachments.length > 0 ? (
                                     <div className="space-y-2">
@@ -770,6 +754,18 @@ export default function HelpdeskUserTicketDetail() {
                                                 ))}
                                             </div>
                                         )}
+
+                                        {/* Comment Upload Progress */}
+                                        {commentUpload.isUploading && commentFiles.length > 0 && (
+                                            <div className="mt-2">
+                                                <FileUploadProgress
+                                                    files={commentFiles}
+                                                    fileProgress={commentUpload.fileProgress}
+                                                    isUploading={commentUpload.isUploading}
+                                                    onCancel={commentUpload.cancel}
+                                                />
+                                            </div>
+                                        )}
                                         
                                         <div className="flex items-center justify-between mt-3">
                                             <div className="flex items-center gap-4">
@@ -806,11 +802,11 @@ export default function HelpdeskUserTicketDetail() {
                                             </div>
                                             <button
                                                 type="submit"
-                                                disabled={(!newComment.trim() && commentFiles.length === 0) || submitting || uploadingCommentFiles}
+                                                disabled={(!newComment.trim() && commentFiles.length === 0) || submitting || commentUpload.isUploading}
                                                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg transition"
                                             >
                                                 <Send className="w-4 h-4" />
-                                                {submitting || uploadingCommentFiles ? 'Sending...' : 'Send'}
+                                                {submitting || commentUpload.isUploading ? 'Sending...' : 'Send'}
                                             </button>
                                         </div>
                                     </form>

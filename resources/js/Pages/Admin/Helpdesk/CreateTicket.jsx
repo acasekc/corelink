@@ -13,6 +13,8 @@ import {
     Search,
 } from 'lucide-react';
 import LexicalMarkdownEditor from '../../../components/LexicalMarkdownEditor';
+import FileUploadProgress from '../../../components/FileUploadProgress';
+import useFileUpload, { validateFiles, ALLOWED_TYPES, MAX_FILE_SIZE, MAX_FILES } from '../../../hooks/useFileUpload';
 
 export default function AdminCreateTicket() {
     const navigate = useNavigate();
@@ -46,16 +48,7 @@ export default function AdminCreateTicket() {
     const [attachments, setAttachments] = useState([]);
     const fileInputRef = useRef(null);
     const userSearchRef = useRef(null);
-
-    const ALLOWED_TYPES = [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-        'application/pdf',
-        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'text/plain', 'text/csv'
-    ];
-    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    const ticketUpload = useFileUpload();
 
     useEffect(() => {
         fetchInitialData();
@@ -180,20 +173,7 @@ export default function AdminCreateTicket() {
 
     const handleFileSelect = (e) => {
         const files = Array.from(e.target.files);
-        const validFiles = [];
-        const errors = [];
-
-        files.forEach(file => {
-            if (!ALLOWED_TYPES.includes(file.type)) {
-                errors.push(`${file.name}: Only images and documents are allowed`);
-            } else if (file.size > MAX_FILE_SIZE) {
-                errors.push(`${file.name}: File size must not exceed 10MB`);
-            } else if (attachments.length + validFiles.length >= 10) {
-                errors.push(`Maximum 10 files allowed`);
-            } else {
-                validFiles.push(file);
-            }
-        });
+        const { validFiles, errors } = validateFiles(files, attachments.length);
 
         if (errors.length > 0) {
             setError(errors.join(', '));
@@ -268,21 +248,16 @@ export default function AdminCreateTicket() {
 
             // Upload attachments if any
             if (attachments.length > 0) {
-                const formData = new FormData();
-                attachments.forEach(file => {
-                    formData.append('files[]', file);
-                });
-
-                await fetch(`/api/helpdesk/admin/tickets/${ticketId}/attachments`, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                    },
-                    body: formData,
-                });
+                const result = await ticketUpload.upload(
+                    `/api/helpdesk/admin/tickets/${ticketId}/attachments`,
+                    attachments,
+                );
+                if (result.errors.length > 0) {
+                    console.error('Some files failed to upload:', result.errors);
+                }
             }
+
+            ticketUpload.reset();
 
             navigate(`/admin/helpdesk/tickets/${ticketId}`);
         } catch (err) {
@@ -581,6 +556,18 @@ export default function AdminCreateTicket() {
                                         ))}
                                     </div>
                                 )}
+
+                                {/* Upload Progress */}
+                                {ticketUpload.isUploading && attachments.length > 0 && (
+                                    <div className="mt-4">
+                                        <FileUploadProgress
+                                            files={attachments}
+                                            fileProgress={ticketUpload.fileProgress}
+                                            isUploading={ticketUpload.isUploading}
+                                            onCancel={ticketUpload.cancel}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Actions */}
@@ -593,11 +580,11 @@ export default function AdminCreateTicket() {
                                 </Link>
                                 <button
                                     type="submit"
-                                    disabled={submitting || !form.project_id || !form.title || !form.content}
+                                    disabled={submitting || ticketUpload.isUploading || !form.project_id || !form.title || !form.content}
                                     className="flex items-center gap-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition"
                                 >
                                     <Ticket className="w-4 h-4" />
-                                    {submitting ? 'Creating...' : 'Create Ticket'}
+                                    {submitting || ticketUpload.isUploading ? 'Creating...' : 'Create Ticket'}
                                 </button>
                             </div>
                         </form>

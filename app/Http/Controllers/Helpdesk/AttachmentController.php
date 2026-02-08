@@ -48,7 +48,7 @@ class AttachmentController extends Controller
     private function handleUpload(Request $request, Ticket|Comment $attachable, $user): JsonResponse
     {
         $request->validate([
-            'files' => ['required', 'array', 'max:10'],
+            'files' => ['required', 'array', 'max:30'],
             'files.*' => [
                 'required',
                 'file',
@@ -58,6 +58,7 @@ class AttachmentController extends Controller
         ], [
             'files.*.mimetypes' => 'Only images and documents (PDF, Word, Excel, PowerPoint, TXT, CSV) are allowed.',
             'files.*.max' => 'File size must not exceed 10MB.',
+            'files.max' => 'You may upload a maximum of 30 files at once.',
         ]);
 
         $disk = config('filesystems.default') === 's3' ? 's3' : 'local';

@@ -36,7 +36,10 @@ jobs:
             echo "🔨 Building frontend assets..."
             npm run build
             
-            echo "🗄️ Running migrations..."
+            echo "� Stopping SSR server..."
+            php artisan inertia:stop-ssr 2>/dev/null || true
+            
+            echo "�🗄️ Running migrations..."
             php artisan migrate --force
             
             echo "🌱 Seeding projects..."
@@ -58,5 +61,8 @@ jobs:
             echo "🔄 Restarting services..."
             php artisan queue:restart
             sudo systemctl reload php-fpm || echo "Could not reload PHP-FPM"
+            
+            echo "🌐 Starting SSR server..."
+            sudo supervisorctl restart inertia-ssr 2>/dev/null || echo "Supervisor not configured for SSR"
             
             echo "✅ Deployment complete!"
