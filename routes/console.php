@@ -21,6 +21,9 @@ Artisan::command('inspire', function () {
 // Publish scheduled articles every hour
 Schedule::command('articles:publish-scheduled')->hourly();
 
+// Clean up attachments from tickets closed for more than 30 days
+Schedule::command('helpdesk:cleanup-attachments')->dailyAt('03:00');
+
 // Auto-generate articles daily (if enabled)
 Schedule::call(function () {
     $settings = ArticleGenerationSettings::get();

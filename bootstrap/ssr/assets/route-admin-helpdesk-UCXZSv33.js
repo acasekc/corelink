@@ -1,7 +1,7 @@
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import React, { forwardRef, useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link, useParams } from "react-router-dom";
-import { Bold, Italic, Strikethrough, List, ListOrdered, AlertCircle, ArrowLeft, Plus, LogOut, Search, X, Paperclip, Image, FileText, Ticket, Clock, CheckCircle, FolderOpen, Check, DollarSign, Trash2, Edit2, Send, XCircle, Download, CreditCard, Eye, Save, Filter, ChevronLeft, ChevronRight, User, Mail, MapPin, Key, RefreshCw, Copy, Settings as Settings$1, GripVertical, Pencil, MessageSquare, Lock, Unlock, Tag, Square, Play, Timer, Shield, Loader2, Users, AlertTriangle, RotateCcw } from "lucide-react";
+import { Bold, Italic, Strikethrough, List, ListOrdered, CheckCircle, AlertCircle, Loader2, ArrowLeft, Plus, LogOut, Search, X, Paperclip, Image, FileText, Ticket, Clock, FolderOpen, Check, DollarSign, Trash2, Edit2, Send, XCircle, Download, CreditCard, Eye, Save, Filter, ChevronLeft, ChevronRight, User, Mail, MapPin, Key, RefreshCw, Copy, Settings as Settings$1, GripVertical, Pencil, MessageSquare, Lock, Unlock, Tag, Square, Play, Timer, Shield, Users, AlertTriangle, RotateCcw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -205,6 +205,211 @@ const LexicalMarkdownEditor = forwardRef(({
   ] }) }, editorKey);
 });
 LexicalMarkdownEditor.displayName = "LexicalMarkdownEditor";
+function FileUploadProgress({ files, fileProgress, isUploading, onCancel }) {
+  if (!files || files.length === 0 || fileProgress.size === 0) {
+    return null;
+  }
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-2", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+      /* @__PURE__ */ jsxs("span", { className: "text-xs text-slate-400", children: [
+        "Uploading ",
+        files.length,
+        " file",
+        files.length !== 1 ? "s" : "",
+        "…"
+      ] }),
+      isUploading && onCancel && /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: onCancel,
+          className: "text-xs text-red-400 hover:text-red-300",
+          children: "Cancel"
+        }
+      )
+    ] }),
+    files.map((file, index) => {
+      const percent = fileProgress.get(index) ?? 0;
+      const isError = percent === -1;
+      const isDone = percent === 100;
+      const isActive = !isError && !isDone && percent >= 0;
+      return /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsxs("div", { className: "shrink-0 w-4", children: [
+          isDone && /* @__PURE__ */ jsx(CheckCircle, { className: "w-4 h-4 text-green-400" }),
+          isError && /* @__PURE__ */ jsx(AlertCircle, { className: "w-4 h-4 text-red-400" }),
+          isActive && /* @__PURE__ */ jsx(Loader2, { className: "w-4 h-4 text-blue-400 animate-spin" })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between mb-0.5", children: [
+            /* @__PURE__ */ jsx("span", { className: "text-xs text-slate-300 truncate mr-2", children: file.name }),
+            /* @__PURE__ */ jsx("span", { className: "text-xs text-slate-500 shrink-0", children: isError ? "Failed" : isDone ? formatFileSize(file.size) : `${percent}%` })
+          ] }),
+          /* @__PURE__ */ jsx("div", { className: "h-1.5 bg-slate-700 rounded-full overflow-hidden", children: /* @__PURE__ */ jsx(
+            "div",
+            {
+              className: `h-full rounded-full transition-all duration-300 ${isError ? "bg-red-500" : isDone ? "bg-green-500" : "bg-blue-500"}`,
+              style: { width: `${isError ? 100 : Math.max(0, percent)}%` }
+            }
+          ) })
+        ] })
+      ] }, `${file.name}-${index}`);
+    })
+  ] });
+}
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "text/plain",
+  "text/csv"
+];
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILES = 30;
+function validateFiles(files, existingCount = 0) {
+  const validFiles = [];
+  const errors = [];
+  files.forEach((file) => {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      errors.push(`${file.name}: Only images and documents are allowed`);
+    } else if (file.size > MAX_FILE_SIZE) {
+      errors.push(`${file.name}: File size must not exceed 10MB`);
+    } else if (existingCount + validFiles.length >= MAX_FILES) {
+      errors.push(`Maximum ${MAX_FILES} files allowed`);
+    } else {
+      validFiles.push(file);
+    }
+  });
+  return { validFiles, errors };
+}
+function uploadWithProgress(url, files, csrfToken, onProgress, abortController) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    abortController.current = xhr;
+    const formData = new FormData();
+    files.forEach((file) => formData.append("files[]", file));
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round(e.loaded / e.total * 100);
+        onProgress(percent, e.loaded, e.total);
+      }
+    });
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch {
+          resolve(null);
+        }
+      } else {
+        reject(new Error(`Upload failed with status ${xhr.status}`));
+      }
+    });
+    xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+    xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")));
+    xhr.open("POST", url);
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.setRequestHeader("X-CSRF-TOKEN", csrfToken);
+    xhr.withCredentials = true;
+    xhr.send(formData);
+  });
+}
+async function uploadFilesIndividually(url, files, csrfToken, onFileProgress, abortRef) {
+  const results = [];
+  const errors = [];
+  for (let i = 0; i < files.length; i++) {
+    try {
+      const result = await uploadWithProgress(
+        url,
+        [files[i]],
+        csrfToken,
+        (percent) => onFileProgress(i, percent),
+        abortRef
+      );
+      if (result?.data) {
+        results.push(...Array.isArray(result.data) ? result.data : [result.data]);
+      }
+      onFileProgress(i, 100);
+    } catch (err) {
+      if (err.message === "Upload cancelled") {
+        break;
+      }
+      errors.push({ file: files[i].name, error: err.message });
+      onFileProgress(i, -1);
+    }
+  }
+  return { data: results, errors };
+}
+function useFileUpload() {
+  const [fileProgress, setFileProgress] = useState(/* @__PURE__ */ new Map());
+  const [isUploading, setIsUploading] = useState(false);
+  const [overallPercent, setOverallPercent] = useState(0);
+  const abortRef = useRef(null);
+  const getCsrfToken = () => {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+  };
+  const upload = useCallback(async (url, files) => {
+    if (files.length === 0) {
+      return { data: [], errors: [] };
+    }
+    setIsUploading(true);
+    setOverallPercent(0);
+    const initialProgress = /* @__PURE__ */ new Map();
+    files.forEach((_, i) => initialProgress.set(i, 0));
+    setFileProgress(new Map(initialProgress));
+    const csrfToken = getCsrfToken();
+    const onFileProgress = (fileIndex, percent) => {
+      setFileProgress((prev) => {
+        const updated = new Map(prev);
+        updated.set(fileIndex, percent);
+        let total = 0;
+        let completed = 0;
+        updated.forEach((p) => {
+          total += 100;
+          completed += Math.max(0, p);
+        });
+        setOverallPercent(total > 0 ? Math.round(completed / total * 100) : 0);
+        return updated;
+      });
+    };
+    try {
+      const result = await uploadFilesIndividually(url, files, csrfToken, onFileProgress, abortRef);
+      setOverallPercent(100);
+      return result;
+    } catch (err) {
+      return { data: [], errors: [{ file: "upload", error: err.message }] };
+    } finally {
+      setIsUploading(false);
+      abortRef.current = null;
+    }
+  }, []);
+  const cancel = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    setIsUploading(false);
+  }, []);
+  const reset = useCallback(() => {
+    setFileProgress(/* @__PURE__ */ new Map());
+    setOverallPercent(0);
+    setIsUploading(false);
+  }, []);
+  return { fileProgress, isUploading, overallPercent, upload, cancel, reset };
+}
 function AdminCreateTicket() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -236,23 +441,7 @@ function AdminCreateTicket() {
   const [attachments, setAttachments] = useState([]);
   const fileInputRef = useRef(null);
   const userSearchRef = useRef(null);
-  const ALLOWED_TYPES = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "text/plain",
-    "text/csv"
-  ];
-  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const ticketUpload = useFileUpload();
   useEffect(() => {
     fetchInitialData();
   }, []);
@@ -364,19 +553,7 @@ function AdminCreateTicket() {
   };
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = [];
-    const errors = [];
-    files.forEach((file) => {
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        errors.push(`${file.name}: Only images and documents are allowed`);
-      } else if (file.size > MAX_FILE_SIZE) {
-        errors.push(`${file.name}: File size must not exceed 10MB`);
-      } else if (attachments.length + validFiles.length >= 10) {
-        errors.push(`Maximum 10 files allowed`);
-      } else {
-        validFiles.push(file);
-      }
-    });
+    const { validFiles, errors } = validateFiles(files, attachments.length);
     if (errors.length > 0) {
       setError(errors.join(", "));
     }
@@ -436,20 +613,15 @@ function AdminCreateTicket() {
       const result = await response.json();
       const ticketId = result.data.id;
       if (attachments.length > 0) {
-        const formData = new FormData();
-        attachments.forEach((file) => {
-          formData.append("files[]", file);
-        });
-        await fetch(`/api/helpdesk/admin/tickets/${ticketId}/attachments`, {
-          method: "POST",
-          credentials: "same-origin",
-          headers: {
-            "Accept": "application/json",
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || ""
-          },
-          body: formData
-        });
+        const result2 = await ticketUpload.upload(
+          `/api/helpdesk/admin/tickets/${ticketId}/attachments`,
+          attachments
+        );
+        if (result2.errors.length > 0) {
+          console.error("Some files failed to upload:", result2.errors);
+        }
       }
+      ticketUpload.reset();
       navigate(`/admin/helpdesk/tickets/${ticketId}`);
     } catch (err) {
       setError(err.message);
@@ -704,7 +876,16 @@ function AdminCreateTicket() {
               ]
             },
             index
-          )) })
+          )) }),
+          ticketUpload.isUploading && attachments.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-4", children: /* @__PURE__ */ jsx(
+            FileUploadProgress,
+            {
+              files: attachments,
+              fileProgress: ticketUpload.fileProgress,
+              isUploading: ticketUpload.isUploading,
+              onCancel: ticketUpload.cancel
+            }
+          ) })
         ] }),
         /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-4 pt-4 border-t border-slate-700", children: [
           /* @__PURE__ */ jsx(
@@ -719,11 +900,11 @@ function AdminCreateTicket() {
             "button",
             {
               type: "submit",
-              disabled: submitting || !form.project_id || !form.title || !form.content,
+              disabled: submitting || ticketUpload.isUploading || !form.project_id || !form.title || !form.content,
               className: "flex items-center gap-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition",
               children: [
                 /* @__PURE__ */ jsx(Ticket, { className: "w-4 h-4" }),
-                submitting ? "Creating..." : "Create Ticket"
+                submitting || ticketUpload.isUploading ? "Creating..." : "Create Ticket"
               ]
             }
           )
@@ -5082,6 +5263,7 @@ const TicketDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [commentAttachments, setCommentAttachments] = useState([]);
   const commentFileInputRef = useRef(null);
+  const commentUpload = useFileUpload();
   const [showTimeForm, setShowTimeForm] = useState(false);
   const [timeFormData, setTimeFormData] = useState({ hours: "", minutes: "", hourly_rate_category_id: "", description: "", is_billable: true });
   const [editingTimeEntry, setEditingTimeEntry] = useState(null);
@@ -5095,23 +5277,6 @@ const TicketDetail = () => {
   const [editingTicketTitle, setEditingTicketTitle] = useState("");
   const [editingTicketContent, setEditingTicketContent] = useState("");
   const [editingTicketSubmitting, setEditingTicketSubmitting] = useState(false);
-  const ALLOWED_TYPES = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "text/plain",
-    "text/csv"
-  ];
-  const MAX_FILE_SIZE = 10 * 1024 * 1024;
   useEffect(() => {
     fetchReferenceData();
     fetchTicket();
@@ -5281,20 +5446,12 @@ const TicketDetail = () => {
       const data = await response.json();
       const newCommentData = data.data;
       if (commentAttachments.length > 0) {
-        const formData = new FormData();
-        commentAttachments.forEach((file) => formData.append("files[]", file));
-        const uploadResponse = await fetch(`/api/helpdesk/admin/comments/${newCommentData.id}/attachments`, {
-          method: "POST",
-          headers: {
-            "X-CSRF-TOKEN": getCsrfToken(),
-            "Accept": "application/json"
-          },
-          credentials: "same-origin",
-          body: formData
-        });
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json();
-          newCommentData.attachments = uploadData.data;
+        const uploadResult = await commentUpload.upload(
+          `/api/helpdesk/admin/comments/${newCommentData.id}/attachments`,
+          commentAttachments
+        );
+        if (uploadResult.data.length > 0) {
+          newCommentData.attachments = uploadResult.data;
         }
       }
       setComments([...comments, newCommentData]);
@@ -5302,6 +5459,7 @@ const TicketDetail = () => {
       setCommentKey((k) => k + 1);
       setIsInternal(false);
       setCommentAttachments([]);
+      commentUpload.reset();
     } catch (err) {
       alert("Failed to add comment: " + err.message);
     } finally {
@@ -5569,11 +5727,9 @@ const TicketDetail = () => {
   };
   const handleCommentFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = files.filter(
-      (file) => ALLOWED_TYPES.includes(file.type) && file.size <= MAX_FILE_SIZE
-    );
+    const { validFiles } = validateFiles(files, commentAttachments.length);
     if (validFiles.length > 0) {
-      setCommentAttachments((prev) => [...prev, ...validFiles].slice(0, 10));
+      setCommentAttachments((prev) => [...prev, ...validFiles]);
     }
     if (commentFileInputRef.current) commentFileInputRef.current.value = "";
   };
@@ -5896,6 +6052,15 @@ const TicketDetail = () => {
               },
               index
             )) }),
+            commentUpload.isUploading && commentAttachments.length > 0 && /* @__PURE__ */ jsx("div", { className: "mb-3", children: /* @__PURE__ */ jsx(
+              FileUploadProgress,
+              {
+                files: commentAttachments,
+                fileProgress: commentUpload.fileProgress,
+                isUploading: commentUpload.isUploading,
+                onCancel: commentUpload.cancel
+              }
+            ) }),
             /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
               /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-4", children: [
                 /* @__PURE__ */ jsxs("label", { className: "flex items-center gap-2 cursor-pointer", children: [
@@ -5936,11 +6101,11 @@ const TicketDetail = () => {
                 "button",
                 {
                   type: "submit",
-                  disabled: submitting || !newComment.trim(),
+                  disabled: submitting || commentUpload.isUploading || !newComment.trim(),
                   className: "flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed",
                   children: [
                     /* @__PURE__ */ jsx(Send, { className: "w-4 h-4" }),
-                    submitting ? "Sending..." : "Send"
+                    submitting || commentUpload.isUploading ? "Sending..." : "Send"
                   ]
                 }
               )
@@ -7704,6 +7869,7 @@ const __vite_glob_0_31 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.de
   default: UsersList
 }, Symbol.toStringTag, { value: "Module" }));
 export {
+  FileUploadProgress as F,
   LexicalMarkdownEditor as L,
   Markdown as M,
   __vite_glob_0_31 as _,
@@ -7720,5 +7886,7 @@ export {
   __vite_glob_0_20 as k,
   __vite_glob_0_19 as l,
   __vite_glob_0_18 as m,
-  __vite_glob_0_17 as n
+  __vite_glob_0_17 as n,
+  useFileUpload as u,
+  validateFiles as v
 };

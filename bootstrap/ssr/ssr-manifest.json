@@ -1,7 +1,7 @@
 {
   "resources/js/Layouts/InertiaPublicLayout.jsx": [],
   "resources/js/Pages/About.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/Admin/Articles/Categories/Index.jsx": [
     "/build/assets/route-admin-articles-BR3NEGs1.js"
@@ -52,52 +52,52 @@
     "/build/assets/route-admin-CNbJUzjN.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/CreateTicket.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/Dashboard.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoiceCreate.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoiceDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoiceEdit.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoicesList.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/ProjectDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/ProjectForm.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/ProjectsList.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/Settings.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/TicketDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/TicketsList.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/UserDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/UserForm.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/UsersList.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/Pages/Admin/Login.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/Admin/Projects/Form.jsx": [
     "/build/assets/route-admin-CNbJUzjN.js"
@@ -115,16 +115,16 @@
     "/build/assets/route-blog-jpwBX5H6.js"
   ],
   "resources/js/Pages/CaseStudies.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/CaseStudiesList.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/CaseStudyDetail.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/Contact.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/Discovery/Chat.jsx": [
     "/build/assets/route-discovery-1aL9jwJ0.js"
@@ -133,55 +133,58 @@
     "/build/assets/route-discovery-1aL9jwJ0.js"
   ],
   "resources/js/Pages/Helpdesk/ChangePassword.jsx": [
-    "/build/assets/route-user-helpdesk-CT2hqb6y.js"
+    "/build/assets/route-user-helpdesk-COSESte2.js"
   ],
   "resources/js/Pages/Helpdesk/CreateTicket.jsx": [
-    "/build/assets/route-user-helpdesk-CT2hqb6y.js"
+    "/build/assets/route-user-helpdesk-COSESte2.js"
   ],
   "resources/js/Pages/Helpdesk/Dashboard.jsx": [
-    "/build/assets/route-user-helpdesk-CT2hqb6y.js"
+    "/build/assets/route-user-helpdesk-COSESte2.js"
   ],
   "resources/js/Pages/Helpdesk/Login.jsx": [
-    "/build/assets/route-user-helpdesk-CT2hqb6y.js"
+    "/build/assets/route-user-helpdesk-COSESte2.js"
   ],
   "resources/js/Pages/Helpdesk/Profile.jsx": [
-    "/build/assets/route-user-helpdesk-CT2hqb6y.js"
+    "/build/assets/route-user-helpdesk-COSESte2.js"
   ],
   "resources/js/Pages/Helpdesk/ProjectDetail.jsx": [
-    "/build/assets/route-user-helpdesk-CT2hqb6y.js"
+    "/build/assets/route-user-helpdesk-COSESte2.js"
   ],
   "resources/js/Pages/Helpdesk/TicketDetail.jsx": [
-    "/build/assets/route-user-helpdesk-CT2hqb6y.js"
+    "/build/assets/route-user-helpdesk-COSESte2.js"
   ],
   "resources/js/Pages/Helpdesk/TicketsList.jsx": [
-    "/build/assets/route-user-helpdesk-CT2hqb6y.js"
+    "/build/assets/route-user-helpdesk-COSESte2.js"
   ],
   "resources/js/Pages/Home.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/Index.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/Privacy.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/Process.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/Projects.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/Pages/Terms.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/components/FeatureCard.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/components/Features.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
+  ],
+  "resources/js/components/FileUploadProgress.jsx": [
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/components/Hero.jsx": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
   ],
   "resources/js/components/InertiaFooter.jsx": [],
   "resources/js/components/InertiaHeader.jsx": [],
@@ -189,17 +192,20 @@
     "/build/assets/route-admin-articles-BR3NEGs1.js"
   ],
   "resources/js/components/LexicalMarkdownEditor.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/components/Logo.jsx": [],
   "resources/js/components/Markdown.jsx": [
-    "/build/assets/route-admin-helpdesk-BwQYbHID.js"
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/components/SeoHead.jsx": [
     "/build/assets/route-blog-jpwBX5H6.js"
   ],
   "resources/js/data/caseStudies.js": [
-    "/build/assets/route-public-VUe-ibxy.js"
+    "/build/assets/route-public-B1wLJfPw.js"
+  ],
+  "resources/js/hooks/useFileUpload.js": [
+    "/build/assets/route-admin-helpdesk-UCXZSv33.js"
   ],
   "resources/js/ssr.jsx": []
 }

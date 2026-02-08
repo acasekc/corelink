@@ -984,9 +984,9 @@ const Hero = () => {
           className: "flex flex-col sm:flex-row items-center justify-center gap-4",
           children: [
             /* @__PURE__ */ jsxs(
-              Link$1,
+              Link,
               {
-                to: "/projects",
+                href: "/projects",
                 className: "group px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2",
                 children: [
                   "Explore Our Work",
@@ -995,9 +995,9 @@ const Hero = () => {
               }
             ),
             /* @__PURE__ */ jsx(
-              Link$1,
+              Link,
               {
-                to: "/contact",
+                href: "/contact",
                 className: "px-8 py-4 bg-transparent border border-white/20 text-foreground font-medium rounded-lg hover:bg-white/5 transition-colors",
                 children: "Get In Touch"
               }

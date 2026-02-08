@@ -2,7 +2,7 @@ import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useParams, useSearchParams } from "react-router-dom";
 import { Loader2, Key, AlertTriangle, CheckCircle, Lock, EyeOff, Eye, AlertCircle, ChevronLeft, Plus, LogOut, Paperclip, Image, FileText, X, Ticket, User, Clock, CheckCircle2, FolderOpen, LogIn, ArrowLeft, Mail, Save, ChevronRight, Edit2, Download, MessageSquare, Trash2, Send, Timer, Filter, Search } from "lucide-react";
-import { L as LexicalMarkdownEditor, M as Markdown } from "./route-admin-helpdesk-BwQYbHID.js";
+import { u as useFileUpload, L as LexicalMarkdownEditor, F as FileUploadProgress, v as validateFiles, M as Markdown } from "./route-admin-helpdesk-UCXZSv33.js";
 const ChangePassword = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -250,23 +250,7 @@ function HelpdeskUserCreateTicket() {
   });
   const [attachments, setAttachments] = useState([]);
   const fileInputRef = useRef(null);
-  const ALLOWED_TYPES = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "text/plain",
-    "text/csv"
-  ];
-  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const ticketUpload = useFileUpload();
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -331,19 +315,7 @@ function HelpdeskUserCreateTicket() {
   };
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = [];
-    const errors = [];
-    files.forEach((file) => {
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        errors.push(`${file.name}: Only images and documents are allowed`);
-      } else if (file.size > MAX_FILE_SIZE) {
-        errors.push(`${file.name}: File size must not exceed 10MB`);
-      } else if (attachments.length + validFiles.length >= 10) {
-        errors.push(`Maximum 10 files allowed`);
-      } else {
-        validFiles.push(file);
-      }
-    });
+    const { validFiles, errors } = validateFiles(files, attachments.length);
     if (errors.length > 0) {
       setError(errors.join(", "));
     }
@@ -394,20 +366,15 @@ function HelpdeskUserCreateTicket() {
       const result = await response.json();
       const ticketId = result.data.id;
       if (attachments.length > 0) {
-        const formData = new FormData();
-        attachments.forEach((file) => {
-          formData.append("files[]", file);
-        });
-        await fetch(`/api/helpdesk/user/tickets/${ticketId}/attachments`, {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Accept": "application/json",
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || ""
-          },
-          body: formData
-        });
+        const result2 = await ticketUpload.upload(
+          `/api/helpdesk/user/tickets/${ticketId}/attachments`,
+          attachments
+        );
+        if (result2.errors.length > 0) {
+          console.error("Some files failed to upload:", result2.errors);
+        }
       }
+      ticketUpload.reset();
       navigate(`/helpdesk/tickets/${ticketId}`);
     } catch (err) {
       setError(err.message);
@@ -580,7 +547,16 @@ function HelpdeskUserCreateTicket() {
               ]
             },
             index
-          )) })
+          )) }),
+          ticketUpload.isUploading && attachments.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-4", children: /* @__PURE__ */ jsx(
+            FileUploadProgress,
+            {
+              files: attachments,
+              fileProgress: ticketUpload.fileProgress,
+              isUploading: ticketUpload.isUploading,
+              onCancel: ticketUpload.cancel
+            }
+          ) })
         ] }),
         /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-4 pt-4 border-t border-slate-700", children: [
           /* @__PURE__ */ jsx(
@@ -595,11 +571,11 @@ function HelpdeskUserCreateTicket() {
             "button",
             {
               type: "submit",
-              disabled: submitting || !form.project_id || !form.title || !form.content,
+              disabled: submitting || ticketUpload.isUploading || !form.project_id || !form.title || !form.content,
               className: "flex items-center gap-2 px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition",
               children: [
                 /* @__PURE__ */ jsx(Ticket, { className: "w-4 h-4" }),
-                submitting ? "Creating..." : "Create Ticket"
+                submitting || ticketUpload.isUploading ? "Creating..." : "Create Ticket"
               ]
             }
           )
@@ -1605,11 +1581,11 @@ function HelpdeskUserTicketDetail() {
   const [priorities, setPriorities] = useState([]);
   const [assignees, setAssignees] = useState([]);
   const [attachments, setAttachments] = useState([]);
-  const [uploadingFiles, setUploadingFiles] = useState(false);
   const [commentFiles, setCommentFiles] = useState([]);
-  const [uploadingCommentFiles, setUploadingCommentFiles] = useState(false);
   const fileInputRef = useRef(null);
   const commentFileInputRef = useRef(null);
+  const ticketUpload = useFileUpload();
+  const commentUpload = useFileUpload();
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentContent, setEditingCommentContent] = useState("");
   const [editingCommentSubmitting, setEditingCommentSubmitting] = useState(false);
@@ -1617,23 +1593,6 @@ function HelpdeskUserTicketDetail() {
   const [editingTicketTitle, setEditingTicketTitle] = useState("");
   const [editingTicketContent, setEditingTicketContent] = useState("");
   const [editingTicketSubmitting, setEditingTicketSubmitting] = useState(false);
-  const ALLOWED_TYPES = [
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "image/svg+xml",
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "text/plain",
-    "text/csv"
-  ];
-  const MAX_FILE_SIZE = 10 * 1024 * 1024;
   useEffect(() => {
     const fetchTicket = async () => {
       try {
@@ -1692,33 +1651,26 @@ function HelpdeskUserTicketDetail() {
       console.error("Logout failed:", err);
     }
   };
+  const [uploadingTicketFiles, setUploadingTicketFiles] = useState([]);
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = files.filter(
-      (file) => ALLOWED_TYPES.includes(file.type) && file.size <= MAX_FILE_SIZE
-    );
+    const { validFiles } = validateFiles(files, attachments.length);
     if (validFiles.length === 0) return;
-    setUploadingFiles(true);
+    setUploadingTicketFiles(validFiles);
+    ticketUpload.reset();
     try {
-      const formData = new FormData();
-      validFiles.forEach((file) => formData.append("files[]", file));
-      const response = await fetch(`/api/helpdesk/user/tickets/${ticketId}/attachments`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Accept": "application/json",
-          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || ""
-        },
-        body: formData
-      });
-      if (response.ok) {
-        const result = await response.json();
+      const result = await ticketUpload.upload(
+        `/api/helpdesk/user/tickets/${ticketId}/attachments`,
+        validFiles
+      );
+      if (result.data.length > 0) {
         setAttachments((prev) => [...prev, ...result.data]);
       }
     } catch (err) {
       console.error("Failed to upload files:", err);
     } finally {
-      setUploadingFiles(false);
+      setUploadingTicketFiles([]);
+      ticketUpload.reset();
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -1741,9 +1693,7 @@ function HelpdeskUserTicketDetail() {
   };
   const handleCommentFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = files.filter(
-      (file) => ALLOWED_TYPES.includes(file.type) && file.size <= MAX_FILE_SIZE
-    );
+    const { validFiles } = validateFiles(files, commentFiles.length);
     setCommentFiles((prev) => [...prev, ...validFiles]);
     if (commentFileInputRef.current) commentFileInputRef.current.value = "";
   };
@@ -1752,22 +1702,12 @@ function HelpdeskUserTicketDetail() {
   };
   const uploadCommentAttachments = async (commentId) => {
     if (commentFiles.length === 0) return [];
-    const formData = new FormData();
-    commentFiles.forEach((file) => formData.append("files[]", file));
     try {
-      const response = await fetch(`/api/helpdesk/user/comments/${commentId}/attachments`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Accept": "application/json",
-          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || ""
-        },
-        body: formData
-      });
-      if (response.ok) {
-        const result = await response.json();
-        return result.data || [];
-      }
+      const result = await commentUpload.upload(
+        `/api/helpdesk/user/comments/${commentId}/attachments`,
+        commentFiles
+      );
+      return result.data || [];
     } catch (err) {
       console.error("Failed to upload comment attachments:", err);
     }
@@ -1794,13 +1734,11 @@ function HelpdeskUserTicketDetail() {
         const result = await response.json();
         let newCommentData = result.data;
         if (commentFiles.length > 0) {
-          setUploadingCommentFiles(true);
           const uploadedAttachments = await uploadCommentAttachments(newCommentData.id);
           newCommentData = {
             ...newCommentData,
             attachments: [...newCommentData.attachments || [], ...uploadedAttachments]
           };
-          setUploadingCommentFiles(false);
         }
         setTicket((prev) => ({
           ...prev,
@@ -1810,6 +1748,7 @@ function HelpdeskUserTicketDetail() {
         setCommentKey((k) => k + 1);
         setIsInternal(false);
         setCommentFiles([]);
+        commentUpload.reset();
       }
     } catch (err) {
       console.error("Failed to add comment:", err);
@@ -2085,16 +2024,25 @@ function HelpdeskUserTicketDetail() {
                 {
                   type: "button",
                   onClick: () => fileInputRef.current?.click(),
-                  disabled: uploadingFiles,
+                  disabled: ticketUpload.isUploading,
                   className: "flex items-center gap-2 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition disabled:opacity-50",
                   children: [
                     /* @__PURE__ */ jsx(Paperclip, { className: "w-4 h-4" }),
-                    uploadingFiles ? "Uploading..." : "Add Files"
+                    ticketUpload.isUploading ? "Uploading..." : "Add Files"
                   ]
                 }
               )
             ] })
           ] }),
+          ticketUpload.isUploading && uploadingTicketFiles.length > 0 && /* @__PURE__ */ jsx("div", { className: "mb-4", children: /* @__PURE__ */ jsx(
+            FileUploadProgress,
+            {
+              files: uploadingTicketFiles,
+              fileProgress: ticketUpload.fileProgress,
+              isUploading: ticketUpload.isUploading,
+              onCancel: ticketUpload.cancel
+            }
+          ) }),
           attachments.length > 0 ? /* @__PURE__ */ jsx("div", { className: "space-y-2", children: attachments.map((attachment) => /* @__PURE__ */ jsxs(
             "div",
             {
@@ -2249,6 +2197,15 @@ function HelpdeskUserTicketDetail() {
               },
               index
             )) }),
+            commentUpload.isUploading && commentFiles.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-2", children: /* @__PURE__ */ jsx(
+              FileUploadProgress,
+              {
+                files: commentFiles,
+                fileProgress: commentUpload.fileProgress,
+                isUploading: commentUpload.isUploading,
+                onCancel: commentUpload.cancel
+              }
+            ) }),
             /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between mt-3", children: [
               /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-4", children: [
                 ticket.permissions?.can_internal_comment && /* @__PURE__ */ jsxs("label", { className: "flex items-center gap-2 text-sm", children: [
@@ -2294,11 +2251,11 @@ function HelpdeskUserTicketDetail() {
                 "button",
                 {
                   type: "submit",
-                  disabled: !newComment.trim() && commentFiles.length === 0 || submitting || uploadingCommentFiles,
+                  disabled: !newComment.trim() && commentFiles.length === 0 || submitting || commentUpload.isUploading,
                   className: "flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg transition",
                   children: [
                     /* @__PURE__ */ jsx(Send, { className: "w-4 h-4" }),
-                    submitting || uploadingCommentFiles ? "Sending..." : "Send"
+                    submitting || commentUpload.isUploading ? "Sending..." : "Send"
                   ]
                 }
               )

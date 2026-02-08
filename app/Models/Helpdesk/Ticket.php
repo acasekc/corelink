@@ -32,13 +32,35 @@ class Ticket extends Model
         'metadata',
         'github_issue_url',
         'time_estimate_minutes',
+        'closed_at',
     ];
 
     protected function casts(): array
     {
         return [
             'metadata' => 'array',
+            'closed_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Track when a ticket is closed/reopened
+        static::updating(function (Ticket $ticket) {
+            if ($ticket->isDirty('status_id')) {
+                $newStatus = TicketStatus::find($ticket->status_id);
+                if ($newStatus && $newStatus->slug === 'closed') {
+                    $ticket->closed_at = now();
+                } else {
+                    $ticket->closed_at = null;
+                }
+            }
+        });
+
+        // Delete all attachments when ticket is soft-deleted or force-deleted
+        static::deleting(function (Ticket $ticket) {
+            $ticket->purgeAttachments();
+        });
     }
 
     public function project(): BelongsTo
@@ -132,5 +154,19 @@ class Ticket extends Model
             'old_value' => $oldValue,
             'new_value' => $newValue,
         ]);
+    }
+
+    /**
+     * Delete all attachments from storage for this ticket and its comments.
+     */
+    public function purgeAttachments(): void
+    {
+        // Delete ticket-level attachments
+        $this->attachments()->each(fn (Attachment $a) => $a->delete());
+
+        // Delete comment-level attachments
+        $this->comments()->withTrashed()->each(function (Comment $comment) {
+            $comment->attachments()->each(fn (Attachment $a) => $a->delete());
+        });
     }
 }
