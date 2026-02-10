@@ -422,10 +422,12 @@ class ArticleService
 
     /**
      * Publish scheduled articles that are due.
+     * Also catches pending_review articles past their auto_publish_at as a safety net.
      */
     public function publishScheduledArticles(): int
     {
-        $articles = Article::scheduled()
+        $articles = Article::whereIn('status', ['scheduled', 'pending_review'])
+            ->whereNotNull('auto_publish_at')
             ->where('auto_publish_at', '<=', now())
             ->get();
 

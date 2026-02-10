@@ -28,7 +28,7 @@ Schedule::command('helpdesk:cleanup-attachments')->dailyAt('03:00');
 Schedule::call(function () {
     $settings = ArticleGenerationSettings::get();
 
-    if (! $settings->auto_generation_enabled) {
+    if (! $settings->is_enabled) {
         return;
     }
 
