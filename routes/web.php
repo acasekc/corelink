@@ -265,6 +265,10 @@ Route::post('/webhooks/postmark', [PostmarkWebhookController::class, 'handle'])
 Route::middleware(['guest'])->prefix('helpdesk')->group(function () {
     Route::get('/login', [HelpdeskAuthController::class, 'showLogin'])->name('helpdesk.login');
     Route::post('/login', [HelpdeskAuthController::class, 'login']);
+    Route::get('/forgot-password', [HelpdeskAuthController::class, 'showForgotPassword'])->name('helpdesk.forgot-password');
+    Route::post('/forgot-password', [HelpdeskAuthController::class, 'sendResetLink']);
+    Route::get('/reset-password', [HelpdeskAuthController::class, 'showResetPassword'])->name('helpdesk.reset-password');
+    Route::post('/reset-password', [HelpdeskAuthController::class, 'resetPassword']);
 });
 
 // Helpdesk Logout (authenticated)

@@ -133,19 +133,24 @@ const HelpdeskLogin = () => {
                             )}
                         </div>
 
-                        {/* Remember Me */}
-                        <div className="flex items-center">
-                            <input
-                                id="remember"
-                                name="remember"
-                                type="checkbox"
-                                checked={form.remember}
-                                onChange={handleChange}
-                                className="w-4 h-4 bg-slate-900 border-slate-700 rounded text-purple-500 focus:ring-purple-500"
-                            />
-                            <label htmlFor="remember" className="ml-2 text-sm text-slate-400">
-                                Remember me
-                            </label>
+                        {/* Remember Me & Forgot Password */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                                <input
+                                    id="remember"
+                                    name="remember"
+                                    type="checkbox"
+                                    checked={form.remember}
+                                    onChange={handleChange}
+                                    className="w-4 h-4 bg-slate-900 border-slate-700 rounded text-purple-500 focus:ring-purple-500"
+                                />
+                                <label htmlFor="remember" className="ml-2 text-sm text-slate-400">
+                                    Remember me
+                                </label>
+                            </div>
+                            <a href="/helpdesk/forgot-password" className="text-sm text-purple-400 hover:text-purple-300 transition">
+                                Forgot password?
+                            </a>
                         </div>
 
                         {/* Submit */}

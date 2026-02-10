@@ -42,6 +42,8 @@ const UserHelpdeskTicketDetail = React.lazy(() => import("./Pages/Helpdesk/Ticke
 const UserHelpdeskCreateTicket = React.lazy(() => import("./Pages/Helpdesk/CreateTicket"));
 const UserHelpdeskProjectDetail = React.lazy(() => import("./Pages/Helpdesk/ProjectDetail"));
 const UserHelpdeskLogin = React.lazy(() => import("./Pages/Helpdesk/Login"));
+const UserHelpdeskForgotPassword = React.lazy(() => import("./Pages/Helpdesk/ForgotPassword"));
+const UserHelpdeskResetPassword = React.lazy(() => import("./Pages/Helpdesk/ResetPassword"));
 const UserHelpdeskProfile = React.lazy(() => import("./Pages/Helpdesk/Profile"));
 const UserHelpdeskChangePassword = React.lazy(() => import("./Pages/Helpdesk/ChangePassword"));
 
@@ -68,6 +70,8 @@ export default function App() {
 				<Routes>
 					{/* User Helpdesk Routes - Authenticated users (not admin-only) */}
 					<Route path="/helpdesk/login" element={<AdminLayout><UserHelpdeskLogin /></AdminLayout>} />
+					<Route path="/helpdesk/forgot-password" element={<AdminLayout><UserHelpdeskForgotPassword /></AdminLayout>} />
+					<Route path="/helpdesk/reset-password" element={<AdminLayout><UserHelpdeskResetPassword /></AdminLayout>} />
 					<Route path="/helpdesk" element={<AdminLayout><UserHelpdeskDashboard /></AdminLayout>} />
 					<Route path="/helpdesk/profile" element={<AdminLayout><UserHelpdeskProfile /></AdminLayout>} />
 					<Route path="/helpdesk/change-password" element={<AdminLayout><UserHelpdeskChangePassword /></AdminLayout>} />
