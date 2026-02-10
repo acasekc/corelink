@@ -40,15 +40,15 @@ Route::get('/case-studies/{slug}', [PageController::class, 'caseStudies']);
 // Projects API
 Route::get('/api/projects', [ProjectController::class, 'index']);
 
-// Articles API (requires authentication)
-Route::middleware(['auth', 'force-password-change'])->prefix('api')->group(function () {
+// Articles API (requires authentication + admin)
+Route::middleware(['auth', 'admin', 'force-password-change'])->prefix('api')->group(function () {
     Route::apiResource('articles', ArticleController::class);
     Route::post('/articles/{article}/publish', [ArticleController::class, 'publish'])->name('articles.publish');
     Route::post('/articles/{article}/schedule', [ArticleController::class, 'schedule'])->name('articles.schedule');
 });
 
 // Admin Profile API (exempt from force-password-change)
-Route::middleware(['auth'])->prefix('api/admin')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('api/admin')->group(function () {
     Route::get('/profile', [AdminProfileController::class, 'show']);
     Route::post('/change-password', [AdminProfileController::class, 'changePassword']);
 });
@@ -121,8 +121,8 @@ Route::middleware(['auth', 'no-cache'])->prefix('admin')->group(function () {
     Route::get('/change-password', [PageController::class, 'adminSpa'])->name('admin.change-password');
 });
 
-// Admin Routes (requires authentication)
-Route::middleware(['auth', 'force-password-change', 'no-cache'])->prefix('admin')->name('admin.')->group(function () {
+// Admin Routes (requires authentication + admin)
+Route::middleware(['auth', 'admin', 'force-password-change', 'no-cache'])->prefix('admin')->name('admin.')->group(function () {
     // Admin Dashboard
     Route::get('/', [PageController::class, 'adminSpa'])->name('dashboard');
 
