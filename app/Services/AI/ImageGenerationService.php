@@ -143,7 +143,7 @@ class ImageGenerationService
     }
 
     /**
-     * Download and save an image from URL.
+     * Download and save an image from URL, converting to WebP and resizing to half dimensions.
      */
     private function saveImage(string $url, ?string $articleSlug = null): ?string
     {
@@ -162,13 +162,24 @@ class ImageGenerationService
                 return null;
             }
 
+            // Convert to WebP at half size
+            $webpContent = $this->convertToWebp($imageContent);
+
+            if (! $webpContent) {
+                Log::warning('WebP conversion failed, saving original PNG');
+                $webpContent = $imageContent;
+                $extension = 'png';
+            } else {
+                $extension = 'webp';
+            }
+
             $filename = $articleSlug
-                ? Str::slug($articleSlug).'-'.time().'.png'
-                : 'article-'.Str::random(10).'-'.time().'.png';
+                ? Str::slug($articleSlug).'-'.time().'.'.$extension
+                : 'article-'.Str::random(10).'-'.time().'.'.$extension;
 
             $path = "articles/images/{$filename}";
 
-            $saved = Storage::disk($this->storageDisk)->put($path, $imageContent, 'public');
+            $saved = Storage::disk($this->storageDisk)->put($path, $webpContent, 'public');
 
             if (! $saved) {
                 Log::error('Storage::put returned false', ['path' => $path]);
@@ -182,6 +193,9 @@ class ImageGenerationService
             Log::info('Image saved successfully', [
                 'path' => $path,
                 'url' => $fullUrl,
+                'format' => $extension,
+                'original_size' => strlen($imageContent),
+                'saved_size' => strlen($webpContent),
             ]);
 
             return $fullUrl;
@@ -192,6 +206,52 @@ class ImageGenerationService
                 'url' => $url,
                 'disk' => $this->storageDisk,
             ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Convert image content to WebP at half dimensions.
+     */
+    private function convertToWebp(string $imageContent): ?string
+    {
+        try {
+            $source = imagecreatefromstring($imageContent);
+
+            if ($source === false) {
+                return null;
+            }
+
+            $originalWidth = imagesx($source);
+            $originalHeight = imagesy($source);
+            $newWidth = (int) ($originalWidth / 2);
+            $newHeight = (int) ($originalHeight / 2);
+
+            $resized = imagecreatetruecolor($newWidth, $newHeight);
+
+            if ($resized === false) {
+                imagedestroy($source);
+
+                return null;
+            }
+
+            // Preserve alpha/transparency
+            imagealphablending($resized, false);
+            imagesavealpha($resized, true);
+
+            imagecopyresampled($resized, $source, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
+
+            ob_start();
+            imagewebp($resized, null, 82);
+            $webpContent = ob_get_clean();
+
+            imagedestroy($source);
+            imagedestroy($resized);
+
+            return $webpContent ?: null;
+        } catch (\Exception $e) {
+            Log::error('WebP conversion failed', ['error' => $e->getMessage()]);
 
             return null;
         }
