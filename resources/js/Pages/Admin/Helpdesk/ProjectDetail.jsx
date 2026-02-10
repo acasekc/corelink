@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket, DollarSign, Edit2, Save, X, User, Mail, MapPin } from 'lucide-react';
+import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket, DollarSign, Edit2, Save, X, User, Mail, MapPin, Users, Bell, BellOff, Search, Shield } from 'lucide-react';
 
 const ProjectDetail = () => {
     const { projectId } = useParams();
@@ -40,6 +40,15 @@ const ProjectDetail = () => {
         payment_terms_days: '30',
     });
 
+    // Members state
+    const [members, setMembers] = useState([]);
+    const [showAddMember, setShowAddMember] = useState(false);
+    const [memberSearch, setMemberSearch] = useState('');
+    const [availableUsers, setAvailableUsers] = useState([]);
+    const [searchingUsers, setSearchingUsers] = useState(false);
+    const [addMemberRole, setAddMemberRole] = useState('user');
+    const [addMemberNotify, setAddMemberNotify] = useState(true);
+
     useEffect(() => {
         fetchProject();
         fetchApiKeys();
@@ -47,6 +56,7 @@ const ProjectDetail = () => {
         fetchCategories();
         fetchHourlyRates();
         fetchInvoiceSettings();
+        fetchMembers();
     }, [projectId]);
 
     const fetchProject = async () => {
@@ -397,6 +407,107 @@ const ProjectDetail = () => {
         return categories.filter(c => !usedCategoryIds.includes(c.id));
     };
 
+    // Members management
+    const fetchMembers = async () => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/users`, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Failed to fetch members');
+            const json = await response.json();
+            setMembers(json.data);
+        } catch (err) {
+            console.error('Failed to fetch members:', err);
+        }
+    };
+
+    const searchAvailableUsers = async (query) => {
+        setMemberSearch(query);
+        if (query.length < 2) {
+            setAvailableUsers([]);
+            return;
+        }
+        setSearchingUsers(true);
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/users/available?q=${encodeURIComponent(query)}`, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Search failed');
+            const json = await response.json();
+            setAvailableUsers(json.data);
+        } catch (err) {
+            console.error('Failed to search users:', err);
+        } finally {
+            setSearchingUsers(false);
+        }
+    };
+
+    const handleAddMember = async (userId) => {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ user_id: userId, role: addMemberRole, receive_notifications: addMemberNotify }),
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to add member');
+            }
+            await fetchMembers();
+            setShowAddMember(false);
+            setMemberSearch('');
+            setAvailableUsers([]);
+            setAddMemberRole('user');
+            setAddMemberNotify(true);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleUpdateMember = async (userId, data) => {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/users/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) throw new Error('Failed to update member');
+            await fetchMembers();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleRemoveMember = async (userId, name) => {
+        if (!confirm(`Remove ${name} from this project?`)) return;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/users/${userId}`, {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to remove member');
+            }
+            await fetchMembers();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const roleColors = {
+        owner: 'bg-amber-500/20 text-amber-400',
+        manager: 'bg-blue-500/20 text-blue-400',
+        agent: 'bg-green-500/20 text-green-400',
+        user: 'bg-slate-500/20 text-slate-400',
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-linear-to-b from-slate-900 to-slate-800 text-white flex items-center justify-center">
@@ -655,6 +766,149 @@ const ProjectDetail = () => {
                             </table>
                         </div>
                     )}
+
+                    {/* Members */}
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl">
+                        <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+                            <h3 className="font-semibold flex items-center gap-2">
+                                <Users className="w-5 h-5 text-purple-400" />
+                                Members ({members.length})
+                            </h3>
+                            <button
+                                onClick={() => setShowAddMember(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded-lg transition text-sm"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Add Member
+                            </button>
+                        </div>
+
+                        {/* Add Member Form */}
+                        {showAddMember && (
+                            <div className="p-4 border-b border-slate-700 bg-slate-900/50">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="flex-1 relative">
+                                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                        <input
+                                            type="text"
+                                            value={memberSearch}
+                                            onChange={(e) => searchAvailableUsers(e.target.value)}
+                                            placeholder="Search by name or email..."
+                                            className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <select
+                                        value={addMemberRole}
+                                        onChange={(e) => setAddMemberRole(e.target.value)}
+                                        className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm"
+                                    >
+                                        <option value="user">User</option>
+                                        <option value="agent">Agent</option>
+                                        <option value="manager">Manager</option>
+                                        <option value="owner">Owner</option>
+                                    </select>
+                                    <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={addMemberNotify}
+                                            onChange={(e) => setAddMemberNotify(e.target.checked)}
+                                            className="w-4 h-4 bg-slate-800 border-slate-600 rounded text-purple-500 focus:ring-purple-500"
+                                        />
+                                        Notify
+                                    </label>
+                                    <button
+                                        onClick={() => { setShowAddMember(false); setMemberSearch(''); setAvailableUsers([]); }}
+                                        className="p-2 text-slate-400 hover:text-white"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                {searchingUsers && <p className="text-sm text-slate-400">Searching...</p>}
+                                {availableUsers.length > 0 && (
+                                    <div className="space-y-1 max-h-48 overflow-y-auto">
+                                        {availableUsers.map((u) => (
+                                            <button
+                                                key={u.id}
+                                                onClick={() => handleAddMember(u.id)}
+                                                className="w-full flex items-center gap-3 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition text-left"
+                                            >
+                                                <User className="w-4 h-4 text-slate-400" />
+                                                <span className="text-sm text-white">{u.name}</span>
+                                                <span className="text-sm text-slate-400">{u.email}</span>
+                                                {u.is_admin && <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded">Admin</span>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                {memberSearch.length >= 2 && !searchingUsers && availableUsers.length === 0 && (
+                                    <p className="text-sm text-slate-500">No users found</p>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Members List */}
+                        <div className="divide-y divide-slate-700">
+                            {members.length === 0 ? (
+                                <div className="p-6 text-center text-slate-500 text-sm">No members yet</div>
+                            ) : (
+                                members.map((member) => (
+                                    <div key={member.id} className="p-4 flex items-center gap-4">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium text-white truncate">{member.name}</span>
+                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${roleColors[member.role] || roleColors.user}`}>
+                                                    {member.role_label || member.role}
+                                                </span>
+                                                {member.is_admin && (
+                                                    <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded flex items-center gap-1">
+                                                        <Shield className="w-3 h-3" />
+                                                        Admin
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-slate-400 truncate">{member.email}</p>
+                                        </div>
+
+                                        {/* Role Select */}
+                                        <select
+                                            value={member.role}
+                                            onChange={(e) => handleUpdateMember(member.id, { role: e.target.value })}
+                                            className="px-2 py-1 bg-slate-900 border border-slate-600 rounded text-sm text-white"
+                                        >
+                                            <option value="user">User</option>
+                                            <option value="agent">Agent</option>
+                                            <option value="manager">Manager</option>
+                                            <option value="owner">Owner</option>
+                                        </select>
+
+                                        {/* Notification Toggle */}
+                                        <button
+                                            onClick={() => handleUpdateMember(member.id, { receive_notifications: !member.receive_notifications })}
+                                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${
+                                                member.receive_notifications
+                                                    ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                                                    : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                                            }`}
+                                            title={member.receive_notifications ? 'Receiving notifications' : 'Notifications off'}
+                                        >
+                                            {member.receive_notifications ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
+                                            {member.receive_notifications ? 'On' : 'Off'}
+                                        </button>
+
+                                        {/* Remove */}
+                                        <button
+                                            onClick={() => handleRemoveMember(member.id, member.name)}
+                                            className="p-1.5 text-slate-500 hover:text-red-400 transition"
+                                            title="Remove from project"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
 
                     {/* API Keys */}
                     <div className="bg-slate-800/50 border border-slate-700 rounded-xl">
