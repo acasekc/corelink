@@ -15,12 +15,21 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user()) {
-            return response()->json(['error' => 'Unauthenticated'], 401);
+        if (! $request->user()) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Unauthenticated'], 401);
+            }
+
+            return redirect()->route('admin.login');
         }
 
-        if (!$request->user()->is_admin) {
-            return response()->json(['error' => 'Unauthorized. Admin access required.'], 403);
+        if (! $request->user()->is_admin) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Unauthorized. Admin access required.'], 403);
+            }
+
+            // Redirect non-admin users to their helpdesk dashboard
+            return redirect('/helpdesk');
         }
 
         return $next($request);
