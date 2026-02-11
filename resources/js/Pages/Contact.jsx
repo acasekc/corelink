@@ -1,29 +1,77 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Send } from "lucide-react";
 import { useForm, usePage } from "@inertiajs/react";
 import SeoHead from "@/components/SeoHead";
 
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
 const Contact = ({ meta }) => {
   const { flash } = usePage().props;
-  const { data, setData, post, processing, errors, reset } = useForm({
+  const [submitting, setSubmitting] = useState(false);
+  const { data, setData, post, processing, errors, reset, transform } = useForm({
     name: "",
     email: "",
     subject: "",
     message: "",
   });
 
+  useEffect(() => {
+    if (!RECAPTCHA_SITE_KEY) return;
+
+    const script = document.createElement("script");
+    script.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+      const badge = document.querySelector(".grecaptcha-badge");
+      if (badge) {
+        badge.remove();
+      }
+    };
+  }, []);
+
+  const getRecaptchaToken = useCallback(async () => {
+    if (!RECAPTCHA_SITE_KEY || !window.grecaptcha) {
+      return "";
+    }
+
+    try {
+      return await window.grecaptcha.execute(RECAPTCHA_SITE_KEY, {
+        action: "contact",
+      });
+    } catch {
+      return "";
+    }
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setData(name, value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+
+    const recaptchaToken = await getRecaptchaToken();
+
+    transform((formData) => ({
+      ...formData,
+      recaptcha_token: recaptchaToken,
+    }));
+
     post("/contact", {
+      preserveScroll: true,
       onSuccess: () => reset(),
+      onFinish: () => setSubmitting(false),
     });
   };
+
+  const isProcessing = processing || submitting;
 
   return (
     <div className="relative overflow-hidden">
@@ -173,10 +221,10 @@ const Contact = ({ meta }) => {
                 >
                   <button
                     type="submit"
-                    disabled={processing}
+                    disabled={isProcessing}
                     className="w-full bg-linear-to-r from-primary to-accent hover:opacity-90 transition-opacity text-primary-foreground font-medium py-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {processing ? (
+                    {isProcessing ? (
                       <span className="flex items-center gap-2">
                         <motion.div
                           animate={{ rotate: 360 }}
@@ -192,6 +240,29 @@ const Contact = ({ meta }) => {
                       </span>
                     )}
                   </button>
+                  {RECAPTCHA_SITE_KEY && (
+                    <p className="text-xs text-muted-foreground text-center mt-3">
+                      This site is protected by reCAPTCHA and the Google{" "}
+                      <a
+                        href="https://policies.google.com/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        Privacy Policy
+                      </a>{" "}
+                      and{" "}
+                      <a
+                        href="https://policies.google.com/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        Terms of Service
+                      </a>{" "}
+                      apply.
+                    </p>
+                  )}
                 </motion.div>
               </div>
             </form>

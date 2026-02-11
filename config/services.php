@@ -65,4 +65,10 @@ return [
         'base_url' => env('HELPDESK_BASE_URL', 'https://corelink.dev/api/helpdesk/v1'),
     ],
 
+    'recaptcha' => [
+        'site_key' => env('RECAPTCHA_SITE_KEY'),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+        'min_score' => env('RECAPTCHA_MIN_SCORE', 0.5),
+    ],
+
 ];
