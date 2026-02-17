@@ -568,7 +568,7 @@ const InvoiceCreate = () => {
                                                                 <p className="text-sm text-slate-300 truncate">{entry.description}</p>
                                                             )}
                                                             <p className="text-xs text-slate-500 mt-1">
-                                                                {entry.user?.name} • {new Date(entry.created_at).toLocaleDateString()}
+                                                                {entry.user?.name} • {new Date(entry.date_worked + 'T00:00:00').toLocaleDateString()}
                                                             </p>
                                                         </div>
                                                         <div className="text-right">

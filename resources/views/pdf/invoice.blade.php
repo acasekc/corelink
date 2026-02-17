@@ -300,7 +300,7 @@
             <table class="dates-table">
                 <tr>
                     <td>Invoice Date:</td>
-                    <td>{{ $invoice->created_at->format('F j, Y') }}</td>
+                    <td>{{ ($invoice->issue_date ?? $invoice->created_at)->format('F j, Y') }}</td>
                 </tr>
                 @if($invoice->due_date)
                 <tr>

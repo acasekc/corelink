@@ -338,7 +338,7 @@
                     <div class="info-section">
                         <h3>Invoice Details</h3>
                         <p><strong>Project:</strong> {{ $project->name }}</p>
-                        <p><strong>Invoice Date:</strong> {{ $invoice->created_at->format('F j, Y') }}</p>
+                        <p><strong>Invoice Date:</strong> {{ ($invoice->issue_date ?? $invoice->created_at)->format('F j, Y') }}</p>
                         @if($invoice->due_date)
                         <p><strong>Due Date:</strong> {{ $invoice->due_date->format('F j, Y') }}</p>
                         @endif

@@ -1201,7 +1201,7 @@ const TicketDetail = () => {
                                                         </p>
                                                     )}
                                                     <p className="text-xs text-slate-500 mt-1">
-                                                        {entry.user?.name} • {new Date(entry.created_at).toLocaleDateString()}
+                                                        {entry.user?.name} • {new Date(entry.date_worked + 'T00:00:00').toLocaleDateString()}
                                                     </p>
                                                 </div>
                                                 <div className="flex items-center gap-1 ml-2">

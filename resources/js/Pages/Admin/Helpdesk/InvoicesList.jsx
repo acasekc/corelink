@@ -276,7 +276,7 @@ const InvoicesList = () => {
                                                     {invoice.invoice_number}
                                                 </Link>
                                                 <p className="text-xs text-slate-500 mt-0.5">
-                                                    {new Date(invoice.created_at).toLocaleDateString()}
+                                                    {invoice.issue_date ? new Date(invoice.issue_date + 'T00:00:00').toLocaleDateString() : new Date(invoice.created_at).toLocaleDateString()}
                                                 </p>
                                             </td>
                                             <td className="px-4 py-3 text-slate-300">
