@@ -13,6 +13,7 @@ use App\Http\Controllers\Helpdesk\Admin\ProjectInvoiceSettingsController;
 use App\Http\Controllers\Helpdesk\Admin\ProjectUserController;
 use App\Http\Controllers\Helpdesk\Admin\ReferenceDataController;
 use App\Http\Controllers\Helpdesk\Admin\TicketController;
+use App\Http\Controllers\Helpdesk\Admin\TicketWatcherController;
 use App\Http\Controllers\Helpdesk\Admin\TimeEntryController;
 use App\Http\Controllers\Helpdesk\Admin\UserController;
 use App\Http\Controllers\Helpdesk\Api\CommentApiController;
@@ -24,6 +25,7 @@ use App\Http\Controllers\Helpdesk\User\DashboardController as UserDashboardContr
 use App\Http\Controllers\Helpdesk\User\ProfileController as UserProfileController;
 use App\Http\Controllers\Helpdesk\User\ProjectController as UserProjectController;
 use App\Http\Controllers\Helpdesk\User\TicketController as UserTicketController;
+use App\Http\Controllers\Helpdesk\User\TicketWatcherController as UserTicketWatcherController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -97,6 +99,10 @@ Route::prefix('api/helpdesk/user')->middleware(['web', 'auth', 'force-password-c
     Route::post('comments/{comment}/attachments', [AttachmentController::class, 'uploadToComment']);
     Route::get('attachments/{attachment}/download', [AttachmentController::class, 'download'])->name('helpdesk.attachments.download');
     Route::delete('attachments/{attachment}', [AttachmentController::class, 'destroy']);
+
+    // Ticket Watchers
+    Route::get('tickets/{ticket}/watchers', [UserTicketWatcherController::class, 'index']);
+    Route::post('tickets/{ticket}/watchers/toggle', [UserTicketWatcherController::class, 'toggle']);
 });
 
 /*
@@ -140,6 +146,12 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     Route::post('tickets/{ticket}/status', [TicketController::class, 'changeStatus']);
     Route::post('tickets/{ticket}/priority', [TicketController::class, 'changePriority']);
     Route::post('tickets/{ticket}/labels', [TicketController::class, 'addLabels']);
+
+    // Ticket Watchers
+    Route::get('tickets/{ticket}/watchers', [TicketWatcherController::class, 'index']);
+    Route::post('tickets/{ticket}/watchers', [TicketWatcherController::class, 'store']);
+    Route::delete('tickets/{ticket}/watchers/{user}', [TicketWatcherController::class, 'destroy']);
+    Route::get('tickets/{ticket}/watchers/available', [TicketWatcherController::class, 'available']);
 
     // Time Entries
     Route::get('time-entries/categories', [TimeEntryController::class, 'categories']);

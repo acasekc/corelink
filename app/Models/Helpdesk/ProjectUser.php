@@ -18,6 +18,7 @@ class ProjectUser extends Pivot
         'user_id',
         'role',
         'receive_notifications',
+        'auto_watch_all_tickets',
     ];
 
     protected function casts(): array
@@ -25,6 +26,7 @@ class ProjectUser extends Pivot
         return [
             'role' => ProjectRole::class,
             'receive_notifications' => 'boolean',
+            'auto_watch_all_tickets' => 'boolean',
         ];
     }
 

@@ -188,6 +188,9 @@ class TicketApiController extends Controller
         // Send email notifications to project staff
         $this->notificationService->notifyNewTicket($ticket);
 
+        // Auto-add watchers from project settings
+        $this->notificationService->addAutoWatchers($ticket);
+
         return response()->json([
             'data' => $this->formatTicket($ticket),
             'attachments' => $attachmentData,

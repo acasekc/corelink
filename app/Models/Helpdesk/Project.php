@@ -111,7 +111,7 @@ class Project extends Model
     {
         return $this->belongsToMany(User::class, 'helpdesk_project_users')
             ->using(ProjectUser::class)
-            ->withPivot(['role', 'receive_notifications'])
+            ->withPivot(['role', 'receive_notifications', 'auto_watch_all_tickets'])
             ->withTimestamps();
     }
 

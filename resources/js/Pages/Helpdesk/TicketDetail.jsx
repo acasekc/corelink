@@ -18,6 +18,8 @@ import {
     Image,
     X,
     Timer,
+    Eye,
+    EyeOff,
 } from 'lucide-react';
 import Markdown from '../../components/Markdown';
 import LexicalMarkdownEditor from '../../components/LexicalMarkdownEditor';
@@ -57,6 +59,10 @@ export default function HelpdeskUserTicketDetail() {
     const [editingTicketContent, setEditingTicketContent] = useState('');
     const [editingTicketSubmitting, setEditingTicketSubmitting] = useState(false);
 
+    // Watcher state
+    const [isWatching, setIsWatching] = useState(false);
+    const [watcherCount, setWatcherCount] = useState(0);
+
     useEffect(() => {
         const fetchTicket = async () => {
             try {
@@ -81,6 +87,8 @@ export default function HelpdeskUserTicketDetail() {
 
                 const result = await response.json();
                 setTicket(result.data);
+                setIsWatching(result.data.is_watching || false);
+                setWatcherCount((result.data.watchers || []).length);
 
                 // Fetch reference data
                 if (result.data.project?.id) {
@@ -123,6 +131,26 @@ export default function HelpdeskUserTicketDetail() {
             window.location.href = '/helpdesk/login';
         } catch (err) {
             console.error('Logout failed:', err);
+        }
+    };
+
+    const handleToggleWatch = async () => {
+        try {
+            const response = await fetch(`/api/helpdesk/user/tickets/${ticketId}/watchers/toggle`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+            });
+            if (response.ok) {
+                const result = await response.json();
+                setIsWatching(result.watching);
+                setWatcherCount(prev => result.watching ? prev + 1 : Math.max(0, prev - 1));
+            }
+        } catch (err) {
+            console.error('Failed to toggle watch:', err);
         }
     };
 
@@ -910,6 +938,24 @@ export default function HelpdeskUserTicketDetail() {
                                         <label className="block text-sm text-slate-400 mb-1">Submitted By</label>
                                         <p className="text-slate-300">{ticket.submitter?.name}</p>
                                         <p className="text-sm text-slate-500">{ticket.submitter?.email}</p>
+                                    </div>
+
+                                    {/* Watch Toggle */}
+                                    <div>
+                                        <button
+                                            onClick={handleToggleWatch}
+                                            className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition ${
+                                                isWatching
+                                                    ? 'bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 border border-purple-500/30'
+                                                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                            }`}
+                                        >
+                                            {isWatching ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            {isWatching ? 'Unwatch' : 'Watch'}
+                                            {watcherCount > 0 && (
+                                                <span className="text-xs bg-slate-700/50 px-1.5 py-0.5 rounded-full">{watcherCount}</span>
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
                             </div>

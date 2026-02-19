@@ -114,6 +114,15 @@ class Ticket extends Model
     }
 
     /**
+     * Get the users watching this ticket
+     */
+    public function watchers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'helpdesk_ticket_watchers')
+            ->withTimestamps();
+    }
+
+    /**
      * Get the total time spent on this ticket in minutes
      */
     public function getTotalTimeSpentAttribute(): int

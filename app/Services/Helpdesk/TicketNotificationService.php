@@ -94,7 +94,7 @@ class TicketNotificationService
 
     /**
      * Get the list of email addresses to notify.
-     * Returns assignee email and submitter email, deduplicated.
+     * Returns assignee email, submitter email, and watcher emails, deduplicated.
      */
     private function getNotificationRecipients(Ticket $ticket, ?Comment $excludeCommenter = null): array
     {
@@ -110,8 +110,16 @@ class TicketNotificationService
             $recipients[] = $ticket->assignee->email;
         }
 
+        // Add watcher emails
+        $ticket->loadMissing('watchers');
+        foreach ($ticket->watchers as $watcher) {
+            if ($watcher->email) {
+                $recipients[] = $watcher->email;
+            }
+        }
+
         // Remove duplicates
-        $recipients = array_unique($recipients);
+        $recipients = array_unique(array_map('strtolower', $recipients));
 
         // If a comment was added, don't notify the person who wrote it
         if ($excludeCommenter) {

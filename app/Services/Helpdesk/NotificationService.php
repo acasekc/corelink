@@ -30,6 +30,24 @@ class NotificationService
     }
 
     /**
+     * Auto-add watchers for a newly created ticket.
+     * Adds all project users who have auto_watch_all_tickets enabled.
+     */
+    public function addAutoWatchers(Ticket $ticket): void
+    {
+        $ticket->loadMissing('project');
+
+        $autoWatchUserIds = $ticket->project->users()
+            ->wherePivot('auto_watch_all_tickets', true)
+            ->pluck('users.id')
+            ->toArray();
+
+        if (! empty($autoWatchUserIds)) {
+            $ticket->watchers()->syncWithoutDetaching($autoWatchUserIds);
+        }
+    }
+
+    /**
      * Send welcome email to a new helpdesk user
      */
     public function sendUserWelcome(User $user, string $password, ?Project $project = null): void

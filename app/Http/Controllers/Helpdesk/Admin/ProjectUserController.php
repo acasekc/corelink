@@ -29,6 +29,7 @@ class ProjectUserController extends Controller
                 'role' => $user->pivot->role->value,
                 'role_label' => $user->pivot->role->label(),
                 'receive_notifications' => $user->pivot->receive_notifications,
+                'auto_watch_all_tickets' => $user->pivot->auto_watch_all_tickets,
                 'joined_at' => $user->pivot->created_at,
             ]);
 
@@ -46,6 +47,7 @@ class ProjectUserController extends Controller
             'user_id' => ['required', 'exists:users,id'],
             'role' => ['required', Rule::enum(ProjectRole::class)],
             'receive_notifications' => ['boolean'],
+            'auto_watch_all_tickets' => ['boolean'],
         ]);
 
         $user = User::findOrFail($validated['user_id']);
@@ -59,6 +61,7 @@ class ProjectUserController extends Controller
         $project->users()->attach($user->id, [
             'role' => $validated['role'],
             'receive_notifications' => $validated['receive_notifications'] ?? true,
+            'auto_watch_all_tickets' => $validated['auto_watch_all_tickets'] ?? false,
         ]);
 
         return response()->json([
@@ -68,6 +71,7 @@ class ProjectUserController extends Controller
                 'email' => $user->email,
                 'role' => $validated['role'],
                 'receive_notifications' => $validated['receive_notifications'] ?? true,
+                'auto_watch_all_tickets' => $validated['auto_watch_all_tickets'] ?? false,
             ],
             'message' => 'User added to project successfully',
         ], 201);
@@ -81,6 +85,7 @@ class ProjectUserController extends Controller
         $validated = $request->validate([
             'role' => ['sometimes', Rule::enum(ProjectRole::class)],
             'receive_notifications' => ['sometimes', 'boolean'],
+            'auto_watch_all_tickets' => ['sometimes', 'boolean'],
         ]);
 
         if (! $project->hasUser($user)) {
@@ -96,6 +101,9 @@ class ProjectUserController extends Controller
         if (isset($validated['receive_notifications'])) {
             $updateData['receive_notifications'] = $validated['receive_notifications'];
         }
+        if (isset($validated['auto_watch_all_tickets'])) {
+            $updateData['auto_watch_all_tickets'] = $validated['auto_watch_all_tickets'];
+        }
 
         $project->users()->updateExistingPivot($user->id, $updateData);
 
@@ -109,6 +117,7 @@ class ProjectUserController extends Controller
                 'role' => $freshUser->pivot->role->value,
                 'role_label' => $freshUser->pivot->role->label(),
                 'receive_notifications' => $freshUser->pivot->receive_notifications,
+                'auto_watch_all_tickets' => $freshUser->pivot->auto_watch_all_tickets,
             ],
             'message' => 'User role updated successfully',
         ]);

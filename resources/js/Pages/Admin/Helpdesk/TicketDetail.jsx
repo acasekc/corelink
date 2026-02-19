@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Ticket, ArrowLeft, LogOut, User, Clock, Tag, MessageSquare, Send, Lock, Unlock, Paperclip, X, FileText, Image, Download, Trash2, Plus, Play, Square, Edit2, DollarSign, Timer } from 'lucide-react';
+import { Ticket, ArrowLeft, LogOut, User, Clock, Tag, MessageSquare, Send, Lock, Unlock, Paperclip, X, FileText, Image, Download, Trash2, Plus, Play, Square, Edit2, DollarSign, Timer, Eye, EyeOff, Search } from 'lucide-react';
 import Markdown from '../../../components/Markdown';
 import LexicalMarkdownEditor from '../../../components/LexicalMarkdownEditor';
 import FileUploadProgress from '../../../components/FileUploadProgress';
@@ -42,6 +42,12 @@ const TicketDetail = () => {
     const [editingTicketTitle, setEditingTicketTitle] = useState('');
     const [editingTicketContent, setEditingTicketContent] = useState('');
     const [editingTicketSubmitting, setEditingTicketSubmitting] = useState(false);
+
+    // Watcher state
+    const [watchers, setWatchers] = useState([]);
+    const [watcherSearch, setWatcherSearch] = useState('');
+    const [watcherResults, setWatcherResults] = useState([]);
+    const [showWatcherSearch, setShowWatcherSearch] = useState(false);
 
     useEffect(() => {
         fetchReferenceData();
@@ -92,6 +98,7 @@ const TicketDetail = () => {
             if (!response.ok) throw new Error('Failed to fetch ticket');
             const json = await response.json();
             setTicket(json.data || json);
+            setWatchers((json.data || json).watchers || []);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -395,6 +402,74 @@ const TicketDetail = () => {
             console.error('Logout failed:', error);
         }
     };
+
+    // Watcher Handlers
+    const searchAvailableWatchers = async (search) => {
+        if (!search || search.length < 2) {
+            setWatcherResults([]);
+            return;
+        }
+        try {
+            const response = await fetch(`/api/helpdesk/admin/tickets/${ticketId}/watchers/available?search=${encodeURIComponent(search)}`, {
+                credentials: 'same-origin',
+            });
+            if (response.ok) {
+                const json = await response.json();
+                setWatcherResults(json.data || []);
+            }
+        } catch (err) {
+            console.error('Failed to search watchers:', err);
+        }
+    };
+
+    const handleAddWatcher = async (userId) => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/tickets/${ticketId}/watchers`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ user_id: userId }),
+            });
+            if (response.ok) {
+                const json = await response.json();
+                setWatchers(prev => [...prev, json.data]);
+                setWatcherSearch('');
+                setWatcherResults([]);
+                setShowWatcherSearch(false);
+            }
+        } catch (err) {
+            console.error('Failed to add watcher:', err);
+        }
+    };
+
+    const handleRemoveWatcher = async (userId) => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/tickets/${ticketId}/watchers/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+            if (response.ok || response.status === 204) {
+                setWatchers(prev => prev.filter(w => w.id !== userId));
+            }
+        } catch (err) {
+            console.error('Failed to remove watcher:', err);
+        }
+    };
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            searchAvailableWatchers(watcherSearch);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [watcherSearch]);
 
     // Time Entry Handlers
     const formatTimerDisplay = (seconds) => {
@@ -1058,6 +1133,86 @@ const TicketDetail = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Watchers */}
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+                                <h3 className="font-semibold mb-4 flex items-center justify-between">
+                                    <span className="flex items-center gap-2">
+                                        <Eye className="w-4 h-4 text-purple-400" />
+                                        Watchers
+                                        {watchers.length > 0 && (
+                                            <span className="text-xs bg-slate-700 px-1.5 py-0.5 rounded-full text-slate-300">{watchers.length}</span>
+                                        )}
+                                    </span>
+                                    <button
+                                        onClick={() => setShowWatcherSearch(!showWatcherSearch)}
+                                        className="flex items-center gap-1 px-2 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs font-medium"
+                                    >
+                                        <Plus className="w-3 h-3" />
+                                    </button>
+                                </h3>
+
+                                {showWatcherSearch && (
+                                    <div className="mb-3 relative">
+                                        <div className="flex items-center gap-2 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2">
+                                            <Search className="w-4 h-4 text-slate-400" />
+                                            <input
+                                                type="text"
+                                                value={watcherSearch}
+                                                onChange={(e) => setWatcherSearch(e.target.value)}
+                                                placeholder="Search users..."
+                                                className="bg-transparent text-sm flex-1 focus:outline-none"
+                                                autoFocus
+                                            />
+                                            <button onClick={() => { setShowWatcherSearch(false); setWatcherSearch(''); setWatcherResults([]); }}>
+                                                <X className="w-4 h-4 text-slate-400 hover:text-white" />
+                                            </button>
+                                        </div>
+                                        {watcherResults.length > 0 && (
+                                            <div className="absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                                                {watcherResults.map((user) => (
+                                                    <button
+                                                        key={user.id}
+                                                        onClick={() => handleAddWatcher(user.id)}
+                                                        className="w-full px-3 py-2 text-left hover:bg-slate-600 text-sm flex items-center gap-2"
+                                                    >
+                                                        <User className="w-3.5 h-3.5 text-slate-400" />
+                                                        <div>
+                                                            <div className="text-slate-200">{user.name}</div>
+                                                            <div className="text-xs text-slate-400">{user.email}</div>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {watchers.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {watchers.map((watcher) => (
+                                            <div key={watcher.id} className="flex items-center justify-between p-2 bg-slate-700/30 rounded-lg text-sm">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                    <div className="min-w-0">
+                                                        <div className="text-slate-200 truncate">{watcher.name}</div>
+                                                        <div className="text-xs text-slate-400 truncate">{watcher.email}</div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleRemoveWatcher(watcher.id)}
+                                                    className="p-1 hover:bg-slate-600 rounded shrink-0"
+                                                    title="Remove watcher"
+                                                >
+                                                    <X className="w-3 h-3 text-red-400" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-slate-500 text-center py-2">No watchers</p>
+                                )}
+                            </div>
 
                             {/* Time Tracking */}
                             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">

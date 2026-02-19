@@ -157,6 +157,9 @@ class TicketController extends Controller
 
         $ticket->logActivity('created', null, null, $user->id);
 
+        // Auto-add watchers from project settings
+        app(\App\Services\Helpdesk\NotificationService::class)->addAutoWatchers($ticket);
+
         $ticket->load(['project', 'status', 'priority', 'type', 'assignee']);
 
         return response()->json([
@@ -167,7 +170,7 @@ class TicketController extends Controller
 
     public function show(Ticket $ticket): JsonResponse
     {
-        $ticket->load(['project', 'status', 'priority', 'type', 'assignee', 'labels', 'attachments', 'comments.user', 'comments.attachments', 'activities.user', 'timeEntries.user']);
+        $ticket->load(['project', 'status', 'priority', 'type', 'assignee', 'labels', 'attachments', 'comments.user', 'comments.attachments', 'activities.user', 'timeEntries.user', 'watchers']);
 
         return response()->json([
             'data' => $this->formatTicket($ticket, true),
@@ -465,6 +468,12 @@ class TicketController extends Controller
             ]);
 
             $data['metadata'] = $ticket->metadata;
+
+            $data['watchers'] = $ticket->watchers->map(fn ($watcher) => [
+                'id' => $watcher->id,
+                'name' => $watcher->name,
+                'email' => $watcher->email,
+            ]);
         }
 
         return $data;

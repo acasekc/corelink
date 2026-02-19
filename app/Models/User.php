@@ -86,7 +86,7 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Project::class, 'helpdesk_project_users')
             ->using(ProjectUser::class)
-            ->withPivot(['role', 'receive_notifications'])
+            ->withPivot(['role', 'receive_notifications', 'auto_watch_all_tickets'])
             ->withTimestamps();
     }
 
@@ -124,6 +124,15 @@ class User extends Authenticatable
     public function submittedTickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'submitter_user_id');
+    }
+
+    /**
+     * Get tickets this user is watching
+     */
+    public function watchedTickets(): BelongsToMany
+    {
+        return $this->belongsToMany(Ticket::class, 'helpdesk_ticket_watchers')
+            ->withTimestamps();
     }
 
     /**

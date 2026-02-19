@@ -101,6 +101,7 @@ class TicketController extends Controller
             'comments' => fn ($q) => $q->with(['user:id,name,email', 'attachments']),
             'activities' => fn ($q) => $q->with('user:id,name')->latest()->limit(20),
             'timeEntries' => fn ($q) => $q->with('user:id,name'),
+            'watchers:id,name,email',
         ]);
 
         // Filter internal comments for non-staff
@@ -150,6 +151,12 @@ class TicketController extends Controller
                     'created_at' => $entry->created_at,
                 ]),
                 'metadata' => $ticket->metadata,
+                'watchers' => $ticket->watchers->map(fn ($watcher) => [
+                    'id' => $watcher->id,
+                    'name' => $watcher->name,
+                    'email' => $watcher->email,
+                ]),
+                'is_watching' => $ticket->watchers->contains('id', $user->id),
                 'created_at' => $ticket->created_at,
                 'updated_at' => $ticket->updated_at,
                 'permissions' => [
@@ -228,6 +235,9 @@ class TicketController extends Controller
         ]);
 
         $ticket->logActivity('created', null, null, $user->id);
+
+        // Auto-add watchers from project settings
+        app(\App\Services\Helpdesk\NotificationService::class)->addAutoWatchers($ticket);
 
         $ticket->load(['project', 'status', 'priority', 'type']);
 

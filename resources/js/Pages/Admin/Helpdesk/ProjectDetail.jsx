@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket, DollarSign, Edit2, Save, X, User, Mail, MapPin, Users, Bell, BellOff, Search, Shield } from 'lucide-react';
+import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket, DollarSign, Edit2, Save, X, User, Mail, MapPin, Users, Bell, BellOff, Eye, EyeOff, Search, Shield } from 'lucide-react';
 
 const ProjectDetail = () => {
     const { projectId } = useParams();
@@ -48,6 +48,7 @@ const ProjectDetail = () => {
     const [searchingUsers, setSearchingUsers] = useState(false);
     const [addMemberRole, setAddMemberRole] = useState('user');
     const [addMemberNotify, setAddMemberNotify] = useState(true);
+    const [addMemberAutoWatch, setAddMemberAutoWatch] = useState(false);
 
     useEffect(() => {
         fetchProject();
@@ -449,7 +450,7 @@ const ProjectDetail = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
                 credentials: 'same-origin',
-                body: JSON.stringify({ user_id: userId, role: addMemberRole, receive_notifications: addMemberNotify }),
+                body: JSON.stringify({ user_id: userId, role: addMemberRole, receive_notifications: addMemberNotify, auto_watch_all_tickets: addMemberAutoWatch }),
             });
             if (!response.ok) {
                 const err = await response.json();
@@ -461,6 +462,7 @@ const ProjectDetail = () => {
             setAvailableUsers([]);
             setAddMemberRole('user');
             setAddMemberNotify(true);
+            setAddMemberAutoWatch(false);
         } catch (err) {
             alert(err.message);
         }
@@ -817,6 +819,15 @@ const ProjectDetail = () => {
                                         />
                                         Notify
                                     </label>
+                                    <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={addMemberAutoWatch}
+                                            onChange={(e) => setAddMemberAutoWatch(e.target.checked)}
+                                            className="w-4 h-4 bg-slate-800 border-slate-600 rounded text-purple-500 focus:ring-purple-500"
+                                        />
+                                        Auto-watch
+                                    </label>
                                     <button
                                         onClick={() => { setShowAddMember(false); setMemberSearch(''); setAvailableUsers([]); }}
                                         className="p-2 text-slate-400 hover:text-white"
@@ -894,6 +905,20 @@ const ProjectDetail = () => {
                                         >
                                             {member.receive_notifications ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
                                             {member.receive_notifications ? 'On' : 'Off'}
+                                        </button>
+
+                                        {/* Auto-watch Toggle */}
+                                        <button
+                                            onClick={() => handleUpdateMember(member.id, { auto_watch_all_tickets: !member.auto_watch_all_tickets })}
+                                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${
+                                                member.auto_watch_all_tickets
+                                                    ? 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30'
+                                                    : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                                            }`}
+                                            title={member.auto_watch_all_tickets ? 'Auto-watching all tickets' : 'Auto-watch off'}
+                                        >
+                                            {member.auto_watch_all_tickets ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                            {member.auto_watch_all_tickets ? 'Watch' : 'Watch'}
                                         </button>
 
                                         {/* Remove */}
