@@ -167,17 +167,16 @@ class CaseStudyService
             throw new \InvalidArgumentException('Invalid file upload. Please ensure the file is valid and not empty.');
         }
 
-        // Generate a unique filename with extension
         $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
-        
-        // Use explicit disk() call to ensure 'public' disk is used, regardless of default
-        $path = Storage::disk('public')->put('case-studies/'.$filename, $file->getContent());
+        $relativePath = 'case-studies/'.$filename;
 
-        if (! $path) {
+        $stored = Storage::disk('public')->put($relativePath, $file->getContent());
+
+        if (! $stored) {
             throw new \RuntimeException('Failed to store uploaded file. Please try again.');
         }
 
-        return '/storage/'.$path;
+        return '/storage/'.$relativePath;
     }
 
     protected function deleteHeroImage(string $imagePath): void
