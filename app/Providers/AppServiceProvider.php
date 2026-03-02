@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Events\Helpdesk\UsageSynced;
 use App\Listeners\CheckEmailSuppression;
+use App\Listeners\Helpdesk\EvaluateUsageThresholds;
 use App\Listeners\LogSentEmail;
 use App\Models\Helpdesk\ApiKey;
 use App\Models\Helpdesk\Attachment;
@@ -36,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
         // Email event listeners
         Event::listen(MessageSending::class, CheckEmailSuppression::class);
         Event::listen(MessageSent::class, LogSentEmail::class);
+        Event::listen(UsageSynced::class, EvaluateUsageThresholds::class);
 
         // Configure authentication redirects
         if (class_exists(\Illuminate\Auth\Middleware\Authenticate::class)) {

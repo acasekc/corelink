@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 
 /**
  * Markdown component for rendering markdown content with consistent styling.
@@ -27,7 +28,7 @@ export default function Markdown({ children, className = '' }) {
             prose-hr:border-slate-700
             ${className}`}>
             <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
+                remarkPlugins={[remarkGfm, remarkBreaks]}
                 components={{
                     // Open links in new tab
                     a: ({ node, ...props }) => (

@@ -99,6 +99,11 @@ class Project extends Model
         return $this->hasOne(ProjectInvoiceSettings::class);
     }
 
+    public function anthropicApiConfig(): HasOne
+    {
+        return $this->hasOne(AnthropicApiConfig::class);
+    }
+
     /**
      * Get or create invoice settings for this project.
      */

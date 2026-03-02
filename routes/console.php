@@ -24,6 +24,15 @@ Schedule::command('articles:publish-scheduled')->hourly();
 // Clean up attachments from tickets closed for more than 30 days
 Schedule::command('helpdesk:cleanup-attachments')->dailyAt('03:00');
 
+// Sync Anthropic API usage data daily at 2:00 AM
+Schedule::command('anthropic:sync-usage')->dailyAt('02:00');
+
+// Generate Anthropic billing invoices daily at 3:00 AM (checks cycle end dates)
+Schedule::command('anthropic:generate-invoices')->dailyAt('03:00');
+
+// Send Anthropic weekly usage digest to admin every Monday at 8:00 AM
+Schedule::command('anthropic:weekly-digest')->weeklyOn(1, '08:00');
+
 // Auto-generate articles daily (if enabled)
 Schedule::call(function () {
     $settings = ArticleGenerationSettings::get();

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Helpdesk\Admin\AnthropicBillingController;
 use App\Http\Controllers\Helpdesk\Admin\ApiKeyController;
 use App\Http\Controllers\Helpdesk\Admin\BillableItemController;
 use App\Http\Controllers\Helpdesk\Admin\CommentController;
@@ -228,4 +229,13 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     Route::delete('users/{user}/force', [UserController::class, 'forceDelete']);
     Route::get('users-search', [UserController::class, 'search']);
     Route::get('roles', [UserController::class, 'roles']);
+
+    // Anthropic API Billing
+    Route::get('projects/{project}/anthropic-config', [AnthropicBillingController::class, 'show']);
+    Route::post('projects/{project}/anthropic-config', [AnthropicBillingController::class, 'store']);
+    Route::get('projects/{project}/anthropic-usage-logs', [AnthropicBillingController::class, 'usageLogs']);
+    Route::post('projects/{project}/anthropic-config/toggle-key', [AnthropicBillingController::class, 'toggleKey']);
+    Route::post('projects/{project}/anthropic-config/sync', [AnthropicBillingController::class, 'sync']);
+    Route::post('projects/{project}/anthropic-config/generate-invoice', [AnthropicBillingController::class, 'generateInvoice']);
+    Route::post('projects/{project}/anthropic-config/reset-cycle', [AnthropicBillingController::class, 'resetCycle']);
 });

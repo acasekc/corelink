@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket, DollarSign, Edit2, Save, X, User, Mail, MapPin, Users, Bell, BellOff, Eye, EyeOff, Search, Shield } from 'lucide-react';
+import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket, DollarSign, Edit2, Save, X, User, Mail, MapPin, Users, Bell, BellOff, Eye, EyeOff, Search, Shield, Cpu, Activity, AlertTriangle } from 'lucide-react';
 
 const ProjectDetail = () => {
     const { projectId } = useParams();
@@ -50,6 +50,26 @@ const ProjectDetail = () => {
     const [addMemberNotify, setAddMemberNotify] = useState(true);
     const [addMemberAutoWatch, setAddMemberAutoWatch] = useState(false);
 
+    // Anthropic API Billing state
+    const [anthropicConfig, setAnthropicConfig] = useState(null);
+    const [anthropicLoading, setAnthropicLoading] = useState(false);
+    const [editingAnthropic, setEditingAnthropic] = useState(false);
+    const [anthropicUsageLogs, setAnthropicUsageLogs] = useState([]);
+    const [showUsageLogs, setShowUsageLogs] = useState(false);
+    const [anthropicSyncing, setAnthropicSyncing] = useState(false);
+    const [anthropicForm, setAnthropicForm] = useState({
+        api_key_name: '',
+        api_key: '',
+        plan_tier: 'starter',
+        included_allowance: '0',
+        grace_threshold: '0',
+        markup_percentage: '0',
+        overage_mode: 'silent',
+        notification_emails: [],
+        cycle_start_day: '1',
+    });
+    const [newNotificationEmail, setNewNotificationEmail] = useState('');
+
     useEffect(() => {
         fetchProject();
         fetchApiKeys();
@@ -58,6 +78,7 @@ const ProjectDetail = () => {
         fetchHourlyRates();
         fetchInvoiceSettings();
         fetchMembers();
+        fetchAnthropicConfig();
     }, [projectId]);
 
     const fetchProject = async () => {
@@ -256,6 +277,144 @@ const ProjectDetail = () => {
             window.location.href = '/admin/login';
         } catch (error) {
             console.error('Logout failed:', error);
+        }
+    };
+
+    // Anthropic API Billing handlers
+    const fetchAnthropicConfig = async () => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/anthropic-config`, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) return;
+            const json = await response.json();
+            setAnthropicConfig(json.data);
+            if (json.data) {
+                setAnthropicForm({
+                    api_key_name: json.data.api_key_name || '',
+                    api_key: '',
+                    plan_tier: json.data.plan_tier || 'starter',
+                    included_allowance: json.data.included_allowance || '0',
+                    grace_threshold: json.data.grace_threshold || '0',
+                    markup_percentage: json.data.markup_percentage || '0',
+                    overage_mode: json.data.overage_mode || 'silent',
+                    notification_emails: json.data.notification_emails || [],
+                    cycle_start_day: String(json.data.cycle_start_day || '1'),
+                });
+            }
+        } catch (err) {
+            console.error('Failed to fetch Anthropic config:', err);
+        }
+    };
+
+    const handleSaveAnthropicConfig = async (e) => {
+        e.preventDefault();
+        setAnthropicLoading(true);
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/anthropic-config`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    ...anthropicForm,
+                    included_allowance: parseFloat(anthropicForm.included_allowance),
+                    grace_threshold: parseFloat(anthropicForm.grace_threshold),
+                    markup_percentage: parseFloat(anthropicForm.markup_percentage),
+                    cycle_start_day: parseInt(anthropicForm.cycle_start_day),
+                }),
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to save config');
+            }
+            const json = await response.json();
+            setAnthropicConfig(json.data);
+            setEditingAnthropic(false);
+            setAnthropicForm(prev => ({ ...prev, api_key: '' }));
+        } catch (err) {
+            alert('Failed to save Anthropic config: ' + err.message);
+        } finally {
+            setAnthropicLoading(false);
+        }
+    };
+
+    const handleToggleAnthropicKey = async (status, reason = null) => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/anthropic-config/toggle-key`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ status, reason }),
+            });
+            if (!response.ok) throw new Error('Failed to toggle key');
+            const json = await response.json();
+            setAnthropicConfig(json.data);
+        } catch (err) {
+            alert('Failed to toggle key: ' + err.message);
+        }
+    };
+
+    const fetchAnthropicUsageLogs = async () => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/anthropic-usage-logs`, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) return;
+            const json = await response.json();
+            setAnthropicUsageLogs(json.data || []);
+        } catch (err) {
+            console.error('Failed to fetch usage logs:', err);
+        }
+    };
+
+    const handleAddNotificationEmail = () => {
+        if (newNotificationEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newNotificationEmail)) {
+            setAnthropicForm(prev => ({
+                ...prev,
+                notification_emails: [...(prev.notification_emails || []), newNotificationEmail],
+            }));
+            setNewNotificationEmail('');
+        }
+    };
+
+    const handleRemoveNotificationEmail = (email) => {
+        setAnthropicForm(prev => ({
+            ...prev,
+            notification_emails: (prev.notification_emails || []).filter(e => e !== email),
+        }));
+    };
+
+    const handleSyncAnthropicUsage = async () => {
+        setAnthropicSyncing(true);
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/anthropic-config/sync`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Sync failed');
+            }
+            const json = await response.json();
+            setAnthropicConfig(json.data);
+            if (showUsageLogs) fetchAnthropicUsageLogs();
+        } catch (err) {
+            alert('Sync failed: ' + err.message);
+        } finally {
+            setAnthropicSyncing(false);
         }
     };
 
@@ -1054,6 +1213,326 @@ const ProjectDetail = () => {
                                 ))
                             )}
                         </div>
+                    </div>
+
+                    {/* Anthropic API Billing */}
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl">
+                        <div className="p-4 border-b border-slate-700">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-semibold flex items-center gap-2">
+                                    <Cpu className="w-5 h-5 text-cyan-400" />
+                                    Anthropic API Billing
+                                </h3>
+                                <button
+                                    onClick={() => setEditingAnthropic(!editingAnthropic)}
+                                    className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded"
+                                >
+                                    {editingAnthropic ? 'Cancel' : (anthropicConfig ? 'Edit' : 'Configure')}
+                                </button>
+                            </div>
+                        </div>
+
+                        {editingAnthropic ? (
+                            <form onSubmit={handleSaveAnthropicConfig} className="p-4 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">API Key Name</label>
+                                        <input
+                                            type="text"
+                                            value={anthropicForm.api_key_name}
+                                            onChange={(e) => setAnthropicForm(prev => ({ ...prev, api_key_name: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                                            placeholder="e.g. Production Key"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">
+                                            API Key {anthropicConfig?.has_api_key ? '(leave blank to keep current)' : ''}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={anthropicForm.api_key}
+                                            onChange={(e) => setAnthropicForm(prev => ({ ...prev, api_key: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm font-mono"
+                                            placeholder={anthropicConfig?.has_api_key ? '••••••••' : 'sk-ant-...'}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Plan Tier</label>
+                                        <select
+                                            value={anthropicForm.plan_tier}
+                                            onChange={(e) => setAnthropicForm(prev => ({ ...prev, plan_tier: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                                        >
+                                            <option value="starter">Starter</option>
+                                            <option value="growth">Growth</option>
+                                            <option value="pro">Pro</option>
+                                            <option value="custom">Custom</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Included Allowance ($)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={anthropicForm.included_allowance}
+                                            onChange={(e) => setAnthropicForm(prev => ({ ...prev, included_allowance: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Grace Threshold ($)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={anthropicForm.grace_threshold}
+                                            onChange={(e) => setAnthropicForm(prev => ({ ...prev, grace_threshold: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Markup (%)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            value={anthropicForm.markup_percentage}
+                                            onChange={(e) => setAnthropicForm(prev => ({ ...prev, markup_percentage: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Overage Mode</label>
+                                        <select
+                                            value={anthropicForm.overage_mode}
+                                            onChange={(e) => setAnthropicForm(prev => ({ ...prev, overage_mode: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                                        >
+                                            <option value="silent">Silent</option>
+                                            <option value="proactive">Proactive</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Cycle Start Day (1-28)</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="28"
+                                            value={anthropicForm.cycle_start_day}
+                                            onChange={(e) => setAnthropicForm(prev => ({ ...prev, cycle_start_day: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                                        />
+                                    </div>
+                                </div>
+
+                                {anthropicForm.overage_mode === 'proactive' && (
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Notification Emails</label>
+                                        <div className="flex gap-2 mb-2">
+                                            <input
+                                                type="email"
+                                                value={newNotificationEmail}
+                                                onChange={(e) => setNewNotificationEmail(e.target.value)}
+                                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddNotificationEmail(); } }}
+                                                className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                                                placeholder="email@example.com"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleAddNotificationEmail}
+                                                className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 rounded text-sm"
+                                            >
+                                                Add
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(anthropicForm.notification_emails || []).map((email, i) => (
+                                                <span key={i} className="inline-flex items-center gap-1 px-2 py-1 bg-slate-700 rounded text-xs">
+                                                    {email}
+                                                    <button type="button" onClick={() => handleRemoveNotificationEmail(email)} className="text-slate-400 hover:text-red-400">
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-2">
+                                    <button
+                                        type="submit"
+                                        disabled={anthropicLoading}
+                                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded text-sm disabled:opacity-50"
+                                    >
+                                        {anthropicLoading ? 'Saving...' : 'Save Configuration'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingAnthropic(false)}
+                                        className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        ) : anthropicConfig ? (
+                            <div className="p-4 space-y-4">
+                                {/* Status & Usage Bar */}
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                            anthropicConfig.key_status === 'active' ? 'bg-green-500/20 text-green-400' :
+                                            anthropicConfig.key_status === 'grace' ? 'bg-yellow-500/20 text-yellow-400' :
+                                            anthropicConfig.key_status === 'disabled' ? 'bg-red-500/20 text-red-400' :
+                                            'bg-orange-500/20 text-orange-400'
+                                        }`}>
+                                            {anthropicConfig.key_status_label}
+                                        </span>
+                                        <span className="text-xs text-slate-400 capitalize">{anthropicConfig.plan_tier} Plan</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {anthropicConfig.key_status !== 'active' && (
+                                            <button
+                                                onClick={() => handleToggleAnthropicKey('active')}
+                                                className="px-2 py-1 text-xs bg-green-600/20 text-green-400 hover:bg-green-600/30 rounded"
+                                            >
+                                                Enable
+                                            </button>
+                                        )}
+                                        {anthropicConfig.key_status === 'active' && (
+                                            <button
+                                                onClick={() => handleToggleAnthropicKey('disabled', 'Manually disabled by admin')}
+                                                className="px-2 py-1 text-xs bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded"
+                                            >
+                                                Disable
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Usage Progress Bar */}
+                                <div>
+                                    <div className="flex justify-between text-xs text-slate-400 mb-1">
+                                        <span>Cycle Usage: ${anthropicConfig.cycle_usage_dollars.toFixed(2)}</span>
+                                        <span>Allowance: ${parseFloat(anthropicConfig.included_allowance).toFixed(2)} / Grace: ${parseFloat(anthropicConfig.grace_threshold).toFixed(2)}</span>
+                                    </div>
+                                    <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
+                                        {(() => {
+                                            const graceThresholdCents = anthropicConfig.grace_threshold_cents || 1;
+                                            const usagePct = Math.min(100, (anthropicConfig.cycle_usage_cents / graceThresholdCents) * 100);
+                                            const allowancePct = (anthropicConfig.included_allowance_cents / graceThresholdCents) * 100;
+                                            const barColor = usagePct > allowancePct ? (anthropicConfig.is_over_grace_threshold ? 'bg-red-500' : 'bg-yellow-500') : 'bg-cyan-500';
+                                            return (
+                                                <>
+                                                    <div className={`h-full ${barColor} rounded-full transition-all`} style={{ width: `${usagePct}%` }} />
+                                                    <div className="relative" style={{ top: '-12px', left: `${allowancePct}%` }}>
+                                                        <div className="w-px h-3 bg-slate-400 absolute" />
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+
+                                {/* Config Details */}
+                                <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                                    <dt className="text-slate-500">API Key</dt>
+                                    <dd className="font-mono text-xs">{anthropicConfig.masked_api_key || 'Not set'}</dd>
+                                    <dt className="text-slate-500">Markup</dt>
+                                    <dd>{parseFloat(anthropicConfig.markup_percentage).toFixed(1)}%</dd>
+                                    <dt className="text-slate-500">Overage Mode</dt>
+                                    <dd className="capitalize">{anthropicConfig.overage_mode}</dd>
+                                    <dt className="text-slate-500">Cycle Start Day</dt>
+                                    <dd>{anthropicConfig.cycle_start_day}</dd>
+                                    <dt className="text-slate-500">Last Synced</dt>
+                                    <dd className="flex items-center gap-2">
+                                        {anthropicConfig.last_synced_at ? new Date(anthropicConfig.last_synced_at).toLocaleString() : 'Never'}
+                                        {(anthropicConfig.key_status === 'active' || anthropicConfig.key_status === 'grace') && (
+                                            <button
+                                                onClick={handleSyncAnthropicUsage}
+                                                disabled={anthropicSyncing}
+                                                className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/30 rounded disabled:opacity-50"
+                                                title="Sync usage now"
+                                            >
+                                                <RefreshCw className={`w-3 h-3 ${anthropicSyncing ? 'animate-spin' : ''}`} />
+                                                {anthropicSyncing ? 'Syncing...' : 'Sync Now'}
+                                            </button>
+                                        )}
+                                    </dd>
+                                </dl>
+
+                                {anthropicConfig.disabled_reason && (
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-400">
+                                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                                        {anthropicConfig.disabled_reason}
+                                    </div>
+                                )}
+
+                                {/* Usage Logs Toggle */}
+                                <div>
+                                    <button
+                                        onClick={() => {
+                                            if (!showUsageLogs) fetchAnthropicUsageLogs();
+                                            setShowUsageLogs(!showUsageLogs);
+                                        }}
+                                        className="flex items-center gap-2 text-xs text-cyan-400 hover:text-cyan-300"
+                                    >
+                                        <Activity className="w-3.5 h-3.5" />
+                                        {showUsageLogs ? 'Hide Usage History' : 'Show Usage History'}
+                                    </button>
+
+                                    {showUsageLogs && (
+                                        <div className="mt-3 overflow-x-auto">
+                                            {anthropicUsageLogs.length > 0 ? (
+                                                <table className="w-full text-xs">
+                                                    <thead>
+                                                        <tr className="text-slate-400 border-b border-slate-700">
+                                                            <th className="text-left py-2 pr-3">Synced</th>
+                                                            <th className="text-left py-2 pr-3">Period</th>
+                                                            <th className="text-right py-2 pr-3">Input Tokens</th>
+                                                            <th className="text-right py-2 pr-3">Output Tokens</th>
+                                                            <th className="text-right py-2">Cost</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {anthropicUsageLogs.map(log => (
+                                                            <tr key={log.id} className="border-b border-slate-700/50">
+                                                                <td className="py-2 pr-3">{new Date(log.synced_at).toLocaleDateString()}</td>
+                                                                <td className="py-2 pr-3">{log.period_start} — {log.period_end}</td>
+                                                                <td className="py-2 pr-3 text-right">{log.tokens_input.toLocaleString()}</td>
+                                                                <td className="py-2 pr-3 text-right">{log.tokens_output.toLocaleString()}</td>
+                                                                <td className="py-2 text-right text-green-400">${log.cost_dollars.toFixed(2)}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                <p className="text-sm text-slate-500 text-center py-4">No usage logs yet.</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="p-4 text-center">
+                                <p className="text-sm text-slate-500">No Anthropic API billing configured for this project.</p>
+                                <button
+                                    onClick={() => setEditingAnthropic(true)}
+                                    className="mt-2 px-3 py-1.5 text-xs bg-cyan-600 hover:bg-cyan-700 rounded"
+                                >
+                                    Set Up API Billing
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Billing & Invoicing */}
