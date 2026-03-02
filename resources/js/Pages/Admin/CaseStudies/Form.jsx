@@ -128,12 +128,15 @@ const CaseStudyForm = () => {
       formData.append('is_published', form.is_published ? '1' : '0');
       formData.append('order', form.order);
       
-      // Add image file if selected
+      // Add image file if selected, or a new external URL
       if (imageFile) {
         formData.append('hero_image', imageFile);
-      } else if (form.hero_image) {
+      } else if (form.hero_image && !form.hero_image.startsWith('/storage/')) {
+        // Only send hero_image_url for external URLs, not existing storage paths
         formData.append('hero_image_url', form.hero_image);
       }
+      // If hero_image is an existing /storage/ path and no new file, don't send anything —
+      // the backend will preserve the current value
       
       // For PUT requests, Laravel needs _method field
       if (isEdit) {

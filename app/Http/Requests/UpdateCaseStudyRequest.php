@@ -25,7 +25,7 @@ class UpdateCaseStudyRequest extends FormRequest
             'project_type' => 'nullable|string|max:255',
             'technologies' => 'nullable|string',
             'hero_image' => 'nullable|image|max:2048',
-            'hero_image_url' => 'nullable|string|url',
+            'hero_image_url' => 'nullable|string',
             'content' => 'sometimes|required|string',
             'metrics' => 'nullable|string',
             'is_published' => 'nullable|boolean',
