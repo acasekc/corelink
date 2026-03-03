@@ -9,6 +9,7 @@ use App\Models\Helpdesk\TicketStatus;
 use App\Models\Helpdesk\TicketType;
 use App\Models\Helpdesk\TimeEntry;
 use App\Models\User;
+use App\Services\Helpdesk\NotificationService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -106,7 +107,14 @@ class TicketService
         // Log activity
         $ticket->logActivity('created', null, null, $currentUser->id);
 
-        return $ticket->load(['project', 'status', 'priority', 'type', 'assignee', 'labels']);
+        $ticket->load(['project', 'status', 'priority', 'type', 'assignee', 'labels']);
+
+        // Send email notifications and auto-add watchers
+        $notificationService = app(NotificationService::class);
+        $notificationService->notifyNewTicket($ticket);
+        $notificationService->addAutoWatchers($ticket);
+
+        return $ticket;
     }
 
     /**

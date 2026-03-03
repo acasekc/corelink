@@ -6,6 +6,7 @@ use App\Mcp\McpContext;
 use App\Models\Helpdesk\TicketPriority;
 use App\Models\Helpdesk\TicketStatus;
 use App\Models\Helpdesk\TicketType;
+use App\Services\Helpdesk\NotificationService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -95,8 +96,13 @@ class CreateTicketTool extends Tool
 
         $ticket->logActivity('created', null, null, null);
 
-        // Load relationships for response
-        $ticket->load(['status', 'priority', 'type']);
+        // Load relationships for notification/response
+        $ticket->load(['status', 'priority', 'type', 'project']);
+
+        // Send email notifications and auto-add watchers
+        $notificationService = app(NotificationService::class);
+        $notificationService->notifyNewTicket($ticket);
+        $notificationService->addAutoWatchers($ticket);
 
         return Response::text(json_encode([
             'success' => true,

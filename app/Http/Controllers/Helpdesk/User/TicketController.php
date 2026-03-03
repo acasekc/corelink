@@ -236,10 +236,12 @@ class TicketController extends Controller
 
         $ticket->logActivity('created', null, null, $user->id);
 
-        // Auto-add watchers from project settings
-        app(\App\Services\Helpdesk\NotificationService::class)->addAutoWatchers($ticket);
-
         $ticket->load(['project', 'status', 'priority', 'type']);
+
+        // Send email notifications and auto-add watchers
+        $notificationService = app(\App\Services\Helpdesk\NotificationService::class);
+        $notificationService->notifyNewTicket($ticket);
+        $notificationService->addAutoWatchers($ticket);
 
         return response()->json([
             'data' => $ticket,
