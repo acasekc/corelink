@@ -20,6 +20,7 @@ import {
     Timer,
     Eye,
     EyeOff,
+    FolderArchive,
 } from 'lucide-react';
 import Markdown from '../../components/Markdown';
 import LexicalMarkdownEditor from '../../components/LexicalMarkdownEditor';
@@ -565,7 +566,17 @@ export default function HelpdeskUserTicketDetail() {
                                         <Paperclip className="w-5 h-5" />
                                         Attachments ({attachments.length})
                                     </h2>
-                                    <div>
+                                    <div className="flex items-center gap-2">
+                                        {attachments.length > 1 && (
+                                            <a
+                                                href={`/api/helpdesk/user/tickets/${ticketId}/attachments/download-all`}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition"
+                                                title="Download all attachments as zip"
+                                            >
+                                                <FolderArchive className="w-4 h-4" />
+                                                Download All
+                                            </a>
+                                        )}
                                         <input
                                             ref={fileInputRef}
                                             type="file"

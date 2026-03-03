@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use ZipArchive;
 
 class AttachmentController extends Controller
 {
@@ -189,6 +190,87 @@ class AttachmentController extends Controller
                 'uploaded_by' => $a->uploader?->name,
                 'created_at' => $a->created_at,
             ]),
+        ]);
+    }
+
+    /**
+     * Download all attachments for a ticket as a zip file.
+     * Includes both ticket-level and comment-level attachments.
+     */
+    public function downloadAllForTicket(Request $request, Ticket $ticket): StreamedResponse|JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->canViewTicket($ticket)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // Gather ticket attachments and comment attachments
+        $ticket->load(['attachments', 'comments.attachments']);
+
+        $allAttachments = collect();
+
+        foreach ($ticket->attachments as $attachment) {
+            $allAttachments->push($attachment);
+        }
+
+        foreach ($ticket->comments as $comment) {
+            foreach ($comment->attachments as $attachment) {
+                $allAttachments->push($attachment);
+            }
+        }
+
+        if ($allAttachments->isEmpty()) {
+            return response()->json(['message' => 'No attachments to download'], 404);
+        }
+
+        $zipFilename = sprintf('ticket-%d-attachments.zip', $ticket->number);
+        $tempPath = storage_path('app/temp/'.$zipFilename);
+
+        // Ensure temp directory exists
+        if (! is_dir(dirname($tempPath))) {
+            mkdir(dirname($tempPath), 0755, true);
+        }
+
+        $zip = new ZipArchive;
+
+        if ($zip->open($tempPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['message' => 'Could not create zip file'], 500);
+        }
+
+        $usedNames = [];
+
+        foreach ($allAttachments as $attachment) {
+            if (! $attachment->exists()) {
+                continue;
+            }
+
+            // Deduplicate filenames
+            $name = $attachment->filename;
+            if (in_array($name, $usedNames, true)) {
+                $ext = pathinfo($name, PATHINFO_EXTENSION);
+                $base = pathinfo($name, PATHINFO_FILENAME);
+                $counter = 2;
+                do {
+                    $name = $ext ? "{$base}_{$counter}.{$ext}" : "{$base}_{$counter}";
+                    $counter++;
+                } while (in_array($name, $usedNames, true));
+            }
+            $usedNames[] = $name;
+
+            $contents = $attachment->getContents();
+            if ($contents !== null) {
+                $zip->addFromString($name, $contents);
+            }
+        }
+
+        $zip->close();
+
+        return response()->streamDownload(function () use ($tempPath) {
+            readfile($tempPath);
+            @unlink($tempPath);
+        }, $zipFilename, [
+            'Content-Type' => 'application/zip',
         ]);
     }
 }

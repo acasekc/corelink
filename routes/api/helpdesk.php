@@ -96,6 +96,7 @@ Route::prefix('api/helpdesk/user')->middleware(['web', 'auth', 'force-password-c
 
     // Attachments
     Route::get('tickets/{ticket}/attachments', [AttachmentController::class, 'listForTicket']);
+    Route::get('tickets/{ticket}/attachments/download-all', [AttachmentController::class, 'downloadAllForTicket']);
     Route::post('tickets/{ticket}/attachments', [AttachmentController::class, 'uploadToTicket']);
     Route::post('comments/{comment}/attachments', [AttachmentController::class, 'uploadToComment']);
     Route::get('attachments/{attachment}/download', [AttachmentController::class, 'download'])->name('helpdesk.attachments.download');
@@ -205,6 +206,9 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     // Invoice Payments (manual payments)
     Route::post('invoices/{invoice}/payments', [InvoicePaymentController::class, 'store']);
     Route::delete('invoices/{invoice}/payments/{payment}', [InvoicePaymentController::class, 'destroy']);
+
+    // Attachments (admin)
+    Route::get('tickets/{ticket}/attachments/download-all', [AttachmentController::class, 'downloadAllForTicket']);
 
     // Comments
     Route::get('tickets/{ticket}/comments', [CommentController::class, 'index']);

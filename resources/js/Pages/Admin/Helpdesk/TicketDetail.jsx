@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Ticket, ArrowLeft, LogOut, User, Clock, Tag, MessageSquare, Send, Lock, Unlock, Paperclip, X, FileText, Image, Download, Trash2, Plus, Play, Square, Edit2, DollarSign, Timer, Eye, EyeOff, Search } from 'lucide-react';
+import { Ticket, ArrowLeft, LogOut, User, Clock, Tag, MessageSquare, Send, Lock, Unlock, Paperclip, X, FileText, Image, Download, Trash2, Plus, Play, Square, Edit2, DollarSign, Timer, Eye, EyeOff, Search, FolderArchive } from 'lucide-react';
 import Markdown from '../../../components/Markdown';
 import LexicalMarkdownEditor from '../../../components/LexicalMarkdownEditor';
 import FileUploadProgress from '../../../components/FileUploadProgress';
@@ -779,10 +779,22 @@ const TicketDetail = () => {
                                 {/* Ticket Attachments */}
                                 {ticket?.attachments?.length > 0 && (
                                     <div className="mt-6 pt-6 border-t border-slate-700">
-                                        <h3 className="text-sm font-medium text-slate-400 mb-3 flex items-center gap-2">
-                                            <Paperclip className="w-4 h-4" />
-                                            Attachments ({ticket.attachments.length})
-                                        </h3>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="text-sm font-medium text-slate-400 flex items-center gap-2">
+                                                <Paperclip className="w-4 h-4" />
+                                                Attachments ({ticket.attachments.length})
+                                            </h3>
+                                            {ticket.attachments.length > 1 && (
+                                                <a
+                                                    href={`/api/helpdesk/admin/tickets/${ticket.id}/attachments/download-all`}
+                                                    className="flex items-center gap-1.5 px-2.5 py-1 text-xs bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition"
+                                                    title="Download all attachments as zip"
+                                                >
+                                                    <FolderArchive className="w-3.5 h-3.5" />
+                                                    Download All
+                                                </a>
+                                            )}
+                                        </div>
                                         <div className="flex flex-wrap gap-3">
                                             {ticket.attachments.map((attachment) => (
                                                 <a
