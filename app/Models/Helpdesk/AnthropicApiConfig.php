@@ -17,6 +17,7 @@ class AnthropicApiConfig extends Model
         'api_key_name',
         'api_key_encrypted',
         'plan_tier',
+        'plan_tier_id',
         'included_allowance',
         'grace_threshold',
         'markup_percentage',
@@ -48,6 +49,11 @@ class AnthropicApiConfig extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function planTier(): BelongsTo
+    {
+        return $this->belongsTo(AnthropicPlanTier::class, 'plan_tier_id');
     }
 
     public function usageLogs(): HasMany

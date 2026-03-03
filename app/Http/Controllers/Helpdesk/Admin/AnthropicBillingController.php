@@ -40,6 +40,7 @@ class AnthropicBillingController extends Controller
             'api_key_name' => ['nullable', 'string', 'max:255'],
             'api_key' => ['nullable', 'string', 'max:500'],
             'plan_tier' => ['required', 'string', 'max:32'],
+            'plan_tier_id' => ['nullable', 'integer', 'exists:helpdesk_anthropic_plan_tiers,id'],
             'included_allowance' => ['required', 'numeric', 'min:0'],
             'grace_threshold' => ['required', 'numeric', 'min:0', 'gte:included_allowance'],
             'markup_percentage' => ['required', 'numeric', 'min:0', 'max:100'],
@@ -54,6 +55,7 @@ class AnthropicBillingController extends Controller
         $data = [
             'api_key_name' => $validated['api_key_name'] ?? null,
             'plan_tier' => $validated['plan_tier'],
+            'plan_tier_id' => $validated['plan_tier_id'] ?? null,
             'included_allowance' => $validated['included_allowance'],
             'grace_threshold' => $validated['grace_threshold'],
             'markup_percentage' => $validated['markup_percentage'],
@@ -253,6 +255,8 @@ class AnthropicBillingController extends Controller
      */
     private function formatConfig(AnthropicApiConfig $config): array
     {
+        $config->load('planTier');
+
         return [
             'id' => $config->id,
             'project_id' => $config->project_id,
@@ -260,6 +264,8 @@ class AnthropicBillingController extends Controller
             'has_api_key' => ! empty($config->api_key_encrypted),
             'masked_api_key' => $config->maskedApiKey(),
             'plan_tier' => $config->plan_tier,
+            'plan_tier_id' => $config->plan_tier_id,
+            'plan_tier_name' => $config->planTier?->name,
             'included_allowance' => $config->included_allowance,
             'grace_threshold' => $config->grace_threshold,
             'markup_percentage' => $config->markup_percentage,

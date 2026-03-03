@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket, DollarSign, Edit2, Save, X, User, Mail, MapPin, Users, Bell, BellOff, Eye, EyeOff, Search, Shield, Cpu, Activity, AlertTriangle } from 'lucide-react';
+import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket, DollarSign, Edit2, Save, X, User, Mail, MapPin, Users, Bell, BellOff, Eye, EyeOff, Search, Shield, Cpu, Activity, AlertTriangle, Settings2 } from 'lucide-react';
 
 const ProjectDetail = () => {
     const { projectId } = useParams();
@@ -57,10 +57,12 @@ const ProjectDetail = () => {
     const [anthropicUsageLogs, setAnthropicUsageLogs] = useState([]);
     const [showUsageLogs, setShowUsageLogs] = useState(false);
     const [anthropicSyncing, setAnthropicSyncing] = useState(false);
+    const [planTiers, setPlanTiers] = useState([]);
     const [anthropicForm, setAnthropicForm] = useState({
         api_key_name: '',
         api_key: '',
         plan_tier: 'starter',
+        plan_tier_id: '',
         included_allowance: '0',
         grace_threshold: '0',
         markup_percentage: '0',
@@ -79,6 +81,7 @@ const ProjectDetail = () => {
         fetchInvoiceSettings();
         fetchMembers();
         fetchAnthropicConfig();
+        fetchPlanTiers();
     }, [projectId]);
 
     const fetchProject = async () => {
@@ -294,6 +297,7 @@ const ProjectDetail = () => {
                     api_key_name: json.data.api_key_name || '',
                     api_key: '',
                     plan_tier: json.data.plan_tier || 'starter',
+                    plan_tier_id: json.data.plan_tier_id || '',
                     included_allowance: json.data.included_allowance || '0',
                     grace_threshold: json.data.grace_threshold || '0',
                     markup_percentage: json.data.markup_percentage || '0',
@@ -304,6 +308,39 @@ const ProjectDetail = () => {
             }
         } catch (err) {
             console.error('Failed to fetch Anthropic config:', err);
+        }
+    };
+
+    const fetchPlanTiers = async () => {
+        try {
+            const response = await fetch('/api/admin/anthropic-plan-tiers', {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) return;
+            const json = await response.json();
+            setPlanTiers(json.data || []);
+        } catch (err) {
+            console.error('Failed to fetch plan tiers:', err);
+        }
+    };
+
+    const handleTierChange = (tierId) => {
+        const tier = planTiers.find(t => t.id === parseInt(tierId));
+        if (tier) {
+            setAnthropicForm(prev => ({
+                ...prev,
+                plan_tier: tier.slug,
+                plan_tier_id: tier.id,
+                included_allowance: tier.included_allowance,
+                grace_threshold: tier.grace_threshold,
+                markup_percentage: tier.markup_percentage,
+                overage_mode: tier.overage_mode,
+            }));
+        } else {
+            setAnthropicForm(prev => ({
+                ...prev,
+                plan_tier_id: '',
+            }));
         }
     };
 
@@ -321,6 +358,7 @@ const ProjectDetail = () => {
                 credentials: 'same-origin',
                 body: JSON.stringify({
                     ...anthropicForm,
+                    plan_tier_id: anthropicForm.plan_tier_id || null,
                     included_allowance: parseFloat(anthropicForm.included_allowance),
                     grace_threshold: parseFloat(anthropicForm.grace_threshold),
                     markup_percentage: parseFloat(anthropicForm.markup_percentage),
@@ -1261,16 +1299,25 @@ const ProjectDetail = () => {
 
                                 <div className="grid grid-cols-3 gap-4">
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Plan Tier</label>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="block text-xs text-slate-400">Plan Tier</label>
+                                            <Link
+                                                to="/admin/anthropic-plan-tiers"
+                                                className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+                                            >
+                                                <Settings2 className="w-3 h-3" />
+                                                Manage
+                                            </Link>
+                                        </div>
                                         <select
-                                            value={anthropicForm.plan_tier}
-                                            onChange={(e) => setAnthropicForm(prev => ({ ...prev, plan_tier: e.target.value }))}
+                                            value={anthropicForm.plan_tier_id || ''}
+                                            onChange={(e) => handleTierChange(e.target.value)}
                                             className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
                                         >
-                                            <option value="starter">Starter</option>
-                                            <option value="growth">Growth</option>
-                                            <option value="pro">Pro</option>
-                                            <option value="custom">Custom</option>
+                                            <option value="">Select a tier...</option>
+                                            {planTiers.filter(t => t.is_active).map(tier => (
+                                                <option key={tier.id} value={tier.id}>{tier.name}</option>
+                                            ))}
                                         </select>
                                     </div>
                                     <div>
@@ -1397,7 +1444,7 @@ const ProjectDetail = () => {
                                         }`}>
                                             {anthropicConfig.key_status_label}
                                         </span>
-                                        <span className="text-xs text-slate-400 capitalize">{anthropicConfig.plan_tier} Plan</span>
+                                        <span className="text-xs text-slate-400 capitalize">{anthropicConfig.plan_tier_name || anthropicConfig.plan_tier} Plan</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {anthropicConfig.key_status !== 'active' && (

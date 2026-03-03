@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AnthropicPlanTierController;
 use App\Http\Controllers\Admin\ArticleCategoryController;
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 use App\Http\Controllers\Admin\ArticleSettingsController;
@@ -76,6 +77,14 @@ Route::middleware(['auth', 'admin', 'force-password-change'])->prefix('api/admin
     Route::prefix('discovery')->group(function () {
         Route::get('/invites', [AdminDiscoveryController::class, 'invites']);
     });
+
+    // Anthropic Plan Tiers
+    Route::get('/anthropic-plan-tiers', [AnthropicPlanTierController::class, 'index']);
+    Route::post('/anthropic-plan-tiers', [AnthropicPlanTierController::class, 'store']);
+    Route::get('/anthropic-plan-tiers/{anthropicPlanTier}', [AnthropicPlanTierController::class, 'show']);
+    Route::put('/anthropic-plan-tiers/{anthropicPlanTier}', [AnthropicPlanTierController::class, 'update']);
+    Route::delete('/anthropic-plan-tiers/{anthropicPlanTier}', [AnthropicPlanTierController::class, 'destroy']);
+    Route::post('/anthropic-plan-tiers/reorder', [AnthropicPlanTierController::class, 'reorder']);
 });
 
 // Discovery Bot Routes
