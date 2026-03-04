@@ -312,7 +312,7 @@ const InvoiceDetail = () => {
                             </button>
                         )}
                         <a
-                            href={`/helpdesk/invoices/${invoice?.uuid}/pdf`}
+                            href={`/invoice/${invoice?.uuid}/pdf`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition text-sm"
@@ -665,12 +665,12 @@ const InvoiceDetail = () => {
                                 <input
                                     type="text"
                                     readOnly
-                                    value={`${window.location.origin}/helpdesk/invoices/${invoice.uuid}`}
+                                    value={`${window.location.origin}/invoice/${invoice.uuid}`}
                                     className="flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm text-slate-300"
                                 />
                                 <button
                                     onClick={() => {
-                                        navigator.clipboard.writeText(`${window.location.origin}/helpdesk/invoices/${invoice.uuid}`);
+                                        navigator.clipboard.writeText(`${window.location.origin}/invoice/${invoice.uuid}`);
                                         alert('Link copied to clipboard!');
                                     }}
                                     className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm"
@@ -678,7 +678,7 @@ const InvoiceDetail = () => {
                                     Copy
                                 </button>
                                 <a
-                                    href={`/helpdesk/invoices/${invoice.uuid}`}
+                                    href={`/invoice/${invoice.uuid}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm flex items-center gap-2"
