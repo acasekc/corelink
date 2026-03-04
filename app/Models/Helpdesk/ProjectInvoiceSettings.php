@@ -20,6 +20,9 @@ class ProjectInvoiceSettings extends Model
         'bill_to_address',
         'invoice_footer',
         'stripe_enabled',
+        'default_hourly_rate',
+        'billing_increment_minutes',
+        'minimum_billing_minutes',
     ];
 
     protected function casts(): array
@@ -28,6 +31,9 @@ class ProjectInvoiceSettings extends Model
             'next_invoice_number' => 'integer',
             'default_payment_terms' => 'integer',
             'default_tax_rate' => 'decimal:2',
+            'default_hourly_rate' => 'decimal:2',
+            'billing_increment_minutes' => 'integer',
+            'minimum_billing_minutes' => 'integer',
             'stripe_enabled' => 'boolean',
         ];
     }

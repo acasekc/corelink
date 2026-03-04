@@ -590,7 +590,7 @@ const TicketDetail = () => {
         setTimeFormData({
             hours: hours.toString(),
             minutes: mins.toString(),
-            hourly_rate_category_id: entry.hourly_rate_category_id || '',
+            hourly_rate_category_id: entry.hourly_rate_category_id || entry.hourly_rate_category?.id || '',
             description: entry.description || '',
             is_billable: entry.is_billable,
         });

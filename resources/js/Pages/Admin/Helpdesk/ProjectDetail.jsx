@@ -34,10 +34,10 @@ const ProjectDetail = () => {
     const [settingsFormData, setSettingsFormData] = useState({
         default_hourly_rate: '',
         billing_increment_minutes: '15',
-        minimum_billing_minutes: '60',
+        minimum_billing_minutes: '0',
         invoice_prefix: '',
-        invoice_notes: '',
-        payment_terms_days: '30',
+        invoice_footer: '',
+        default_payment_terms: '30',
     });
 
     // Members state
@@ -163,10 +163,10 @@ const ProjectDetail = () => {
                 setSettingsFormData({
                     default_hourly_rate: json.data.default_hourly_rate || '',
                     billing_increment_minutes: json.data.billing_increment_minutes || '15',
-                    minimum_billing_minutes: json.data.minimum_billing_minutes || '60',
+                    minimum_billing_minutes: json.data.minimum_billing_minutes || '0',
                     invoice_prefix: json.data.invoice_prefix || '',
-                    invoice_notes: json.data.invoice_notes || '',
-                    payment_terms_days: json.data.payment_terms_days || '30',
+                    invoice_footer: json.data.invoice_footer || '',
+                    default_payment_terms: json.data.default_payment_terms || '30',
                 });
             }
         } catch (err) {
@@ -555,8 +555,8 @@ const ProjectDetail = () => {
                     billing_increment_minutes: parseInt(settingsFormData.billing_increment_minutes),
                     minimum_billing_minutes: parseInt(settingsFormData.minimum_billing_minutes),
                     invoice_prefix: settingsFormData.invoice_prefix || null,
-                    invoice_notes: settingsFormData.invoice_notes || null,
-                    payment_terms_days: parseInt(settingsFormData.payment_terms_days),
+                    invoice_footer: settingsFormData.invoice_footer || null,
+                    default_payment_terms: parseInt(settingsFormData.default_payment_terms),
                 }),
             });
             if (!response.ok) throw new Error('Failed to save settings');
@@ -1668,8 +1668,8 @@ const ProjectDetail = () => {
                                         <input
                                             type="number"
                                             min="1"
-                                            value={settingsFormData.payment_terms_days}
-                                            onChange={(e) => setSettingsFormData(prev => ({ ...prev, payment_terms_days: e.target.value }))}
+                                            value={settingsFormData.default_payment_terms}
+                                            onChange={(e) => setSettingsFormData(prev => ({ ...prev, default_payment_terms: e.target.value }))}
                                             className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                                         />
                                     </div>
@@ -1686,8 +1686,8 @@ const ProjectDetail = () => {
                                     <div className="col-span-2">
                                         <label className="block text-xs text-slate-400 mb-1">Default Invoice Notes</label>
                                         <textarea
-                                            value={settingsFormData.invoice_notes}
-                                            onChange={(e) => setSettingsFormData(prev => ({ ...prev, invoice_notes: e.target.value }))}
+                                            value={settingsFormData.invoice_footer}
+                                            onChange={(e) => setSettingsFormData(prev => ({ ...prev, invoice_footer: e.target.value }))}
                                             rows={2}
                                             className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
                                             placeholder="Payment terms, bank details, etc."
@@ -1714,7 +1714,7 @@ const ProjectDetail = () => {
                                     </div>
                                     <div>
                                         <dt className="text-slate-500">Payment Terms</dt>
-                                        <dd className="text-slate-200">{invoiceSettings?.payment_terms_days || 30} days</dd>
+                                        <dd className="text-slate-200">{invoiceSettings?.default_payment_terms || 30} days</dd>
                                     </div>
                                 </dl>
                             )}

@@ -219,6 +219,7 @@ class TimeEntryController extends Controller
                 'id' => $entry->user->id,
                 'name' => $entry->user->name,
             ] : null,
+            'hourly_rate_category_id' => $entry->hourly_rate_category_id,
             'hourly_rate_category' => $entry->hourlyRateCategory ? [
                 'id' => $entry->hourlyRateCategory->id,
                 'name' => $entry->hourlyRateCategory->name,
