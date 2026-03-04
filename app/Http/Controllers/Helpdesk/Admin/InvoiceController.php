@@ -518,11 +518,33 @@ class InvoiceController extends Controller
             ->where('is_billable', true)
             ->get();
 
+        // Use project invoice settings for billing calculations (matches frontend preview)
+        $settings = $project->getInvoiceSettings();
+        $increment = $settings->billing_increment_minutes ?: 15;
+        $minimum = $settings->minimum_billing_minutes ?: 0;
+
         // Group by category
         $grouped = $timeEntries->groupBy('hourly_rate_category_id');
 
         foreach ($grouped as $categoryId => $entries) {
-            $totalMinutes = $entries->sum('billable_minutes');
+            // Calculate billable minutes per entry using project settings, then sum
+            $totalMinutes = $entries->sum(function ($entry) use ($increment, $minimum) {
+                $minutes = $entry->minutes;
+                if ($minutes <= 0) {
+                    return 0;
+                }
+
+                // Round up to billing increment
+                $billable = (int) ceil($minutes / $increment) * $increment;
+
+                // Apply minimum billing
+                if ($billable < $minimum && $minutes > 0) {
+                    $billable = $minimum;
+                }
+
+                return $billable;
+            });
+
             $hours = $totalMinutes / 60;
 
             // Get the effective rate for this category
