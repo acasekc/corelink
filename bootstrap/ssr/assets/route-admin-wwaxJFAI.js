@@ -1,8 +1,404 @@
-import { jsxs, jsx, Fragment } from "react/jsx-runtime";
-import { useRef, useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { Loader2, Key, AlertTriangle, CheckCircle, Lock, EyeOff, Eye, LogOut, FileText, Briefcase, MessageSquare, Ticket, Sparkles, ArrowLeft, X, Plus, Upload, ExternalLink, Edit, Trash2 } from "lucide-react";
+import { jsx, jsxs, Fragment } from "react/jsx-runtime";
+import { useState, useEffect, useRef } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { Loader2, ArrowLeft, Plus, X, Layers, GripVertical, Pencil, Trash2, Key, AlertTriangle, CheckCircle, Lock, EyeOff, Eye, LogOut, FileText, Briefcase, MessageSquare, Ticket, Sparkles, Upload, ExternalLink, Edit } from "lucide-react";
 import { motion } from "framer-motion";
+const AnthropicPlanTiers = () => {
+  const [loading, setLoading] = useState(true);
+  const [tiers, setTiers] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingTier, setEditingTier] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(null);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    monthly_price: "0",
+    included_allowance: "0",
+    grace_threshold: "0",
+    markup_percentage: "0",
+    overage_mode: "silent",
+    is_active: true
+  });
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+  useEffect(() => {
+    fetchTiers();
+  }, []);
+  const fetchTiers = async () => {
+    try {
+      const response = await fetch("/api/admin/anthropic-plan-tiers", {
+        headers: { "Accept": "application/json" }
+      });
+      if (!response.ok) throw new Error("Failed to fetch plan tiers");
+      const json = await response.json();
+      setTiers(json.data || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const openCreateModal = () => {
+    setEditingTier(null);
+    setFormData({
+      name: "",
+      description: "",
+      monthly_price: "0",
+      included_allowance: "0",
+      grace_threshold: "0",
+      markup_percentage: "0",
+      overage_mode: "silent",
+      is_active: true
+    });
+    setShowModal(true);
+  };
+  const openEditModal = (tier) => {
+    setEditingTier(tier);
+    setFormData({
+      name: tier.name,
+      description: tier.description || "",
+      monthly_price: tier.monthly_price,
+      included_allowance: tier.included_allowance,
+      grace_threshold: tier.grace_threshold,
+      markup_percentage: tier.markup_percentage,
+      overage_mode: tier.overage_mode,
+      is_active: tier.is_active
+    });
+    setShowModal(true);
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    const url = editingTier ? `/api/admin/anthropic-plan-tiers/${editingTier.id}` : "/api/admin/anthropic-plan-tiers";
+    const method = editingTier ? "PUT" : "POST";
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": csrfToken
+        },
+        body: JSON.stringify({
+          ...formData,
+          monthly_price: parseFloat(formData.monthly_price) || 0,
+          included_allowance: parseFloat(formData.included_allowance) || 0,
+          grace_threshold: parseFloat(formData.grace_threshold) || 0,
+          markup_percentage: parseFloat(formData.markup_percentage) || 0
+        })
+      });
+      if (!response.ok) {
+        const json = await response.json();
+        throw new Error(json.message || "Failed to save plan tier");
+      }
+      setShowModal(false);
+      fetchTiers();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+  const handleDelete = async (tier) => {
+    if (!confirm(`Delete "${tier.name}" plan tier? This cannot be undone.`)) return;
+    setDeleting(tier.id);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/anthropic-plan-tiers/${tier.id}`, {
+        method: "DELETE",
+        headers: {
+          "Accept": "application/json",
+          "X-CSRF-TOKEN": csrfToken
+        }
+      });
+      if (!response.ok) {
+        const json = await response.json();
+        throw new Error(json.message || "Failed to delete plan tier");
+      }
+      fetchTiers();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeleting(null);
+    }
+  };
+  if (loading) {
+    return /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center min-h-[60vh]", children: /* @__PURE__ */ jsx(Loader2, { className: "w-8 h-8 animate-spin text-blue-500" }) });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "container mx-auto px-6 py-8 max-w-5xl", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between mb-8", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-4", children: [
+        /* @__PURE__ */ jsx(Link, { to: "/admin", className: "text-slate-400 hover:text-white transition-colors", children: /* @__PURE__ */ jsx(ArrowLeft, { className: "w-5 h-5" }) }),
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("h1", { className: "text-2xl font-bold", children: "Anthropic Plan Tiers" }),
+          /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400 mt-1", children: "Manage billing tiers for Anthropic API configurations" })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs(
+        "button",
+        {
+          onClick: openCreateModal,
+          className: "flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors",
+          children: [
+            /* @__PURE__ */ jsx(Plus, { className: "w-4 h-4" }),
+            "New Tier"
+          ]
+        }
+      )
+    ] }),
+    error && /* @__PURE__ */ jsxs("div", { className: "mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm flex items-center justify-between", children: [
+      /* @__PURE__ */ jsx("span", { children: error }),
+      /* @__PURE__ */ jsx("button", { onClick: () => setError(null), className: "text-red-400 hover:text-red-300", children: /* @__PURE__ */ jsx(X, { className: "w-4 h-4" }) })
+    ] }),
+    tiers.length === 0 ? /* @__PURE__ */ jsxs("div", { className: "text-center py-16 bg-slate-800/50 rounded-xl border border-slate-700", children: [
+      /* @__PURE__ */ jsx(Layers, { className: "w-12 h-12 text-slate-600 mx-auto mb-4" }),
+      /* @__PURE__ */ jsx("h3", { className: "text-lg font-medium text-slate-300 mb-2", children: "No plan tiers yet" }),
+      /* @__PURE__ */ jsx("p", { className: "text-slate-400 text-sm mb-6", children: "Create your first tier to define billing defaults for projects." }),
+      /* @__PURE__ */ jsxs(
+        "button",
+        {
+          onClick: openCreateModal,
+          className: "inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition-colors",
+          children: [
+            /* @__PURE__ */ jsx(Plus, { className: "w-4 h-4" }),
+            "Create First Tier"
+          ]
+        }
+      )
+    ] }) : /* @__PURE__ */ jsx("div", { className: "bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden", children: /* @__PURE__ */ jsxs("table", { className: "w-full", children: [
+      /* @__PURE__ */ jsx("thead", { className: "bg-slate-800", children: /* @__PURE__ */ jsxs("tr", { children: [
+        /* @__PURE__ */ jsx("th", { className: "text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3 w-8" }),
+        /* @__PURE__ */ jsx("th", { className: "text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3", children: "Name" }),
+        /* @__PURE__ */ jsx("th", { className: "text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3", children: "Price" }),
+        /* @__PURE__ */ jsx("th", { className: "text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3", children: "Allowance" }),
+        /* @__PURE__ */ jsx("th", { className: "text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3", children: "Grace" }),
+        /* @__PURE__ */ jsx("th", { className: "text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3", children: "Markup" }),
+        /* @__PURE__ */ jsx("th", { className: "text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3", children: "Overage" }),
+        /* @__PURE__ */ jsx("th", { className: "text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3", children: "In Use" }),
+        /* @__PURE__ */ jsx("th", { className: "text-left text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3", children: "Status" }),
+        /* @__PURE__ */ jsx("th", { className: "text-right text-xs font-medium text-slate-400 uppercase tracking-wider px-6 py-3", children: "Actions" })
+      ] }) }),
+      /* @__PURE__ */ jsx("tbody", { className: "divide-y divide-slate-700", children: tiers.map((tier) => /* @__PURE__ */ jsxs("tr", { className: "hover:bg-slate-800/50 transition-colors", children: [
+        /* @__PURE__ */ jsx("td", { className: "px-6 py-4", children: /* @__PURE__ */ jsx(GripVertical, { className: "w-4 h-4 text-slate-600" }) }),
+        /* @__PURE__ */ jsx("td", { className: "px-6 py-4", children: /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("span", { className: "font-medium text-white", children: tier.name }),
+          tier.description && /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-400 mt-0.5", children: tier.description })
+        ] }) }),
+        /* @__PURE__ */ jsxs("td", { className: "px-6 py-4 text-sm text-slate-300", children: [
+          "$",
+          parseFloat(tier.monthly_price).toFixed(2)
+        ] }),
+        /* @__PURE__ */ jsxs("td", { className: "px-6 py-4 text-sm text-slate-300", children: [
+          "$",
+          parseFloat(tier.included_allowance).toFixed(2)
+        ] }),
+        /* @__PURE__ */ jsxs("td", { className: "px-6 py-4 text-sm text-slate-300", children: [
+          "$",
+          parseFloat(tier.grace_threshold).toFixed(2)
+        ] }),
+        /* @__PURE__ */ jsxs("td", { className: "px-6 py-4 text-sm text-slate-300", children: [
+          tier.markup_percentage,
+          "%"
+        ] }),
+        /* @__PURE__ */ jsx("td", { className: "px-6 py-4", children: /* @__PURE__ */ jsx("span", { className: `inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${tier.overage_mode === "proactive" ? "bg-blue-500/10 text-blue-400" : "bg-slate-700 text-slate-400"}`, children: tier.overage_mode_label }) }),
+        /* @__PURE__ */ jsxs("td", { className: "px-6 py-4 text-sm text-slate-400", children: [
+          tier.configs_count,
+          " ",
+          tier.configs_count === 1 ? "project" : "projects"
+        ] }),
+        /* @__PURE__ */ jsx("td", { className: "px-6 py-4", children: /* @__PURE__ */ jsx("span", { className: `inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${tier.is_active ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"}`, children: tier.is_active ? "Active" : "Inactive" }) }),
+        /* @__PURE__ */ jsx("td", { className: "px-6 py-4 text-right", children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-2", children: [
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: () => openEditModal(tier),
+              className: "p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-colors",
+              title: "Edit",
+              children: /* @__PURE__ */ jsx(Pencil, { className: "w-4 h-4" })
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: () => handleDelete(tier),
+              disabled: deleting === tier.id,
+              className: "p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded transition-colors disabled:opacity-50",
+              title: "Delete",
+              children: deleting === tier.id ? /* @__PURE__ */ jsx(Loader2, { className: "w-4 h-4 animate-spin" }) : /* @__PURE__ */ jsx(Trash2, { className: "w-4 h-4" })
+            }
+          )
+        ] }) })
+      ] }, tier.id)) })
+    ] }) }),
+    showModal && /* @__PURE__ */ jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm", children: /* @__PURE__ */ jsxs("div", { className: "bg-slate-800 rounded-xl border border-slate-700 w-full max-w-lg max-h-[90vh] overflow-y-auto", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between p-6 border-b border-slate-700", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold", children: editingTier ? "Edit Plan Tier" : "New Plan Tier" }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: () => setShowModal(false),
+            className: "text-slate-400 hover:text-white transition-colors",
+            children: /* @__PURE__ */ jsx(X, { className: "w-5 h-5" })
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs("form", { onSubmit: handleSubmit, className: "p-6 space-y-4", children: [
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Name *" }),
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              type: "text",
+              value: formData.name,
+              onChange: (e) => setFormData((prev) => ({ ...prev, name: e.target.value })),
+              className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+              placeholder: "e.g. Starter, Growth, Pro",
+              required: true,
+              maxLength: 32
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Description" }),
+          /* @__PURE__ */ jsx(
+            "textarea",
+            {
+              value: formData.description,
+              onChange: (e) => setFormData((prev) => ({ ...prev, description: e.target.value })),
+              className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+              placeholder: "Brief description of this tier",
+              rows: 2,
+              maxLength: 500
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Monthly Price ($) *" }),
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              type: "number",
+              step: "0.01",
+              min: "0",
+              value: formData.monthly_price,
+              onChange: (e) => setFormData((prev) => ({ ...prev, monthly_price: e.target.value })),
+              className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+              placeholder: "What the client pays per month",
+              required: true
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Included Allowance ($) *" }),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                type: "number",
+                step: "0.01",
+                min: "0",
+                value: formData.included_allowance,
+                onChange: (e) => setFormData((prev) => ({ ...prev, included_allowance: e.target.value })),
+                className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+                required: true
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Grace Threshold ($) *" }),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                type: "number",
+                step: "0.01",
+                min: "0",
+                value: formData.grace_threshold,
+                onChange: (e) => setFormData((prev) => ({ ...prev, grace_threshold: e.target.value })),
+                className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+                required: true
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Markup % *" }),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                type: "number",
+                step: "0.01",
+                min: "0",
+                max: "100",
+                value: formData.markup_percentage,
+                onChange: (e) => setFormData((prev) => ({ ...prev, markup_percentage: e.target.value })),
+                className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+                required: true
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Overage Mode *" }),
+            /* @__PURE__ */ jsxs(
+              "select",
+              {
+                value: formData.overage_mode,
+                onChange: (e) => setFormData((prev) => ({ ...prev, overage_mode: e.target.value })),
+                className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+                children: [
+                  /* @__PURE__ */ jsx("option", { value: "silent", children: "Silent" }),
+                  /* @__PURE__ */ jsx("option", { value: "proactive", children: "Proactive" })
+                ]
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              type: "checkbox",
+              id: "is_active",
+              checked: formData.is_active,
+              onChange: (e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked })),
+              className: "rounded border-slate-600 bg-slate-700 text-blue-500"
+            }
+          ),
+          /* @__PURE__ */ jsx("label", { htmlFor: "is_active", className: "text-sm text-slate-300", children: "Active" })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-3 pt-4 border-t border-slate-700", children: [
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => setShowModal(false),
+              className: "px-4 py-2 text-sm text-slate-300 hover:text-white transition-colors",
+              children: "Cancel"
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "submit",
+              disabled: saving,
+              className: "flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors",
+              children: [
+                saving && /* @__PURE__ */ jsx(Loader2, { className: "w-4 h-4 animate-spin" }),
+                editingTier ? "Update Tier" : "Create Tier"
+              ]
+            }
+          )
+        ] })
+      ] })
+    ] }) })
+  ] });
+};
+const __vite_glob_0_1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: AnthropicPlanTiers
+}, Symbol.toStringTag, { value: "Module" }));
 const CaseStudyForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -101,7 +497,7 @@ const CaseStudyForm = () => {
       formData.append("order", form.order);
       if (imageFile) {
         formData.append("hero_image", imageFile);
-      } else if (form.hero_image) {
+      } else if (form.hero_image && !form.hero_image.startsWith("/storage/")) {
         formData.append("hero_image_url", form.hero_image);
       }
       if (isEdit) {
@@ -368,7 +764,7 @@ const CaseStudyForm = () => {
     ] })
   ] });
 };
-const __vite_glob_0_6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: CaseStudyForm
 }, Symbol.toStringTag, { value: "Module" }));
@@ -457,7 +853,7 @@ const CaseStudiesList = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_8 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: CaseStudiesList
 }, Symbol.toStringTag, { value: "Module" }));
@@ -686,7 +1082,7 @@ const ChangePassword = () => {
     ] })
   ] }) });
 };
-const __vite_glob_0_8 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_9 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ChangePassword
 }, Symbol.toStringTag, { value: "Module" }));
@@ -805,7 +1201,7 @@ const Dashboard = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_9 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_10 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Dashboard
 }, Symbol.toStringTag, { value: "Module" }));
@@ -911,7 +1307,7 @@ const DiscoveryDashboard = () => {
     ] })
   ] });
 };
-const __vite_glob_0_16 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_17 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: DiscoveryDashboard
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1398,7 +1794,7 @@ function ProjectForm({ project: propProject }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_33 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_34 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectForm
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1580,16 +1976,17 @@ function ProjectsList() {
     ] }) }) })
   ] });
 }
-const __vite_glob_0_34 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_35 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectsList
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  __vite_glob_0_34 as _,
-  __vite_glob_0_33 as a,
-  __vite_glob_0_16 as b,
-  __vite_glob_0_9 as c,
-  __vite_glob_0_8 as d,
-  __vite_glob_0_7 as e,
-  __vite_glob_0_6 as f
+  __vite_glob_0_35 as _,
+  __vite_glob_0_34 as a,
+  __vite_glob_0_17 as b,
+  __vite_glob_0_10 as c,
+  __vite_glob_0_9 as d,
+  __vite_glob_0_8 as e,
+  __vite_glob_0_7 as f,
+  __vite_glob_0_1 as g
 };

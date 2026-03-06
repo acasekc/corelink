@@ -412,6 +412,33 @@ const InvoiceDetail = () => {
                                 )}
                             </dl>
                         </div>
+
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 md:col-span-2">
+                            <h3 className="font-semibold mb-4 text-slate-300">Xero Sync</h3>
+                            <div className="flex flex-wrap items-start justify-between gap-4 text-sm">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-1 rounded text-xs font-medium border ${invoice?.xero?.is_synced ? 'bg-green-500/20 text-green-400 border-green-500' : 'bg-slate-500/20 text-slate-400 border-slate-500'}`}>
+                                            {invoice?.xero?.is_synced ? 'Synced to Xero' : 'Not synced to Xero'}
+                                        </span>
+                                        {invoice?.xero?.invoice_id && (
+                                            <span className="text-xs text-slate-500">ID: {invoice.xero.invoice_id}</span>
+                                        )}
+                                    </div>
+                                    <p className="text-slate-400">
+                                        {invoice?.xero?.synced_at
+                                            ? `Last synced ${new Date(invoice.xero.synced_at).toLocaleString()}`
+                                            : 'This invoice will sync the next time it is sent, re-sent from draft, or updated by the Xero webhook.'}
+                                    </p>
+                                    {invoice?.xero?.last_error && (
+                                        <div className="flex items-start gap-2 text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                                            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                                            <span>{invoice.xero.last_error}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Line Items */}

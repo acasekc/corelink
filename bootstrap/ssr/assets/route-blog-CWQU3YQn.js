@@ -146,7 +146,7 @@ function BlogCategory({ meta, category, articles = { data: [] }, categories = []
     ] }) })
   ] });
 }
-const __vite_glob_0_35 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_36 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: BlogCategory
 }, Symbol.toStringTag, { value: "Module" }));
@@ -308,7 +308,7 @@ function BlogIndex({ meta, articles = { data: [] }, categories = [], featuredArt
     ] }) })
   ] });
 }
-const __vite_glob_0_36 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_37 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: BlogIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -535,13 +535,13 @@ function BlogShow({ meta, article, relatedArticles = [], recentArticles = [], ca
     ] }) })
   ] });
 }
-const __vite_glob_0_37 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_38 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: BlogShow
 }, Symbol.toStringTag, { value: "Module" }));
 export {
   SeoHead as S,
-  __vite_glob_0_37 as _,
-  __vite_glob_0_36 as a,
-  __vite_glob_0_35 as b
+  __vite_glob_0_38 as _,
+  __vite_glob_0_37 as a,
+  __vite_glob_0_36 as b
 };

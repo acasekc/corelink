@@ -60,6 +60,13 @@ return [
         ],
     ],
 
+    'xero' => [
+        'client_id' => env('XERO_CLIENT_ID'),
+        'client_secret' => env('XERO_CLIENT_SECRET'),
+        'redirect_uri' => env('XERO_REDIRECT_URI'),
+        'webhook_key' => env('XERO_WEBHOOK_KEY'),
+    ],
+
     'helpdesk' => [
         'api_key' => env('HELPDESK_API_KEY'),
         'base_url' => env('HELPDESK_BASE_URL', 'https://corelink.dev/api/helpdesk/v1'),

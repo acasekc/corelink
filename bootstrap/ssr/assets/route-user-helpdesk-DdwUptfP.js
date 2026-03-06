@@ -1,8 +1,8 @@
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useParams, useSearchParams } from "react-router-dom";
-import { Loader2, Key, AlertTriangle, CheckCircle, Lock, EyeOff, Eye, AlertCircle, ChevronLeft, Plus, LogOut, Paperclip, Image, FileText, X, Ticket, User, Clock, CheckCircle2, FolderOpen, LogIn, ArrowLeft, Mail, Save, ChevronRight, Edit2, Download, MessageSquare, Trash2, Send, Timer, Filter, Search } from "lucide-react";
-import { u as useFileUpload, L as LexicalMarkdownEditor, F as FileUploadProgress, v as validateFiles, M as Markdown } from "./route-admin-helpdesk-UCXZSv33.js";
+import { Loader2, Key, AlertTriangle, CheckCircle, Lock, EyeOff, Eye, AlertCircle, ChevronLeft, Plus, LogOut, Paperclip, Image, FileText, X, Ticket, User, Clock, CheckCircle2, FolderOpen, Mail, ArrowLeft, LogIn, Save, ChevronRight, Edit2, FolderArchive, Download, MessageSquare, Trash2, Send, Timer, Filter, Search } from "lucide-react";
+import { u as useFileUpload, L as LexicalMarkdownEditor, F as FileUploadProgress, v as validateFiles, M as Markdown } from "./route-admin-helpdesk-BFCZsZn6.js";
 const ChangePassword = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -228,7 +228,7 @@ const ChangePassword = () => {
     ] })
   ] }) });
 };
-const __vite_glob_0_44 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_45 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ChangePassword
 }, Symbol.toStringTag, { value: "Module" }));
@@ -584,7 +584,7 @@ function HelpdeskUserCreateTicket() {
     ] }) }) })
   ] });
 }
-const __vite_glob_0_45 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_46 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskUserCreateTicket
 }, Symbol.toStringTag, { value: "Module" }));
@@ -872,9 +872,119 @@ function HelpdeskUserDashboard() {
     ] }) })
   ] });
 }
-const __vite_glob_0_46 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_47 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskUserDashboard
+}, Symbol.toStringTag, { value: "Module" }));
+const ForgotPassword = () => {
+  const [email, setEmail] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setProcessing(true);
+    setError("");
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || document.cookie.split("; ").find((row) => row.startsWith("XSRF-TOKEN="))?.split("=")[1];
+    try {
+      const res = await fetch("/helpdesk/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": decodeURIComponent(csrfToken || ""),
+          "Accept": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.errors?.email || data.message || "Something went wrong.");
+        setProcessing(false);
+      } else {
+        setSent(true);
+        setProcessing(false);
+      }
+    } catch {
+      setError("Network error. Please try again.");
+      setProcessing(false);
+    }
+  };
+  return /* @__PURE__ */ jsx("div", { className: "min-h-screen bg-linear-to-b from-slate-900 to-slate-800 flex items-center justify-center px-4", children: /* @__PURE__ */ jsxs("div", { className: "max-w-md w-full", children: [
+    /* @__PURE__ */ jsxs("div", { className: "text-center mb-8", children: [
+      /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center gap-3 mb-4", children: /* @__PURE__ */ jsx("div", { className: "p-3 bg-purple-500/20 rounded-xl", children: /* @__PURE__ */ jsx(Ticket, { className: "w-8 h-8 text-purple-400" }) }) }),
+      /* @__PURE__ */ jsx("h1", { className: "text-3xl font-bold text-white", children: "Forgot Password" }),
+      /* @__PURE__ */ jsx("p", { className: "text-slate-400 mt-2", children: "Enter your email and we'll send you a reset link" })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl p-8", children: sent ? /* @__PURE__ */ jsxs("div", { className: "text-center", children: [
+      /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center mb-4", children: /* @__PURE__ */ jsx("div", { className: "p-3 bg-green-500/20 rounded-full", children: /* @__PURE__ */ jsx(Mail, { className: "w-8 h-8 text-green-400" }) }) }),
+      /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold text-white mb-2", children: "Check your email" }),
+      /* @__PURE__ */ jsx("p", { className: "text-slate-400 text-sm mb-6", children: "If an account exists with that email, we've sent a password reset link. Please check your inbox and spam folder." }),
+      /* @__PURE__ */ jsxs(
+        "a",
+        {
+          href: "/helpdesk/login",
+          className: "inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition text-sm",
+          children: [
+            /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4" }),
+            "Back to sign in"
+          ]
+        }
+      )
+    ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+      error && /* @__PURE__ */ jsx("div", { className: "mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm", children: error }),
+      /* @__PURE__ */ jsxs("form", { onSubmit: handleSubmit, className: "space-y-6", children: [
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("label", { htmlFor: "email", className: "block text-sm font-medium text-slate-300 mb-2", children: "Email" }),
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              id: "email",
+              name: "email",
+              type: "email",
+              required: true,
+              autoFocus: true,
+              autoComplete: "email",
+              value: email,
+              onChange: (e) => setEmail(e.target.value),
+              className: "w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500",
+              placeholder: "you@example.com"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "submit",
+            disabled: processing,
+            className: "w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 text-white font-medium rounded-lg transition",
+            children: processing ? /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx(Loader2, { className: "w-5 h-5 animate-spin" }),
+              "Sending..."
+            ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx(Mail, { className: "w-5 h-5" }),
+              "Send Reset Link"
+            ] })
+          }
+        )
+      ] })
+    ] }) }),
+    !sent && /* @__PURE__ */ jsx("div", { className: "mt-6 text-center", children: /* @__PURE__ */ jsxs(
+      "a",
+      {
+        href: "/helpdesk/login",
+        className: "inline-flex items-center gap-2 text-slate-500 hover:text-slate-400 transition text-sm",
+        children: [
+          /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4" }),
+          "Back to sign in"
+        ]
+      }
+    ) })
+  ] }) });
+};
+const __vite_glob_0_48 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: ForgotPassword
 }, Symbol.toStringTag, { value: "Module" }));
 const HelpdeskLogin = () => {
   const [form, setForm] = useState({
@@ -974,19 +1084,22 @@ const HelpdeskLogin = () => {
           ),
           form.errors.password && /* @__PURE__ */ jsx("p", { className: "mt-2 text-sm text-red-400", children: form.errors.password })
         ] }),
-        /* @__PURE__ */ jsxs("div", { className: "flex items-center", children: [
-          /* @__PURE__ */ jsx(
-            "input",
-            {
-              id: "remember",
-              name: "remember",
-              type: "checkbox",
-              checked: form.remember,
-              onChange: handleChange,
-              className: "w-4 h-4 bg-slate-900 border-slate-700 rounded text-purple-500 focus:ring-purple-500"
-            }
-          ),
-          /* @__PURE__ */ jsx("label", { htmlFor: "remember", className: "ml-2 text-sm text-slate-400", children: "Remember me" })
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center", children: [
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                id: "remember",
+                name: "remember",
+                type: "checkbox",
+                checked: form.remember,
+                onChange: handleChange,
+                className: "w-4 h-4 bg-slate-900 border-slate-700 rounded text-purple-500 focus:ring-purple-500"
+              }
+            ),
+            /* @__PURE__ */ jsx("label", { htmlFor: "remember", className: "ml-2 text-sm text-slate-400", children: "Remember me" })
+          ] }),
+          /* @__PURE__ */ jsx("a", { href: "/helpdesk/forgot-password", className: "text-sm text-purple-400 hover:text-purple-300 transition", children: "Forgot password?" })
         ] }),
         /* @__PURE__ */ jsx(
           "button",
@@ -1012,7 +1125,7 @@ const HelpdeskLogin = () => {
     ] }) })
   ] }) });
 };
-const __vite_glob_0_47 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_49 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskLogin
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1252,7 +1365,7 @@ const Profile = () => {
     ] })
   ] }) });
 };
-const __vite_glob_0_48 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_50 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Profile
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1563,9 +1676,184 @@ function UserProjectDetail() {
     ] }) })
   ] });
 }
-const __vite_glob_0_49 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_51 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: UserProjectDetail
+}, Symbol.toStringTag, { value: "Module" }));
+const ResetPassword = () => {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token") || "";
+  const email = params.get("email") || "";
+  const [form, setForm] = useState({
+    password: "",
+    password_confirmation: ""
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [errors, setErrors] = useState({});
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: null }));
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setProcessing(true);
+    setErrors({});
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || document.cookie.split("; ").find((row) => row.startsWith("XSRF-TOKEN="))?.split("=")[1];
+    try {
+      const res = await fetch("/helpdesk/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": decodeURIComponent(csrfToken || ""),
+          "Accept": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          token,
+          email,
+          password: form.password,
+          password_confirmation: form.password_confirmation
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrors(data.errors || { email: data.message || "Something went wrong." });
+        setProcessing(false);
+      } else {
+        setSuccess(true);
+        setProcessing(false);
+      }
+    } catch {
+      setErrors({ email: "Network error. Please try again." });
+      setProcessing(false);
+    }
+  };
+  return /* @__PURE__ */ jsx("div", { className: "min-h-screen bg-linear-to-b from-slate-900 to-slate-800 flex items-center justify-center px-4", children: /* @__PURE__ */ jsxs("div", { className: "max-w-md w-full", children: [
+    /* @__PURE__ */ jsxs("div", { className: "text-center mb-8", children: [
+      /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center gap-3 mb-4", children: /* @__PURE__ */ jsx("div", { className: "p-3 bg-purple-500/20 rounded-xl", children: /* @__PURE__ */ jsx(Ticket, { className: "w-8 h-8 text-purple-400" }) }) }),
+      /* @__PURE__ */ jsx("h1", { className: "text-3xl font-bold text-white", children: "Reset Password" }),
+      /* @__PURE__ */ jsx("p", { className: "text-slate-400 mt-2", children: "Choose a new password for your account" })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl p-8", children: success ? /* @__PURE__ */ jsxs("div", { className: "text-center", children: [
+      /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center mb-4", children: /* @__PURE__ */ jsx("div", { className: "p-3 bg-green-500/20 rounded-full", children: /* @__PURE__ */ jsx(CheckCircle, { className: "w-8 h-8 text-green-400" }) }) }),
+      /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold text-white mb-2", children: "Password reset!" }),
+      /* @__PURE__ */ jsx("p", { className: "text-slate-400 text-sm mb-6", children: "Your password has been reset successfully. You can now sign in with your new password." }),
+      /* @__PURE__ */ jsx(
+        "a",
+        {
+          href: "/helpdesk/login",
+          className: "inline-flex items-center justify-center gap-2 w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition",
+          children: "Sign In"
+        }
+      )
+    ] }) : /* @__PURE__ */ jsx(Fragment, { children: !token || !email ? /* @__PURE__ */ jsxs("div", { className: "text-center", children: [
+      /* @__PURE__ */ jsx("p", { className: "text-red-300 mb-4", children: "Invalid password reset link." }),
+      /* @__PURE__ */ jsx(
+        "a",
+        {
+          href: "/helpdesk/forgot-password",
+          className: "text-purple-400 hover:text-purple-300 transition text-sm",
+          children: "Request a new reset link"
+        }
+      )
+    ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+      errors.email && /* @__PURE__ */ jsx("div", { className: "mb-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm", children: errors.email }),
+      /* @__PURE__ */ jsxs("form", { onSubmit: handleSubmit, className: "space-y-6", children: [
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("label", { htmlFor: "password", className: "block text-sm font-medium text-slate-300 mb-2", children: "New Password" }),
+          /* @__PURE__ */ jsxs("div", { className: "relative", children: [
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                id: "password",
+                name: "password",
+                type: showPassword ? "text" : "password",
+                required: true,
+                autoFocus: true,
+                autoComplete: "new-password",
+                value: form.password,
+                onChange: handleChange,
+                className: `w-full px-4 py-3 pr-12 bg-slate-900 border rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 ${errors.password ? "border-red-500" : "border-slate-700"}`,
+                placeholder: "••••••••"
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => setShowPassword(!showPassword),
+                className: "absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300",
+                children: showPassword ? /* @__PURE__ */ jsx(EyeOff, { className: "w-5 h-5" }) : /* @__PURE__ */ jsx(Eye, { className: "w-5 h-5" })
+              }
+            )
+          ] }),
+          errors.password && /* @__PURE__ */ jsx("p", { className: "mt-2 text-sm text-red-400", children: errors.password })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("label", { htmlFor: "password_confirmation", className: "block text-sm font-medium text-slate-300 mb-2", children: "Confirm Password" }),
+          /* @__PURE__ */ jsxs("div", { className: "relative", children: [
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                id: "password_confirmation",
+                name: "password_confirmation",
+                type: showConfirm ? "text" : "password",
+                required: true,
+                autoComplete: "new-password",
+                value: form.password_confirmation,
+                onChange: handleChange,
+                className: "w-full px-4 py-3 pr-12 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500",
+                placeholder: "••••••••"
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => setShowConfirm(!showConfirm),
+                className: "absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300",
+                children: showConfirm ? /* @__PURE__ */ jsx(EyeOff, { className: "w-5 h-5" }) : /* @__PURE__ */ jsx(Eye, { className: "w-5 h-5" })
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "submit",
+            disabled: processing,
+            className: "w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 text-white font-medium rounded-lg transition",
+            children: processing ? /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx(Loader2, { className: "w-5 h-5 animate-spin" }),
+              "Resetting..."
+            ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx(Lock, { className: "w-5 h-5" }),
+              "Reset Password"
+            ] })
+          }
+        )
+      ] })
+    ] }) }) }),
+    !success && /* @__PURE__ */ jsx("div", { className: "mt-6 text-center", children: /* @__PURE__ */ jsxs(
+      "a",
+      {
+        href: "/helpdesk/login",
+        className: "inline-flex items-center gap-2 text-slate-500 hover:text-slate-400 transition text-sm",
+        children: [
+          /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4" }),
+          "Back to sign in"
+        ]
+      }
+    ) })
+  ] }) });
+};
+const __vite_glob_0_52 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: ResetPassword
 }, Symbol.toStringTag, { value: "Module" }));
 function HelpdeskUserTicketDetail() {
   const { ticketId } = useParams();
@@ -1593,6 +1881,8 @@ function HelpdeskUserTicketDetail() {
   const [editingTicketTitle, setEditingTicketTitle] = useState("");
   const [editingTicketContent, setEditingTicketContent] = useState("");
   const [editingTicketSubmitting, setEditingTicketSubmitting] = useState(false);
+  const [isWatching, setIsWatching] = useState(false);
+  const [watcherCount, setWatcherCount] = useState(0);
   useEffect(() => {
     const fetchTicket = async () => {
       try {
@@ -1613,6 +1903,8 @@ function HelpdeskUserTicketDetail() {
         }
         const result = await response.json();
         setTicket(result.data);
+        setIsWatching(result.data.is_watching || false);
+        setWatcherCount((result.data.watchers || []).length);
         if (result.data.project?.id) {
           const refRes = await fetch(`/api/helpdesk/user/projects/${result.data.project.id}/reference-data`, {
             credentials: "include"
@@ -1649,6 +1941,25 @@ function HelpdeskUserTicketDetail() {
       window.location.href = "/helpdesk/login";
     } catch (err) {
       console.error("Logout failed:", err);
+    }
+  };
+  const handleToggleWatch = async () => {
+    try {
+      const response = await fetch(`/api/helpdesk/user/tickets/${ticketId}/watchers/toggle`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || ""
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        setIsWatching(result.watching);
+        setWatcherCount((prev) => result.watching ? prev + 1 : Math.max(0, prev - 1));
+      }
+    } catch (err) {
+      console.error("Failed to toggle watch:", err);
     }
   };
   const [uploadingTicketFiles, setUploadingTicketFiles] = useState([]);
@@ -2007,7 +2318,19 @@ function HelpdeskUserTicketDetail() {
               attachments.length,
               ")"
             ] }),
-            /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+              attachments.length > 1 && /* @__PURE__ */ jsxs(
+                "a",
+                {
+                  href: `/api/helpdesk/user/tickets/${ticketId}/attachments/download-all`,
+                  className: "flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition",
+                  title: "Download all attachments as zip",
+                  children: [
+                    /* @__PURE__ */ jsx(FolderArchive, { className: "w-4 h-4" }),
+                    "Download All"
+                  ]
+                }
+              ),
               /* @__PURE__ */ jsx(
                 "input",
                 {
@@ -2341,7 +2664,19 @@ function HelpdeskUserTicketDetail() {
               /* @__PURE__ */ jsx("label", { className: "block text-sm text-slate-400 mb-1", children: "Submitted By" }),
               /* @__PURE__ */ jsx("p", { className: "text-slate-300", children: ticket.submitter?.name }),
               /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-500", children: ticket.submitter?.email })
-            ] })
+            ] }),
+            /* @__PURE__ */ jsx("div", { children: /* @__PURE__ */ jsxs(
+              "button",
+              {
+                onClick: handleToggleWatch,
+                className: `w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition ${isWatching ? "bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 border border-purple-500/30" : "bg-slate-700 text-slate-300 hover:bg-slate-600"}`,
+                children: [
+                  isWatching ? /* @__PURE__ */ jsx(EyeOff, { className: "w-4 h-4" }) : /* @__PURE__ */ jsx(Eye, { className: "w-4 h-4" }),
+                  isWatching ? "Unwatch" : "Watch",
+                  watcherCount > 0 && /* @__PURE__ */ jsx("span", { className: "text-xs bg-slate-700/50 px-1.5 py-0.5 rounded-full", children: watcherCount })
+                ]
+              }
+            ) })
           ] })
         ] }),
         ticket.labels?.length > 0 && /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl p-6", children: [
@@ -2363,7 +2698,7 @@ function HelpdeskUserTicketDetail() {
     ] }) }) })
   ] });
 }
-const __vite_glob_0_50 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_53 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskUserTicketDetail
 }, Symbol.toStringTag, { value: "Module" }));
@@ -2669,17 +3004,19 @@ function HelpdeskUserTicketsList() {
     ] }) })
   ] });
 }
-const __vite_glob_0_51 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_54 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskUserTicketsList
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  __vite_glob_0_51 as _,
-  __vite_glob_0_50 as a,
-  __vite_glob_0_49 as b,
-  __vite_glob_0_48 as c,
-  __vite_glob_0_47 as d,
-  __vite_glob_0_46 as e,
-  __vite_glob_0_45 as f,
-  __vite_glob_0_44 as g
+  __vite_glob_0_54 as _,
+  __vite_glob_0_53 as a,
+  __vite_glob_0_52 as b,
+  __vite_glob_0_51 as c,
+  __vite_glob_0_50 as d,
+  __vite_glob_0_49 as e,
+  __vite_glob_0_48 as f,
+  __vite_glob_0_47 as g,
+  __vite_glob_0_46 as h,
+  __vite_glob_0_45 as i
 };

@@ -1,7 +1,7 @@
 import { jsxs, jsx } from "react/jsx-runtime";
 import { useState, useRef, useEffect } from "react";
 import { usePage, Link } from "@inertiajs/react";
-import { S as SeoHead } from "./route-blog-jpwBX5H6.js";
+import { S as SeoHead } from "./route-blog-CWQU3YQn.js";
 const Chat = ({ meta }) => {
   const { url } = usePage();
   const urlParams = new URLSearchParams((url || "").split("?")[1] || "");
@@ -451,7 +451,7 @@ const Chat = ({ meta }) => {
     ] }) })
   ] });
 };
-const __vite_glob_0_42 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_43 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Chat
 }, Symbol.toStringTag, { value: "Module" }));
@@ -529,11 +529,11 @@ const Summary = ({ meta, sessionId, summary }) => {
     ] }) })
   ] });
 };
-const __vite_glob_0_43 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_44 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Summary
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  __vite_glob_0_43 as _,
-  __vite_glob_0_42 as a
+  __vite_glob_0_44 as _,
+  __vite_glob_0_43 as a
 };

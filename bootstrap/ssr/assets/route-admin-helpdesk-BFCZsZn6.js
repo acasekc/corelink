@@ -1,9 +1,10 @@
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import React, { forwardRef, useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link, useParams } from "react-router-dom";
-import { Bold, Italic, Strikethrough, List, ListOrdered, CheckCircle, AlertCircle, Loader2, ArrowLeft, Plus, LogOut, Search, X, Paperclip, Image, FileText, Ticket, Clock, FolderOpen, Check, DollarSign, Trash2, Edit2, Send, XCircle, Download, CreditCard, Eye, Save, Filter, ChevronLeft, ChevronRight, User, Mail, MapPin, Key, RefreshCw, Copy, Settings as Settings$1, GripVertical, Pencil, MessageSquare, Lock, Unlock, Tag, Square, Play, Timer, Shield, Users, AlertTriangle, RotateCcw } from "lucide-react";
+import { Bold, Italic, Strikethrough, List, ListOrdered, CheckCircle, AlertCircle, Loader2, ArrowLeft, Plus, LogOut, Search, X, Paperclip, Image, FileText, Ticket, Clock, FolderOpen, Check, DollarSign, Trash2, Edit2, Send, XCircle, Download, AlertTriangle, CreditCard, Eye, Save, Filter, ChevronLeft, ChevronRight, User, Mail, MapPin, Users, Shield, Bell, BellOff, EyeOff, Key, RefreshCw, Copy, Cpu, Settings2, Activity, Settings as Settings$1, GripVertical, Pencil, FolderArchive, MessageSquare, Lock, Unlock, Tag, Square, Play, Timer, RotateCcw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -913,7 +914,7 @@ function AdminCreateTicket() {
     ] }) }) })
   ] });
 }
-const __vite_glob_0_17 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_18 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: AdminCreateTicket
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1172,7 +1173,7 @@ const getPriorityColor$1 = (slug) => {
   };
   return colors[slug] || "bg-slate-500/20 text-slate-400";
 };
-const __vite_glob_0_18 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_19 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskDashboard
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1688,7 +1689,7 @@ const InvoiceCreate = () => {
                     /* @__PURE__ */ jsxs("p", { className: "text-xs text-slate-500 mt-1", children: [
                       entry.user?.name,
                       " • ",
-                      new Date(entry.created_at).toLocaleDateString()
+                      (/* @__PURE__ */ new Date(entry.date_worked + "T00:00:00")).toLocaleDateString()
                     ] })
                   ] }),
                   /* @__PURE__ */ jsxs("div", { className: "text-right", children: [
@@ -1864,7 +1865,7 @@ const InvoiceCreate = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_19 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_20 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: InvoiceCreate
 }, Symbol.toStringTag, { value: "Module" }));
@@ -2163,7 +2164,7 @@ const InvoiceDetail = () => {
         /* @__PURE__ */ jsxs(
           "a",
           {
-            href: `/helpdesk/invoices/${invoice?.uuid}/pdf`,
+            href: `/invoice/${invoice?.uuid}/pdf`,
             target: "_blank",
             rel: "noopener noreferrer",
             className: "flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition text-sm",
@@ -2240,6 +2241,23 @@ const InvoiceDetail = () => {
               /* @__PURE__ */ jsx("dd", { className: "text-green-400", children: new Date(invoice.paid_at).toLocaleString() })
             ] })
           ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl p-6 md:col-span-2", children: [
+          /* @__PURE__ */ jsx("h3", { className: "font-semibold mb-4 text-slate-300", children: "Xero Sync" }),
+          /* @__PURE__ */ jsx("div", { className: "flex flex-wrap items-start justify-between gap-4 text-sm", children: /* @__PURE__ */ jsxs("div", { className: "space-y-2", children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsx("span", { className: `px-2 py-1 rounded text-xs font-medium border ${invoice?.xero?.is_synced ? "bg-green-500/20 text-green-400 border-green-500" : "bg-slate-500/20 text-slate-400 border-slate-500"}`, children: invoice?.xero?.is_synced ? "Synced to Xero" : "Not synced to Xero" }),
+              invoice?.xero?.invoice_id && /* @__PURE__ */ jsxs("span", { className: "text-xs text-slate-500", children: [
+                "ID: ",
+                invoice.xero.invoice_id
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx("p", { className: "text-slate-400", children: invoice?.xero?.synced_at ? `Last synced ${new Date(invoice.xero.synced_at).toLocaleString()}` : "This invoice will sync the next time it is sent, re-sent from draft, or updated by the Xero webhook." }),
+            invoice?.xero?.last_error && /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-2 text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2", children: [
+              /* @__PURE__ */ jsx(AlertTriangle, { className: "w-4 h-4 shrink-0 mt-0.5" }),
+              /* @__PURE__ */ jsx("span", { children: invoice.xero.last_error })
+            ] })
+          ] }) })
         ] })
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden", children: [
@@ -2465,7 +2483,7 @@ const InvoiceDetail = () => {
             {
               type: "text",
               readOnly: true,
-              value: `${window.location.origin}/helpdesk/invoices/${invoice.uuid}`,
+              value: `${window.location.origin}/invoice/${invoice.uuid}`,
               className: "flex-1 bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm text-slate-300"
             }
           ),
@@ -2473,7 +2491,7 @@ const InvoiceDetail = () => {
             "button",
             {
               onClick: () => {
-                navigator.clipboard.writeText(`${window.location.origin}/helpdesk/invoices/${invoice.uuid}`);
+                navigator.clipboard.writeText(`${window.location.origin}/invoice/${invoice.uuid}`);
                 alert("Link copied to clipboard!");
               },
               className: "px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm",
@@ -2483,7 +2501,7 @@ const InvoiceDetail = () => {
           /* @__PURE__ */ jsxs(
             "a",
             {
-              href: `/helpdesk/invoices/${invoice.uuid}`,
+              href: `/invoice/${invoice.uuid}`,
               target: "_blank",
               rel: "noopener noreferrer",
               className: "px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm flex items-center gap-2",
@@ -2549,7 +2567,7 @@ const InvoiceDetail = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_20 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_21 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: InvoiceDetail
 }, Symbol.toStringTag, { value: "Module" }));
@@ -3048,7 +3066,7 @@ const InvoiceEdit = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_21 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_22 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: InvoiceEdit
 }, Symbol.toStringTag, { value: "Module" }));
@@ -3304,7 +3322,7 @@ const InvoicesList = () => {
                 children: invoice.invoice_number
               }
             ),
-            /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-500 mt-0.5", children: new Date(invoice.created_at).toLocaleDateString() })
+            /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-500 mt-0.5", children: invoice.issue_date ? (/* @__PURE__ */ new Date(invoice.issue_date + "T00:00:00")).toLocaleDateString() : new Date(invoice.created_at).toLocaleDateString() })
           ] }),
           /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-slate-300", children: invoice.project?.name || "-" }),
           /* @__PURE__ */ jsxs("td", { className: "px-4 py-3", children: [
@@ -3405,7 +3423,7 @@ const InvoicesList = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_22 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_23 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: InvoicesList
 }, Symbol.toStringTag, { value: "Module" }));
@@ -3430,6 +3448,9 @@ const ProjectDetail = () => {
   const [categories, setCategories] = useState([]);
   const [hourlyRates, setHourlyRates] = useState([]);
   const [invoiceSettings, setInvoiceSettings] = useState(null);
+  const [xeroStatus, setXeroStatus] = useState(null);
+  const [xeroLoading, setXeroLoading] = useState(false);
+  const [xeroSaving, setXeroSaving] = useState(false);
   const [showRateForm, setShowRateForm] = useState(false);
   const [editingRate, setEditingRate] = useState(null);
   const [rateFormData, setRateFormData] = useState({ category_id: "", hourly_rate: "" });
@@ -3437,11 +3458,43 @@ const ProjectDetail = () => {
   const [settingsFormData, setSettingsFormData] = useState({
     default_hourly_rate: "",
     billing_increment_minutes: "15",
-    minimum_billing_minutes: "60",
+    minimum_billing_minutes: "0",
     invoice_prefix: "",
-    invoice_notes: "",
-    payment_terms_days: "30"
+    invoice_footer: "",
+    default_payment_terms: "30"
   });
+  const [xeroFormData, setXeroFormData] = useState({
+    sales_account_code: "",
+    payment_account_code: ""
+  });
+  const [members, setMembers] = useState([]);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [memberSearch, setMemberSearch] = useState("");
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [addMemberRole, setAddMemberRole] = useState("user");
+  const [addMemberNotify, setAddMemberNotify] = useState(true);
+  const [addMemberAutoWatch, setAddMemberAutoWatch] = useState(false);
+  const [anthropicConfig, setAnthropicConfig] = useState(null);
+  const [anthropicLoading, setAnthropicLoading] = useState(false);
+  const [editingAnthropic, setEditingAnthropic] = useState(false);
+  const [anthropicUsageLogs, setAnthropicUsageLogs] = useState([]);
+  const [showUsageLogs, setShowUsageLogs] = useState(false);
+  const [anthropicSyncing, setAnthropicSyncing] = useState(false);
+  const [planTiers, setPlanTiers] = useState([]);
+  const [anthropicForm, setAnthropicForm] = useState({
+    api_key_name: "",
+    api_key: "",
+    plan_tier: "starter",
+    plan_tier_id: "",
+    included_allowance: "0",
+    grace_threshold: "0",
+    markup_percentage: "0",
+    overage_mode: "silent",
+    notification_emails: [],
+    cycle_start_day: "1"
+  });
+  const [newNotificationEmail, setNewNotificationEmail] = useState("");
   useEffect(() => {
     fetchProject();
     fetchApiKeys();
@@ -3449,6 +3502,10 @@ const ProjectDetail = () => {
     fetchCategories();
     fetchHourlyRates();
     fetchInvoiceSettings();
+    fetchXeroStatus();
+    fetchMembers();
+    fetchAnthropicConfig();
+    fetchPlanTiers();
   }, [projectId]);
   const fetchProject = async () => {
     try {
@@ -3524,14 +3581,33 @@ const ProjectDetail = () => {
         setSettingsFormData({
           default_hourly_rate: json.data.default_hourly_rate || "",
           billing_increment_minutes: json.data.billing_increment_minutes || "15",
-          minimum_billing_minutes: json.data.minimum_billing_minutes || "60",
+          minimum_billing_minutes: json.data.minimum_billing_minutes || "0",
           invoice_prefix: json.data.invoice_prefix || "",
-          invoice_notes: json.data.invoice_notes || "",
-          payment_terms_days: json.data.payment_terms_days || "30"
+          invoice_footer: json.data.invoice_footer || "",
+          default_payment_terms: json.data.default_payment_terms || "30"
         });
       }
     } catch (err) {
       console.error("Failed to fetch invoice settings:", err);
+    }
+  };
+  const fetchXeroStatus = async () => {
+    setXeroLoading(true);
+    try {
+      const response = await fetch("/api/helpdesk/admin/xero/status", {
+        credentials: "same-origin"
+      });
+      if (!response.ok) throw new Error("Failed to fetch Xero status");
+      const json = await response.json();
+      setXeroStatus(json.data || null);
+      setXeroFormData({
+        sales_account_code: json.data?.sales_account_code || "",
+        payment_account_code: json.data?.payment_account_code || ""
+      });
+    } catch (err) {
+      console.error("Failed to fetch Xero status:", err);
+    } finally {
+      setXeroLoading(false);
     }
   };
   const getCsrfToken = () => {
@@ -3629,6 +3705,169 @@ const ProjectDetail = () => {
       console.error("Logout failed:", error2);
     }
   };
+  const fetchAnthropicConfig = async () => {
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/anthropic-config`, {
+        credentials: "same-origin"
+      });
+      if (!response.ok) return;
+      const json = await response.json();
+      setAnthropicConfig(json.data);
+      if (json.data) {
+        setAnthropicForm({
+          api_key_name: json.data.api_key_name || "",
+          api_key: "",
+          plan_tier: json.data.plan_tier || "starter",
+          plan_tier_id: json.data.plan_tier_id || "",
+          included_allowance: json.data.included_allowance || "0",
+          grace_threshold: json.data.grace_threshold || "0",
+          markup_percentage: json.data.markup_percentage || "0",
+          overage_mode: json.data.overage_mode || "silent",
+          notification_emails: json.data.notification_emails || [],
+          cycle_start_day: String(json.data.cycle_start_day || "1")
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch Anthropic config:", err);
+    }
+  };
+  const fetchPlanTiers = async () => {
+    try {
+      const response = await fetch("/api/admin/anthropic-plan-tiers", {
+        credentials: "same-origin"
+      });
+      if (!response.ok) return;
+      const json = await response.json();
+      setPlanTiers(json.data || []);
+    } catch (err) {
+      console.error("Failed to fetch plan tiers:", err);
+    }
+  };
+  const handleTierChange = (tierId) => {
+    const tier = planTiers.find((t) => t.id === parseInt(tierId));
+    if (tier) {
+      setAnthropicForm((prev) => ({
+        ...prev,
+        plan_tier: tier.slug,
+        plan_tier_id: tier.id,
+        included_allowance: tier.included_allowance,
+        grace_threshold: tier.grace_threshold,
+        markup_percentage: tier.markup_percentage,
+        overage_mode: tier.overage_mode
+      }));
+    } else {
+      setAnthropicForm((prev) => ({
+        ...prev,
+        plan_tier_id: ""
+      }));
+    }
+  };
+  const handleSaveAnthropicConfig = async (e) => {
+    e.preventDefault();
+    setAnthropicLoading(true);
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/anthropic-config`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCsrfToken(),
+          "Accept": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          ...anthropicForm,
+          plan_tier_id: anthropicForm.plan_tier_id || null,
+          included_allowance: parseFloat(anthropicForm.included_allowance),
+          grace_threshold: parseFloat(anthropicForm.grace_threshold),
+          markup_percentage: parseFloat(anthropicForm.markup_percentage),
+          cycle_start_day: parseInt(anthropicForm.cycle_start_day)
+        })
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Failed to save config");
+      }
+      const json = await response.json();
+      setAnthropicConfig(json.data);
+      setEditingAnthropic(false);
+      setAnthropicForm((prev) => ({ ...prev, api_key: "" }));
+    } catch (err) {
+      alert("Failed to save Anthropic config: " + err.message);
+    } finally {
+      setAnthropicLoading(false);
+    }
+  };
+  const handleToggleAnthropicKey = async (status, reason = null) => {
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/anthropic-config/toggle-key`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCsrfToken(),
+          "Accept": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ status, reason })
+      });
+      if (!response.ok) throw new Error("Failed to toggle key");
+      const json = await response.json();
+      setAnthropicConfig(json.data);
+    } catch (err) {
+      alert("Failed to toggle key: " + err.message);
+    }
+  };
+  const fetchAnthropicUsageLogs = async () => {
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/anthropic-usage-logs`, {
+        credentials: "same-origin"
+      });
+      if (!response.ok) return;
+      const json = await response.json();
+      setAnthropicUsageLogs(json.data || []);
+    } catch (err) {
+      console.error("Failed to fetch usage logs:", err);
+    }
+  };
+  const handleAddNotificationEmail = () => {
+    if (newNotificationEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newNotificationEmail)) {
+      setAnthropicForm((prev) => ({
+        ...prev,
+        notification_emails: [...prev.notification_emails || [], newNotificationEmail]
+      }));
+      setNewNotificationEmail("");
+    }
+  };
+  const handleRemoveNotificationEmail = (email) => {
+    setAnthropicForm((prev) => ({
+      ...prev,
+      notification_emails: (prev.notification_emails || []).filter((e) => e !== email)
+    }));
+  };
+  const handleSyncAnthropicUsage = async () => {
+    setAnthropicSyncing(true);
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/anthropic-config/sync`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCsrfToken(),
+          "Accept": "application/json"
+        },
+        credentials: "same-origin"
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Sync failed");
+      }
+      const json = await response.json();
+      setAnthropicConfig(json.data);
+      if (showUsageLogs) fetchAnthropicUsageLogs();
+    } catch (err) {
+      alert("Sync failed: " + err.message);
+    } finally {
+      setAnthropicSyncing(false);
+    }
+  };
   const handleAddRate = async (e) => {
     e.preventDefault();
     try {
@@ -3722,8 +3961,8 @@ const ProjectDetail = () => {
           billing_increment_minutes: parseInt(settingsFormData.billing_increment_minutes),
           minimum_billing_minutes: parseInt(settingsFormData.minimum_billing_minutes),
           invoice_prefix: settingsFormData.invoice_prefix || null,
-          invoice_notes: settingsFormData.invoice_notes || null,
-          payment_terms_days: parseInt(settingsFormData.payment_terms_days)
+          invoice_footer: settingsFormData.invoice_footer || null,
+          default_payment_terms: parseInt(settingsFormData.default_payment_terms)
         })
       });
       if (!response.ok) throw new Error("Failed to save settings");
@@ -3731,6 +3970,51 @@ const ProjectDetail = () => {
       setEditingSettings(false);
     } catch (err) {
       alert("Failed to save settings: " + err.message);
+    }
+  };
+  const handleConnectXero = () => {
+    const returnUrl = `${window.location.pathname}${window.location.search}`;
+    window.location.href = `/api/helpdesk/admin/xero/connect?return_url=${encodeURIComponent(returnUrl)}`;
+  };
+  const handleSaveXeroSettings = async () => {
+    setXeroSaving(true);
+    try {
+      const response = await fetch("/api/helpdesk/admin/xero/settings", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCsrfToken(),
+          "Accept": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          sales_account_code: xeroFormData.sales_account_code || null,
+          payment_account_code: xeroFormData.payment_account_code || null
+        })
+      });
+      if (!response.ok) throw new Error("Failed to save Xero settings");
+      await fetchXeroStatus();
+    } catch (err) {
+      alert("Failed to save Xero settings: " + err.message);
+    } finally {
+      setXeroSaving(false);
+    }
+  };
+  const handleDisconnectXero = async () => {
+    if (!confirm("Disconnect Xero? Future invoices and payments will stop syncing until you reconnect.")) return;
+    try {
+      const response = await fetch("/api/helpdesk/admin/xero/disconnect", {
+        method: "POST",
+        headers: {
+          "X-CSRF-TOKEN": getCsrfToken(),
+          "Accept": "application/json"
+        },
+        credentials: "same-origin"
+      });
+      if (!response.ok) throw new Error("Failed to disconnect Xero");
+      await fetchXeroStatus();
+    } catch (err) {
+      alert("Failed to disconnect Xero: " + err.message);
     }
   };
   const startEditingClientInfo = () => {
@@ -3767,6 +4051,101 @@ const ProjectDetail = () => {
   const getAvailableCategories = () => {
     const usedCategoryIds = hourlyRates.filter((r) => r.category_id).map((r) => r.category_id);
     return categories.filter((c) => !usedCategoryIds.includes(c.id));
+  };
+  const fetchMembers = async () => {
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/users`, {
+        credentials: "same-origin"
+      });
+      if (!response.ok) throw new Error("Failed to fetch members");
+      const json = await response.json();
+      setMembers(json.data);
+    } catch (err) {
+      console.error("Failed to fetch members:", err);
+    }
+  };
+  const searchAvailableUsers = async (query) => {
+    setMemberSearch(query);
+    if (query.length < 2) {
+      setAvailableUsers([]);
+      return;
+    }
+    setSearchingUsers(true);
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/users/available?q=${encodeURIComponent(query)}`, {
+        credentials: "same-origin"
+      });
+      if (!response.ok) throw new Error("Search failed");
+      const json = await response.json();
+      setAvailableUsers(json.data);
+    } catch (err) {
+      console.error("Failed to search users:", err);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+  const handleAddMember = async (userId) => {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken, "Accept": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ user_id: userId, role: addMemberRole, receive_notifications: addMemberNotify, auto_watch_all_tickets: addMemberAutoWatch })
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Failed to add member");
+      }
+      await fetchMembers();
+      setShowAddMember(false);
+      setMemberSearch("");
+      setAvailableUsers([]);
+      setAddMemberRole("user");
+      setAddMemberNotify(true);
+      setAddMemberAutoWatch(false);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+  const handleUpdateMember = async (userId, data) => {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken, "Accept": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error("Failed to update member");
+      await fetchMembers();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+  const handleRemoveMember = async (userId, name) => {
+    if (!confirm(`Remove ${name} from this project?`)) return;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/users/${userId}`, {
+        method: "DELETE",
+        headers: { "X-CSRF-TOKEN": csrfToken, "Accept": "application/json" },
+        credentials: "same-origin"
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Failed to remove member");
+      }
+      await fetchMembers();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+  const roleColors = {
+    owner: "bg-amber-500/20 text-amber-400",
+    manager: "bg-blue-500/20 text-blue-400",
+    agent: "bg-green-500/20 text-green-400",
+    user: "bg-slate-500/20 text-slate-400"
   };
   if (loading) {
     return /* @__PURE__ */ jsx("div", { className: "min-h-screen bg-linear-to-b from-slate-900 to-slate-800 text-white flex items-center justify-center", children: /* @__PURE__ */ jsx("div", { className: "text-slate-400", children: "Loading project..." }) });
@@ -4031,6 +4410,171 @@ const ProjectDetail = () => {
       /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl", children: [
         /* @__PURE__ */ jsxs("div", { className: "p-4 border-b border-slate-700 flex items-center justify-between", children: [
           /* @__PURE__ */ jsxs("h3", { className: "font-semibold flex items-center gap-2", children: [
+            /* @__PURE__ */ jsx(Users, { className: "w-5 h-5 text-purple-400" }),
+            "Members (",
+            members.length,
+            ")"
+          ] }),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: () => setShowAddMember(true),
+              className: "flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded-lg transition text-sm",
+              children: [
+                /* @__PURE__ */ jsx(Plus, { className: "w-4 h-4" }),
+                "Add Member"
+              ]
+            }
+          )
+        ] }),
+        showAddMember && /* @__PURE__ */ jsxs("div", { className: "p-4 border-b border-slate-700 bg-slate-900/50", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3 mb-3", children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex-1 relative", children: [
+              /* @__PURE__ */ jsx(Search, { className: "w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "text",
+                  value: memberSearch,
+                  onChange: (e) => searchAvailableUsers(e.target.value),
+                  placeholder: "Search by name or email...",
+                  className: "w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500",
+                  autoFocus: true
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs(
+              "select",
+              {
+                value: addMemberRole,
+                onChange: (e) => setAddMemberRole(e.target.value),
+                className: "px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm",
+                children: [
+                  /* @__PURE__ */ jsx("option", { value: "user", children: "User" }),
+                  /* @__PURE__ */ jsx("option", { value: "agent", children: "Agent" }),
+                  /* @__PURE__ */ jsx("option", { value: "manager", children: "Manager" }),
+                  /* @__PURE__ */ jsx("option", { value: "owner", children: "Owner" })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxs("label", { className: "flex items-center gap-2 text-sm text-slate-300 cursor-pointer", children: [
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "checkbox",
+                  checked: addMemberNotify,
+                  onChange: (e) => setAddMemberNotify(e.target.checked),
+                  className: "w-4 h-4 bg-slate-800 border-slate-600 rounded text-purple-500 focus:ring-purple-500"
+                }
+              ),
+              "Notify"
+            ] }),
+            /* @__PURE__ */ jsxs("label", { className: "flex items-center gap-2 text-sm text-slate-300 cursor-pointer", children: [
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "checkbox",
+                  checked: addMemberAutoWatch,
+                  onChange: (e) => setAddMemberAutoWatch(e.target.checked),
+                  className: "w-4 h-4 bg-slate-800 border-slate-600 rounded text-purple-500 focus:ring-purple-500"
+                }
+              ),
+              "Auto-watch"
+            ] }),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: () => {
+                  setShowAddMember(false);
+                  setMemberSearch("");
+                  setAvailableUsers([]);
+                },
+                className: "p-2 text-slate-400 hover:text-white",
+                children: /* @__PURE__ */ jsx(X, { className: "w-4 h-4" })
+              }
+            )
+          ] }),
+          searchingUsers && /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400", children: "Searching..." }),
+          availableUsers.length > 0 && /* @__PURE__ */ jsx("div", { className: "space-y-1 max-h-48 overflow-y-auto", children: availableUsers.map((u) => /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: () => handleAddMember(u.id),
+              className: "w-full flex items-center gap-3 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition text-left",
+              children: [
+                /* @__PURE__ */ jsx(User, { className: "w-4 h-4 text-slate-400" }),
+                /* @__PURE__ */ jsx("span", { className: "text-sm text-white", children: u.name }),
+                /* @__PURE__ */ jsx("span", { className: "text-sm text-slate-400", children: u.email }),
+                u.is_admin && /* @__PURE__ */ jsx("span", { className: "px-1.5 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded", children: "Admin" })
+              ]
+            },
+            u.id
+          )) }),
+          memberSearch.length >= 2 && !searchingUsers && availableUsers.length === 0 && /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-500", children: "No users found" })
+        ] }),
+        /* @__PURE__ */ jsx("div", { className: "divide-y divide-slate-700", children: members.length === 0 ? /* @__PURE__ */ jsx("div", { className: "p-6 text-center text-slate-500 text-sm", children: "No members yet" }) : members.map((member) => /* @__PURE__ */ jsxs("div", { className: "p-4 flex items-center gap-4", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsx("span", { className: "font-medium text-white truncate", children: member.name }),
+              /* @__PURE__ */ jsx("span", { className: `px-2 py-0.5 rounded text-xs font-medium ${roleColors[member.role] || roleColors.user}`, children: member.role_label || member.role }),
+              member.is_admin && /* @__PURE__ */ jsxs("span", { className: "px-1.5 py-0.5 bg-amber-500/20 text-amber-400 text-xs rounded flex items-center gap-1", children: [
+                /* @__PURE__ */ jsx(Shield, { className: "w-3 h-3" }),
+                "Admin"
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400 truncate", children: member.email })
+          ] }),
+          /* @__PURE__ */ jsxs(
+            "select",
+            {
+              value: member.role,
+              onChange: (e) => handleUpdateMember(member.id, { role: e.target.value }),
+              className: "px-2 py-1 bg-slate-900 border border-slate-600 rounded text-sm text-white",
+              children: [
+                /* @__PURE__ */ jsx("option", { value: "user", children: "User" }),
+                /* @__PURE__ */ jsx("option", { value: "agent", children: "Agent" }),
+                /* @__PURE__ */ jsx("option", { value: "manager", children: "Manager" }),
+                /* @__PURE__ */ jsx("option", { value: "owner", children: "Owner" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: () => handleUpdateMember(member.id, { receive_notifications: !member.receive_notifications }),
+              className: `flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${member.receive_notifications ? "bg-green-500/20 text-green-400 hover:bg-green-500/30" : "bg-slate-700 text-slate-400 hover:bg-slate-600"}`,
+              title: member.receive_notifications ? "Receiving notifications" : "Notifications off",
+              children: [
+                member.receive_notifications ? /* @__PURE__ */ jsx(Bell, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ jsx(BellOff, { className: "w-3.5 h-3.5" }),
+                member.receive_notifications ? "On" : "Off"
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: () => handleUpdateMember(member.id, { auto_watch_all_tickets: !member.auto_watch_all_tickets }),
+              className: `flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition ${member.auto_watch_all_tickets ? "bg-purple-500/20 text-purple-400 hover:bg-purple-500/30" : "bg-slate-700 text-slate-400 hover:bg-slate-600"}`,
+              title: member.auto_watch_all_tickets ? "Auto-watching all tickets" : "Auto-watch off",
+              children: [
+                member.auto_watch_all_tickets ? /* @__PURE__ */ jsx(Eye, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ jsx(EyeOff, { className: "w-3.5 h-3.5" }),
+                member.auto_watch_all_tickets ? "Watch" : "Watch"
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: () => handleRemoveMember(member.id, member.name),
+              className: "p-1.5 text-slate-500 hover:text-red-400 transition",
+              title: "Remove from project",
+              children: /* @__PURE__ */ jsx(Trash2, { className: "w-4 h-4" })
+            }
+          )
+        ] }, member.id)) })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl", children: [
+        /* @__PURE__ */ jsxs("div", { className: "p-4 border-b border-slate-700 flex items-center justify-between", children: [
+          /* @__PURE__ */ jsxs("h3", { className: "font-semibold flex items-center gap-2", children: [
             /* @__PURE__ */ jsx(Key, { className: "w-5 h-5 text-purple-400" }),
             "API Keys"
           ] }),
@@ -4132,6 +4676,348 @@ const ProjectDetail = () => {
         ] }, apiKey.id)) })
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl", children: [
+        /* @__PURE__ */ jsx("div", { className: "p-4 border-b border-slate-700", children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ jsxs("h3", { className: "font-semibold flex items-center gap-2", children: [
+            /* @__PURE__ */ jsx(Cpu, { className: "w-5 h-5 text-cyan-400" }),
+            "Anthropic API Billing"
+          ] }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: () => setEditingAnthropic(!editingAnthropic),
+              className: "px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded",
+              children: editingAnthropic ? "Cancel" : anthropicConfig ? "Edit" : "Configure"
+            }
+          )
+        ] }) }),
+        editingAnthropic ? /* @__PURE__ */ jsxs("form", { onSubmit: handleSaveAnthropicConfig, className: "p-4 space-y-4", children: [
+          /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "API Key Name" }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "text",
+                  value: anthropicForm.api_key_name,
+                  onChange: (e) => setAnthropicForm((prev) => ({ ...prev, api_key_name: e.target.value })),
+                  className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+                  placeholder: "e.g. Production Key"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsxs("label", { className: "block text-xs text-slate-400 mb-1", children: [
+                "API Key ",
+                anthropicConfig?.has_api_key ? "(leave blank to keep current)" : ""
+              ] }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "password",
+                  value: anthropicForm.api_key,
+                  onChange: (e) => setAnthropicForm((prev) => ({ ...prev, api_key: e.target.value })),
+                  className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm font-mono",
+                  placeholder: anthropicConfig?.has_api_key ? "••••••••" : "sk-ant-..."
+                }
+              )
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-3 gap-4", children: [
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between mb-1", children: [
+                /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400", children: "Plan Tier" }),
+                /* @__PURE__ */ jsxs(
+                  Link,
+                  {
+                    to: "/admin/anthropic-plan-tiers",
+                    className: "flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors",
+                    children: [
+                      /* @__PURE__ */ jsx(Settings2, { className: "w-3 h-3" }),
+                      "Manage"
+                    ]
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxs(
+                "select",
+                {
+                  value: anthropicForm.plan_tier_id || "",
+                  onChange: (e) => handleTierChange(e.target.value),
+                  className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+                  children: [
+                    /* @__PURE__ */ jsx("option", { value: "", children: "Select a tier..." }),
+                    planTiers.filter((t) => t.is_active).map((tier) => /* @__PURE__ */ jsx("option", { value: tier.id, children: tier.name }, tier.id))
+                  ]
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Included Allowance ($)" }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "number",
+                  step: "0.01",
+                  min: "0",
+                  value: anthropicForm.included_allowance,
+                  onChange: (e) => setAnthropicForm((prev) => ({ ...prev, included_allowance: e.target.value })),
+                  className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Grace Threshold ($)" }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "number",
+                  step: "0.01",
+                  min: "0",
+                  value: anthropicForm.grace_threshold,
+                  onChange: (e) => setAnthropicForm((prev) => ({ ...prev, grace_threshold: e.target.value })),
+                  className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                }
+              )
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-3 gap-4", children: [
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Markup (%)" }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "number",
+                  step: "0.01",
+                  min: "0",
+                  max: "100",
+                  value: anthropicForm.markup_percentage,
+                  onChange: (e) => setAnthropicForm((prev) => ({ ...prev, markup_percentage: e.target.value })),
+                  className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Overage Mode" }),
+              /* @__PURE__ */ jsxs(
+                "select",
+                {
+                  value: anthropicForm.overage_mode,
+                  onChange: (e) => setAnthropicForm((prev) => ({ ...prev, overage_mode: e.target.value })),
+                  className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+                  children: [
+                    /* @__PURE__ */ jsx("option", { value: "silent", children: "Silent" }),
+                    /* @__PURE__ */ jsx("option", { value: "proactive", children: "Proactive" })
+                  ]
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Cycle Start Day (1-28)" }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "number",
+                  min: "1",
+                  max: "28",
+                  value: anthropicForm.cycle_start_day,
+                  onChange: (e) => setAnthropicForm((prev) => ({ ...prev, cycle_start_day: e.target.value })),
+                  className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                }
+              )
+            ] })
+          ] }),
+          anthropicForm.overage_mode === "proactive" && /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Notification Emails" }),
+            /* @__PURE__ */ jsxs("div", { className: "flex gap-2 mb-2", children: [
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "email",
+                  value: newNotificationEmail,
+                  onChange: (e) => setNewNotificationEmail(e.target.value),
+                  onKeyDown: (e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddNotificationEmail();
+                    }
+                  },
+                  className: "flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm",
+                  placeholder: "email@example.com"
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: handleAddNotificationEmail,
+                  className: "px-3 py-2 bg-cyan-600 hover:bg-cyan-700 rounded text-sm",
+                  children: "Add"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-2", children: (anthropicForm.notification_emails || []).map((email, i) => /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1 px-2 py-1 bg-slate-700 rounded text-xs", children: [
+              email,
+              /* @__PURE__ */ jsx("button", { type: "button", onClick: () => handleRemoveNotificationEmail(email), className: "text-slate-400 hover:text-red-400", children: /* @__PURE__ */ jsx(X, { className: "w-3 h-3" }) })
+            ] }, i)) })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "submit",
+                disabled: anthropicLoading,
+                className: "px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded text-sm disabled:opacity-50",
+                children: anthropicLoading ? "Saving..." : "Save Configuration"
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => setEditingAnthropic(false),
+                className: "px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm",
+                children: "Cancel"
+              }
+            )
+          ] })
+        ] }) : anthropicConfig ? /* @__PURE__ */ jsxs("div", { className: "p-4 space-y-4", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+              /* @__PURE__ */ jsx("span", { className: `px-2 py-1 rounded text-xs font-medium ${anthropicConfig.key_status === "active" ? "bg-green-500/20 text-green-400" : anthropicConfig.key_status === "grace" ? "bg-yellow-500/20 text-yellow-400" : anthropicConfig.key_status === "disabled" ? "bg-red-500/20 text-red-400" : "bg-orange-500/20 text-orange-400"}`, children: anthropicConfig.key_status_label }),
+              /* @__PURE__ */ jsxs("span", { className: "text-xs text-slate-400 capitalize", children: [
+                anthropicConfig.plan_tier_name || anthropicConfig.plan_tier,
+                " Plan"
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+              anthropicConfig.key_status !== "active" && /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => handleToggleAnthropicKey("active"),
+                  className: "px-2 py-1 text-xs bg-green-600/20 text-green-400 hover:bg-green-600/30 rounded",
+                  children: "Enable"
+                }
+              ),
+              anthropicConfig.key_status === "active" && /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => handleToggleAnthropicKey("disabled", "Manually disabled by admin"),
+                  className: "px-2 py-1 text-xs bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded",
+                  children: "Disable"
+                }
+              )
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex justify-between text-xs text-slate-400 mb-1", children: [
+              /* @__PURE__ */ jsxs("span", { children: [
+                "Cycle Usage: $",
+                anthropicConfig.cycle_usage_dollars.toFixed(2)
+              ] }),
+              /* @__PURE__ */ jsxs("span", { children: [
+                "Allowance: $",
+                parseFloat(anthropicConfig.included_allowance).toFixed(2),
+                " / Grace: $",
+                parseFloat(anthropicConfig.grace_threshold).toFixed(2)
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "w-full bg-slate-700 rounded-full h-3 overflow-hidden", children: (() => {
+              const graceThresholdCents = anthropicConfig.grace_threshold_cents || 1;
+              const usagePct = Math.min(100, anthropicConfig.cycle_usage_cents / graceThresholdCents * 100);
+              const allowancePct = anthropicConfig.included_allowance_cents / graceThresholdCents * 100;
+              const barColor = usagePct > allowancePct ? anthropicConfig.is_over_grace_threshold ? "bg-red-500" : "bg-yellow-500" : "bg-cyan-500";
+              return /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsx("div", { className: `h-full ${barColor} rounded-full transition-all`, style: { width: `${usagePct}%` } }),
+                /* @__PURE__ */ jsx("div", { className: "relative", style: { top: "-12px", left: `${allowancePct}%` }, children: /* @__PURE__ */ jsx("div", { className: "w-px h-3 bg-slate-400 absolute" }) })
+              ] });
+            })() })
+          ] }),
+          /* @__PURE__ */ jsxs("dl", { className: "grid grid-cols-2 gap-x-4 gap-y-2 text-sm", children: [
+            /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "API Key" }),
+            /* @__PURE__ */ jsx("dd", { className: "font-mono text-xs", children: anthropicConfig.masked_api_key || "Not set" }),
+            /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Markup" }),
+            /* @__PURE__ */ jsxs("dd", { children: [
+              parseFloat(anthropicConfig.markup_percentage).toFixed(1),
+              "%"
+            ] }),
+            /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Overage Mode" }),
+            /* @__PURE__ */ jsx("dd", { className: "capitalize", children: anthropicConfig.overage_mode }),
+            /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Cycle Start Day" }),
+            /* @__PURE__ */ jsx("dd", { children: anthropicConfig.cycle_start_day }),
+            /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Last Synced" }),
+            /* @__PURE__ */ jsxs("dd", { className: "flex items-center gap-2", children: [
+              anthropicConfig.last_synced_at ? new Date(anthropicConfig.last_synced_at).toLocaleString() : "Never",
+              (anthropicConfig.key_status === "active" || anthropicConfig.key_status === "grace") && /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  onClick: handleSyncAnthropicUsage,
+                  disabled: anthropicSyncing,
+                  className: "inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/30 rounded disabled:opacity-50",
+                  title: "Sync usage now",
+                  children: [
+                    /* @__PURE__ */ jsx(RefreshCw, { className: `w-3 h-3 ${anthropicSyncing ? "animate-spin" : ""}` }),
+                    anthropicSyncing ? "Syncing..." : "Sync Now"
+                  ]
+                }
+              )
+            ] })
+          ] }),
+          anthropicConfig.disabled_reason && /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-400", children: [
+            /* @__PURE__ */ jsx(AlertTriangle, { className: "w-4 h-4 shrink-0" }),
+            anthropicConfig.disabled_reason
+          ] }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsxs(
+              "button",
+              {
+                onClick: () => {
+                  if (!showUsageLogs) fetchAnthropicUsageLogs();
+                  setShowUsageLogs(!showUsageLogs);
+                },
+                className: "flex items-center gap-2 text-xs text-cyan-400 hover:text-cyan-300",
+                children: [
+                  /* @__PURE__ */ jsx(Activity, { className: "w-3.5 h-3.5" }),
+                  showUsageLogs ? "Hide Usage History" : "Show Usage History"
+                ]
+              }
+            ),
+            showUsageLogs && /* @__PURE__ */ jsx("div", { className: "mt-3 overflow-x-auto", children: anthropicUsageLogs.length > 0 ? /* @__PURE__ */ jsxs("table", { className: "w-full text-xs", children: [
+              /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "text-slate-400 border-b border-slate-700", children: [
+                /* @__PURE__ */ jsx("th", { className: "text-left py-2 pr-3", children: "Synced" }),
+                /* @__PURE__ */ jsx("th", { className: "text-left py-2 pr-3", children: "Period" }),
+                /* @__PURE__ */ jsx("th", { className: "text-right py-2 pr-3", children: "Input Tokens" }),
+                /* @__PURE__ */ jsx("th", { className: "text-right py-2 pr-3", children: "Output Tokens" }),
+                /* @__PURE__ */ jsx("th", { className: "text-right py-2", children: "Cost" })
+              ] }) }),
+              /* @__PURE__ */ jsx("tbody", { children: anthropicUsageLogs.map((log) => /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-700/50", children: [
+                /* @__PURE__ */ jsx("td", { className: "py-2 pr-3", children: new Date(log.synced_at).toLocaleDateString() }),
+                /* @__PURE__ */ jsxs("td", { className: "py-2 pr-3", children: [
+                  log.period_start,
+                  " — ",
+                  log.period_end
+                ] }),
+                /* @__PURE__ */ jsx("td", { className: "py-2 pr-3 text-right", children: log.tokens_input.toLocaleString() }),
+                /* @__PURE__ */ jsx("td", { className: "py-2 pr-3 text-right", children: log.tokens_output.toLocaleString() }),
+                /* @__PURE__ */ jsxs("td", { className: "py-2 text-right text-green-400", children: [
+                  "$",
+                  log.cost_dollars.toFixed(2)
+                ] })
+              ] }, log.id)) })
+            ] }) : /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-500 text-center py-4", children: "No usage logs yet." }) })
+          ] })
+        ] }) : /* @__PURE__ */ jsxs("div", { className: "p-4 text-center", children: [
+          /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-500", children: "No Anthropic API billing configured for this project." }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: () => setEditingAnthropic(true),
+              className: "mt-2 px-3 py-1.5 text-xs bg-cyan-600 hover:bg-cyan-700 rounded",
+              children: "Set Up API Billing"
+            }
+          )
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl", children: [
         /* @__PURE__ */ jsx("div", { className: "p-4 border-b border-slate-700", children: /* @__PURE__ */ jsxs("h3", { className: "font-semibold flex items-center gap-2", children: [
           /* @__PURE__ */ jsx(DollarSign, { className: "w-5 h-5 text-purple-400" }),
           "Billing & Invoicing"
@@ -4225,8 +5111,8 @@ const ProjectDetail = () => {
                 {
                   type: "number",
                   min: "1",
-                  value: settingsFormData.payment_terms_days,
-                  onChange: (e) => setSettingsFormData((prev) => ({ ...prev, payment_terms_days: e.target.value })),
+                  value: settingsFormData.default_payment_terms,
+                  onChange: (e) => setSettingsFormData((prev) => ({ ...prev, default_payment_terms: e.target.value })),
                   className: "w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 }
               )
@@ -4249,8 +5135,8 @@ const ProjectDetail = () => {
               /* @__PURE__ */ jsx(
                 "textarea",
                 {
-                  value: settingsFormData.invoice_notes,
-                  onChange: (e) => setSettingsFormData((prev) => ({ ...prev, invoice_notes: e.target.value })),
+                  value: settingsFormData.invoice_footer,
+                  onChange: (e) => setSettingsFormData((prev) => ({ ...prev, invoice_footer: e.target.value })),
                   rows: 2,
                   className: "w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none",
                   placeholder: "Payment terms, bank details, etc."
@@ -4279,11 +5165,87 @@ const ProjectDetail = () => {
             /* @__PURE__ */ jsxs("div", { children: [
               /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Payment Terms" }),
               /* @__PURE__ */ jsxs("dd", { className: "text-slate-200", children: [
-                invoiceSettings?.payment_terms_days || 30,
+                invoiceSettings?.default_payment_terms || 30,
                 " days"
               ] })
             ] })
           ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "p-4 border-b border-slate-700", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between mb-4 gap-4", children: [
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("h4", { className: "text-sm font-medium text-slate-300", children: "Xero Sync" }),
+              /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-500 mt-1", children: "Global Xero connection for invoice and payment sync." })
+            ] }),
+            xeroStatus?.connected ? /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: handleDisconnectXero,
+                className: "px-3 py-1.5 text-xs bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded",
+                children: "Disconnect"
+              }
+            ) : /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: handleConnectXero,
+                disabled: !xeroStatus?.configured,
+                className: "px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded",
+                children: "Connect to Xero"
+              }
+            )
+          ] }),
+          xeroLoading ? /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-500", children: "Loading Xero status..." }) : xeroStatus?.connected ? /* @__PURE__ */ jsxs("div", { className: "space-y-4", children: [
+            /* @__PURE__ */ jsxs("dl", { className: "grid grid-cols-2 gap-3 text-sm", children: [
+              /* @__PURE__ */ jsxs("div", { children: [
+                /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Organisation" }),
+                /* @__PURE__ */ jsx("dd", { className: "text-slate-200", children: xeroStatus.tenant_name || "Connected" })
+              ] }),
+              /* @__PURE__ */ jsxs("div", { children: [
+                /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Token Expires" }),
+                /* @__PURE__ */ jsx("dd", { className: "text-slate-200", children: xeroStatus.token_expires_at ? new Date(xeroStatus.token_expires_at).toLocaleString() : "Unknown" })
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+              /* @__PURE__ */ jsxs("div", { children: [
+                /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Sales Account Code" }),
+                /* @__PURE__ */ jsx(
+                  "input",
+                  {
+                    type: "text",
+                    value: xeroFormData.sales_account_code,
+                    onChange: (e) => setXeroFormData((prev) => ({ ...prev, sales_account_code: e.target.value })),
+                    className: "w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+                    placeholder: "e.g. 200"
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxs("div", { children: [
+                /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Payment Account Code" }),
+                /* @__PURE__ */ jsx(
+                  "input",
+                  {
+                    type: "text",
+                    value: xeroFormData.payment_account_code,
+                    onChange: (e) => setXeroFormData((prev) => ({ ...prev, payment_account_code: e.target.value })),
+                    className: "w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+                    placeholder: "e.g. 090"
+                  }
+                )
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-4", children: [
+              /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-500", children: "Sales account is used for invoice line items. Payment account is required for payment sync." }),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: handleSaveXeroSettings,
+                  disabled: xeroSaving,
+                  className: "px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded",
+                  children: xeroSaving ? "Saving..." : "Save Xero Settings"
+                }
+              )
+            ] })
+          ] }) : /* @__PURE__ */ jsx("div", { className: "space-y-2", children: /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400", children: xeroStatus?.configured ? "Connect Xero to push sent invoices and recorded payments into your Xero organisation." : "Add XERO_CLIENT_ID and XERO_CLIENT_SECRET to the environment before connecting Xero." }) })
         ] }),
         /* @__PURE__ */ jsxs("div", { className: "p-4", children: [
           /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between mb-4", children: [
@@ -4436,7 +5398,7 @@ const ProjectDetail = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_23 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_24 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectDetail
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4576,7 +5538,7 @@ const ProjectForm = () => {
     ] }) }) })
   ] });
 };
-const __vite_glob_0_24 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_25 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectForm
 }, Symbol.toStringTag, { value: "Module" }));
@@ -4770,7 +5732,7 @@ const ProjectsList = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_25 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_26 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectsList
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5209,7 +6171,7 @@ const Settings = () => {
     ] })
   ] });
 };
-const __vite_glob_0_26 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_27 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Settings
 }, Symbol.toStringTag, { value: "Module" }));
@@ -5232,7 +6194,7 @@ function Markdown({ children, className = "" }) {
             ${className}`, children: /* @__PURE__ */ jsx(
     ReactMarkdown,
     {
-      remarkPlugins: [remarkGfm],
+      remarkPlugins: [remarkGfm, remarkBreaks],
       components: {
         // Open links in new tab
         a: ({ node, ...props }) => /* @__PURE__ */ jsx("a", { ...props, target: "_blank", rel: "noopener noreferrer" }),
@@ -5277,6 +6239,10 @@ const TicketDetail = () => {
   const [editingTicketTitle, setEditingTicketTitle] = useState("");
   const [editingTicketContent, setEditingTicketContent] = useState("");
   const [editingTicketSubmitting, setEditingTicketSubmitting] = useState(false);
+  const [watchers, setWatchers] = useState([]);
+  const [watcherSearch, setWatcherSearch] = useState("");
+  const [watcherResults, setWatcherResults] = useState([]);
+  const [showWatcherSearch, setShowWatcherSearch] = useState(false);
   useEffect(() => {
     fetchReferenceData();
     fetchTicket();
@@ -5322,6 +6288,7 @@ const TicketDetail = () => {
       if (!response.ok) throw new Error("Failed to fetch ticket");
       const json = await response.json();
       setTicket(json.data || json);
+      setWatchers((json.data || json).watchers || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -5594,6 +6561,69 @@ const TicketDetail = () => {
       console.error("Logout failed:", error2);
     }
   };
+  const searchAvailableWatchers = async (search) => {
+    if (!search || search.length < 2) {
+      setWatcherResults([]);
+      return;
+    }
+    try {
+      const response = await fetch(`/api/helpdesk/admin/tickets/${ticketId}/watchers/available?search=${encodeURIComponent(search)}`, {
+        credentials: "same-origin"
+      });
+      if (response.ok) {
+        const json = await response.json();
+        setWatcherResults(json.data || []);
+      }
+    } catch (err) {
+      console.error("Failed to search watchers:", err);
+    }
+  };
+  const handleAddWatcher = async (userId) => {
+    try {
+      const response = await fetch(`/api/helpdesk/admin/tickets/${ticketId}/watchers`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": getCsrfToken(),
+          "Accept": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ user_id: userId })
+      });
+      if (response.ok) {
+        const json = await response.json();
+        setWatchers((prev) => [...prev, json.data]);
+        setWatcherSearch("");
+        setWatcherResults([]);
+        setShowWatcherSearch(false);
+      }
+    } catch (err) {
+      console.error("Failed to add watcher:", err);
+    }
+  };
+  const handleRemoveWatcher = async (userId) => {
+    try {
+      const response = await fetch(`/api/helpdesk/admin/tickets/${ticketId}/watchers/${userId}`, {
+        method: "DELETE",
+        headers: {
+          "X-CSRF-TOKEN": getCsrfToken(),
+          "Accept": "application/json"
+        },
+        credentials: "same-origin"
+      });
+      if (response.ok || response.status === 204) {
+        setWatchers((prev) => prev.filter((w) => w.id !== userId));
+      }
+    } catch (err) {
+      console.error("Failed to remove watcher:", err);
+    }
+  };
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchAvailableWatchers(watcherSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [watcherSearch]);
   const formatTimerDisplay = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor(seconds % 3600 / 60);
@@ -5706,7 +6736,7 @@ const TicketDetail = () => {
     setTimeFormData({
       hours: hours.toString(),
       minutes: mins.toString(),
-      hourly_rate_category_id: entry.hourly_rate_category_id || "",
+      hourly_rate_category_id: entry.hourly_rate_category_id || entry.hourly_rate_category?.id || "",
       description: entry.description || "",
       is_billable: entry.is_billable
     });
@@ -5881,11 +6911,25 @@ const TicketDetail = () => {
             /* @__PURE__ */ jsx(Markdown, { children: ticket?.content })
           ] }),
           ticket?.attachments?.length > 0 && /* @__PURE__ */ jsxs("div", { className: "mt-6 pt-6 border-t border-slate-700", children: [
-            /* @__PURE__ */ jsxs("h3", { className: "text-sm font-medium text-slate-400 mb-3 flex items-center gap-2", children: [
-              /* @__PURE__ */ jsx(Paperclip, { className: "w-4 h-4" }),
-              "Attachments (",
-              ticket.attachments.length,
-              ")"
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between mb-3", children: [
+              /* @__PURE__ */ jsxs("h3", { className: "text-sm font-medium text-slate-400 flex items-center gap-2", children: [
+                /* @__PURE__ */ jsx(Paperclip, { className: "w-4 h-4" }),
+                "Attachments (",
+                ticket.attachments.length,
+                ")"
+              ] }),
+              ticket.attachments.length > 1 && /* @__PURE__ */ jsxs(
+                "a",
+                {
+                  href: `/api/helpdesk/admin/tickets/${ticket.id}/attachments/download-all`,
+                  className: "flex items-center gap-1.5 px-2.5 py-1 text-xs bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg transition",
+                  title: "Download all attachments as zip",
+                  children: [
+                    /* @__PURE__ */ jsx(FolderArchive, { className: "w-3.5 h-3.5" }),
+                    "Download All"
+                  ]
+                }
+              )
             ] }),
             /* @__PURE__ */ jsx("div", { className: "flex flex-wrap gap-3", children: ticket.attachments.map((attachment) => /* @__PURE__ */ jsxs(
               "a",
@@ -6204,6 +7248,77 @@ const TicketDetail = () => {
         /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl p-4", children: [
           /* @__PURE__ */ jsxs("h3", { className: "font-semibold mb-4 flex items-center justify-between", children: [
             /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsx(Eye, { className: "w-4 h-4 text-purple-400" }),
+              "Watchers",
+              watchers.length > 0 && /* @__PURE__ */ jsx("span", { className: "text-xs bg-slate-700 px-1.5 py-0.5 rounded-full text-slate-300", children: watchers.length })
+            ] }),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: () => setShowWatcherSearch(!showWatcherSearch),
+                className: "flex items-center gap-1 px-2 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs font-medium",
+                children: /* @__PURE__ */ jsx(Plus, { className: "w-3 h-3" })
+              }
+            )
+          ] }),
+          showWatcherSearch && /* @__PURE__ */ jsxs("div", { className: "mb-3 relative", children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2", children: [
+              /* @__PURE__ */ jsx(Search, { className: "w-4 h-4 text-slate-400" }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "text",
+                  value: watcherSearch,
+                  onChange: (e) => setWatcherSearch(e.target.value),
+                  placeholder: "Search users...",
+                  className: "bg-transparent text-sm flex-1 focus:outline-none",
+                  autoFocus: true
+                }
+              ),
+              /* @__PURE__ */ jsx("button", { onClick: () => {
+                setShowWatcherSearch(false);
+                setWatcherSearch("");
+                setWatcherResults([]);
+              }, children: /* @__PURE__ */ jsx(X, { className: "w-4 h-4 text-slate-400 hover:text-white" }) })
+            ] }),
+            watcherResults.length > 0 && /* @__PURE__ */ jsx("div", { className: "absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-40 overflow-y-auto", children: watcherResults.map((user) => /* @__PURE__ */ jsxs(
+              "button",
+              {
+                onClick: () => handleAddWatcher(user.id),
+                className: "w-full px-3 py-2 text-left hover:bg-slate-600 text-sm flex items-center gap-2",
+                children: [
+                  /* @__PURE__ */ jsx(User, { className: "w-3.5 h-3.5 text-slate-400" }),
+                  /* @__PURE__ */ jsxs("div", { children: [
+                    /* @__PURE__ */ jsx("div", { className: "text-slate-200", children: user.name }),
+                    /* @__PURE__ */ jsx("div", { className: "text-xs text-slate-400", children: user.email })
+                  ] })
+                ]
+              },
+              user.id
+            )) })
+          ] }),
+          watchers.length > 0 ? /* @__PURE__ */ jsx("div", { className: "space-y-2", children: watchers.map((watcher) => /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between p-2 bg-slate-700/30 rounded-lg text-sm", children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 min-w-0", children: [
+              /* @__PURE__ */ jsx(User, { className: "w-3.5 h-3.5 text-slate-400 shrink-0" }),
+              /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+                /* @__PURE__ */ jsx("div", { className: "text-slate-200 truncate", children: watcher.name }),
+                /* @__PURE__ */ jsx("div", { className: "text-xs text-slate-400 truncate", children: watcher.email })
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: () => handleRemoveWatcher(watcher.id),
+                className: "p-1 hover:bg-slate-600 rounded shrink-0",
+                title: "Remove watcher",
+                children: /* @__PURE__ */ jsx(X, { className: "w-3 h-3 text-red-400" })
+              }
+            )
+          ] }, watcher.id)) }) : /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-500 text-center py-2", children: "No watchers" })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl p-4", children: [
+          /* @__PURE__ */ jsxs("h3", { className: "font-semibold mb-4 flex items-center justify-between", children: [
+            /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-2", children: [
               /* @__PURE__ */ jsx(Clock, { className: "w-4 h-4 text-purple-400" }),
               "Time Tracking"
             ] }),
@@ -6348,7 +7463,7 @@ const TicketDetail = () => {
                 /* @__PURE__ */ jsxs("p", { className: "text-xs text-slate-500 mt-1", children: [
                   entry.user?.name,
                   " • ",
-                  new Date(entry.created_at).toLocaleDateString()
+                  (/* @__PURE__ */ new Date(entry.date_worked + "T00:00:00")).toLocaleDateString()
                 ] })
               ] }),
               /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 ml-2", children: [
@@ -6386,7 +7501,7 @@ const TicketDetail = () => {
     ] }) }) })
   ] });
 };
-const __vite_glob_0_27 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_28 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: TicketDetail
 }, Symbol.toStringTag, { value: "Module" }));
@@ -6771,7 +7886,7 @@ const getPriorityColor = (slug) => {
   };
   return colors[slug] || "bg-slate-500/20 text-slate-400";
 };
-const __vite_glob_0_28 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_29 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: TicketsList
 }, Symbol.toStringTag, { value: "Module" }));
@@ -7179,7 +8294,7 @@ const UserDetail = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_29 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_30 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: UserDetail
 }, Symbol.toStringTag, { value: "Module" }));
@@ -7448,7 +8563,7 @@ const UserForm = () => {
     ] }) }) })
   ] });
 };
-const __vite_glob_0_30 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_31 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: UserForm
 }, Symbol.toStringTag, { value: "Module" }));
@@ -7864,7 +8979,7 @@ const UsersList = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_31 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_32 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: UsersList
 }, Symbol.toStringTag, { value: "Module" }));
@@ -7872,21 +8987,21 @@ export {
   FileUploadProgress as F,
   LexicalMarkdownEditor as L,
   Markdown as M,
-  __vite_glob_0_31 as _,
-  __vite_glob_0_30 as a,
-  __vite_glob_0_29 as b,
-  __vite_glob_0_28 as c,
-  __vite_glob_0_27 as d,
-  __vite_glob_0_26 as e,
-  __vite_glob_0_25 as f,
-  __vite_glob_0_24 as g,
-  __vite_glob_0_23 as h,
-  __vite_glob_0_22 as i,
-  __vite_glob_0_21 as j,
-  __vite_glob_0_20 as k,
-  __vite_glob_0_19 as l,
-  __vite_glob_0_18 as m,
-  __vite_glob_0_17 as n,
+  __vite_glob_0_32 as _,
+  __vite_glob_0_31 as a,
+  __vite_glob_0_30 as b,
+  __vite_glob_0_29 as c,
+  __vite_glob_0_28 as d,
+  __vite_glob_0_27 as e,
+  __vite_glob_0_26 as f,
+  __vite_glob_0_25 as g,
+  __vite_glob_0_24 as h,
+  __vite_glob_0_23 as i,
+  __vite_glob_0_22 as j,
+  __vite_glob_0_21 as k,
+  __vite_glob_0_20 as l,
+  __vite_glob_0_19 as m,
+  __vite_glob_0_18 as n,
   useFileUpload as u,
   validateFiles as v
 };

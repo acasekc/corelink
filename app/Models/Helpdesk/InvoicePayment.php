@@ -2,7 +2,9 @@
 
 namespace App\Models\Helpdesk;
 
+use App\Jobs\Helpdesk\SyncPaymentToXeroJob;
 use App\Models\User;
+use App\Services\Helpdesk\XeroService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -31,12 +33,14 @@ class InvoicePayment extends Model
         'payment_method',
         'stripe_payment_id',
         'stripe_charge_id',
+        'xero_payment_id',
         'reference_number',
         'payment_date',
         'notes',
         'recorded_by',
         'deleted_reason',
         'deleted_by',
+        'xero_last_sync_error',
     ];
 
     protected function casts(): array
@@ -81,6 +85,16 @@ class InvoicePayment extends Model
     {
         static::saved(function (InvoicePayment $payment) {
             $payment->invoice->updatePaymentStatus();
+
+            if (
+                $payment->xero_payment_id
+                || ! $payment->invoice?->xero_invoice_id
+                || ! app(XeroService::class)->hasActiveConnection()
+            ) {
+                return;
+            }
+
+            SyncPaymentToXeroJob::dispatch($payment->id);
         });
 
         // When soft-deleted, still update invoice status

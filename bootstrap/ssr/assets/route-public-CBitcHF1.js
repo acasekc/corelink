@@ -1,8 +1,8 @@
 import { jsxs, jsx, Fragment } from "react/jsx-runtime";
 import { motion, AnimatePresence } from "framer-motion";
-import { S as SeoHead } from "./route-blog-jpwBX5H6.js";
+import { S as SeoHead } from "./route-blog-CWQU3YQn.js";
 import { Heart, Users, Sparkles, ShieldCheck, Target, Rocket, Wrench, Monitor, Server, Layers, Globe, Cpu, Smartphone, Plug, ShoppingCart, ArrowLeft, Send, ArrowRight, Zap, Code2, Shield, MessageSquare, Compass, Palette, Brain, Eye, TrendingUp, HeartHandshake, ExternalLink, X, ChevronLeft, ChevronRight, Scale } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, usePage, useForm } from "@inertiajs/react";
 import { Link as Link$1 } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
@@ -360,7 +360,7 @@ const Login = () => {
     ] }) })
   ] }) });
 };
-const __vite_glob_0_32 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_33 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Login
 }, Symbol.toStringTag, { value: "Module" }));
@@ -415,7 +415,7 @@ const CaseStudies = ({ meta, caseStudies: caseStudies2 = [] }) => {
     ] }) })
   ] });
 };
-const __vite_glob_0_38 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_39 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: CaseStudies
 }, Symbol.toStringTag, { value: "Module" }));
@@ -439,7 +439,7 @@ function CaseStudiesList() {
     ] }, cs.slug)) })
   ] });
 }
-const __vite_glob_0_39 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_40 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: CaseStudiesList
 }, Symbol.toStringTag, { value: "Module" }));
@@ -590,28 +590,65 @@ const CaseStudyDetail = ({ meta, caseStudy }) => {
     ] }) })
   ] });
 };
-const __vite_glob_0_40 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_41 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: CaseStudyDetail
 }, Symbol.toStringTag, { value: "Module" }));
+const RECAPTCHA_SITE_KEY = "6LdOKGgsAAAAAGmot0zM_4TtzP0i9_ozgSkzqxXE";
 const Contact = ({ meta }) => {
   const { flash } = usePage().props;
-  const { data, setData, post, processing, errors, reset } = useForm({
+  const [submitting, setSubmitting] = useState(false);
+  const { data, setData, post, processing, errors, reset, transform } = useForm({
     name: "",
     email: "",
     subject: "",
     message: ""
   });
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+    return () => {
+      document.head.removeChild(script);
+      const badge = document.querySelector(".grecaptcha-badge");
+      if (badge) {
+        badge.remove();
+      }
+    };
+  }, []);
+  const getRecaptchaToken = useCallback(async () => {
+    if (!window.grecaptcha) {
+      return "";
+    }
+    try {
+      return await window.grecaptcha.execute(RECAPTCHA_SITE_KEY, {
+        action: "contact"
+      });
+    } catch {
+      return "";
+    }
+  }, []);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setData(name, value);
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+    const recaptchaToken = await getRecaptchaToken();
+    transform((formData) => ({
+      ...formData,
+      recaptcha_token: recaptchaToken
+    }));
     post("/contact", {
-      onSuccess: () => reset()
+      preserveScroll: true,
+      onSuccess: () => reset(),
+      onFinish: () => setSubmitting(false)
     });
   };
+  const isProcessing = processing || submitting;
   return /* @__PURE__ */ jsxs("div", { className: "relative overflow-hidden", children: [
     /* @__PURE__ */ jsx(SeoHead, { meta }),
     /* @__PURE__ */ jsxs("div", { className: "fixed inset-0 pointer-events-none", children: [
@@ -764,34 +801,65 @@ const Contact = ({ meta }) => {
                   ]
                 }
               ),
-              /* @__PURE__ */ jsx(
+              /* @__PURE__ */ jsxs(
                 motion.div,
                 {
                   initial: { opacity: 0, y: 20 },
                   animate: { opacity: 1, y: 0 },
                   transition: { delay: 0.5 },
-                  children: /* @__PURE__ */ jsx(
-                    "button",
-                    {
-                      type: "submit",
-                      disabled: processing,
-                      className: "w-full bg-linear-to-r from-primary to-accent hover:opacity-90 transition-opacity text-primary-foreground font-medium py-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2",
-                      children: processing ? /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-2", children: [
-                        /* @__PURE__ */ jsx(
-                          motion.div,
-                          {
-                            animate: { rotate: 360 },
-                            transition: { duration: 1, repeat: Infinity, ease: "linear" },
-                            className: "w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full"
-                          }
-                        ),
-                        "Sending..."
-                      ] }) : /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-2", children: [
-                        /* @__PURE__ */ jsx(Send, { className: "w-5 h-5" }),
-                        "Send Message"
-                      ] })
-                    }
-                  )
+                  children: [
+                    /* @__PURE__ */ jsx(
+                      "button",
+                      {
+                        type: "submit",
+                        disabled: isProcessing,
+                        className: "w-full bg-linear-to-r from-primary to-accent hover:opacity-90 transition-opacity text-primary-foreground font-medium py-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2",
+                        children: isProcessing ? /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-2", children: [
+                          /* @__PURE__ */ jsx(
+                            motion.div,
+                            {
+                              animate: { rotate: 360 },
+                              transition: { duration: 1, repeat: Infinity, ease: "linear" },
+                              className: "w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full"
+                            }
+                          ),
+                          "Sending..."
+                        ] }) : /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-2", children: [
+                          /* @__PURE__ */ jsx(Send, { className: "w-5 h-5" }),
+                          "Send Message"
+                        ] })
+                      }
+                    ),
+                    /* @__PURE__ */ jsxs("p", { className: "text-xs text-muted-foreground text-center mt-3", children: [
+                      "This site is protected by reCAPTCHA and the Google",
+                      " ",
+                      /* @__PURE__ */ jsx(
+                        "a",
+                        {
+                          href: "https://policies.google.com/privacy",
+                          target: "_blank",
+                          rel: "noopener noreferrer",
+                          className: "text-primary hover:underline",
+                          children: "Privacy Policy"
+                        }
+                      ),
+                      " ",
+                      "and",
+                      " ",
+                      /* @__PURE__ */ jsx(
+                        "a",
+                        {
+                          href: "https://policies.google.com/terms",
+                          target: "_blank",
+                          rel: "noopener noreferrer",
+                          className: "text-primary hover:underline",
+                          children: "Terms of Service"
+                        }
+                      ),
+                      " ",
+                      "apply."
+                    ] })
+                  ]
                 }
               )
             ] })
@@ -801,7 +869,7 @@ const Contact = ({ meta }) => {
     ] }) })
   ] });
 };
-const __vite_glob_0_41 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_42 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Contact
 }, Symbol.toStringTag, { value: "Module" }));
@@ -906,7 +974,7 @@ function Home() {
     ] })
   ] });
 }
-const __vite_glob_0_52 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_55 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Home
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1094,7 +1162,7 @@ const Index = ({ meta }) => {
     /* @__PURE__ */ jsx(Features, {})
   ] });
 };
-const __vite_glob_0_53 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_56 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Index
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1347,7 +1415,7 @@ const Privacy = ({ meta }) => {
     ) })
   ] });
 };
-const __vite_glob_0_54 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_57 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Privacy
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1637,7 +1705,7 @@ const Process = ({ meta }) => {
     ] }) })
   ] });
 };
-const __vite_glob_0_55 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_58 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Process
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1831,7 +1899,7 @@ const Projects = ({ meta, projects = [] }) => {
     ] }) })
   ] });
 };
-const __vite_glob_0_56 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_59 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Projects
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1983,21 +2051,21 @@ const Terms = ({ meta }) => {
     ) })
   ] });
 };
-const __vite_glob_0_57 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_60 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Terms
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  __vite_glob_0_57 as _,
-  __vite_glob_0_56 as a,
-  __vite_glob_0_55 as b,
-  __vite_glob_0_54 as c,
-  __vite_glob_0_53 as d,
-  __vite_glob_0_52 as e,
-  __vite_glob_0_41 as f,
-  __vite_glob_0_40 as g,
-  __vite_glob_0_39 as h,
-  __vite_glob_0_38 as i,
-  __vite_glob_0_32 as j,
+  __vite_glob_0_60 as _,
+  __vite_glob_0_59 as a,
+  __vite_glob_0_58 as b,
+  __vite_glob_0_57 as c,
+  __vite_glob_0_56 as d,
+  __vite_glob_0_55 as e,
+  __vite_glob_0_42 as f,
+  __vite_glob_0_41 as g,
+  __vite_glob_0_40 as h,
+  __vite_glob_0_39 as i,
+  __vite_glob_0_33 as j,
   __vite_glob_0_0 as k
 };

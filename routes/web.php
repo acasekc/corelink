@@ -15,9 +15,11 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CaseStudyController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DiscoveryController;
+use App\Http\Controllers\Helpdesk\Admin\XeroController;
 use App\Http\Controllers\Helpdesk\AuthController as HelpdeskAuthController;
 use App\Http\Controllers\Helpdesk\Public\InvoiceController as PublicInvoiceController;
 use App\Http\Controllers\Helpdesk\StripeWebhookController;
+use App\Http\Controllers\Helpdesk\XeroWebhookController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PostmarkWebhookController;
 use App\Http\Controllers\ProjectController;
@@ -128,6 +130,10 @@ Route::post('/admin/logout', [AdminAuthController::class, 'logout'])
 // Admin Change Password (authenticated, exempt from force-password-change)
 Route::middleware(['auth', 'no-cache'])->prefix('admin')->group(function () {
     Route::get('/change-password', [PageController::class, 'adminSpa'])->name('admin.change-password');
+});
+
+Route::middleware(['auth', 'admin', 'force-password-change', 'no-cache'])->prefix('admin/xero')->group(function () {
+    Route::get('/callback', [XeroController::class, 'callback'])->name('admin.xero.callback');
 });
 
 // Admin Routes (requires authentication + admin)
@@ -253,6 +259,10 @@ Route::prefix('invoice')->name('invoice.public.')->group(function () {
 Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
     ->name('stripe.webhook');
+
+Route::post('/webhooks/xero', [XeroWebhookController::class, 'handle'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('xero.webhook');
 
 /*
 |--------------------------------------------------------------------------

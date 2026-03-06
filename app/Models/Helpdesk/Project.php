@@ -4,7 +4,6 @@ namespace App\Models\Helpdesk;
 
 use App\Enums\Helpdesk\ProjectRole;
 use App\Models\User;
-use Database\Factories\Helpdesk\ProjectFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -14,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Project extends Model
 {
-    /** @use HasFactory<ProjectFactory> */
+    /** @use HasFactory<\Database\Factories\Helpdesk\ProjectFactory> */
     use HasFactory;
 
     use SoftDeletes;
@@ -28,6 +27,7 @@ class Project extends Model
         'client_name',
         'client_email',
         'client_address',
+        'xero_contact_id',
         'ticket_prefix',
         'github_repo',
         'color',

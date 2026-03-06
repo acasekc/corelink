@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\Helpdesk\RefreshXeroTokenJob;
 use App\Models\ArticleCategory;
 use App\Models\ArticleGenerationSettings;
 use App\Services\ArticleService;
@@ -29,6 +30,9 @@ Schedule::command('anthropic:sync-usage')->dailyAt('02:00');
 
 // Generate Anthropic billing invoices daily at 3:00 AM (checks cycle end dates)
 Schedule::command('anthropic:generate-invoices')->dailyAt('03:00');
+
+// Refresh Xero OAuth tokens every 15 minutes
+Schedule::job(new RefreshXeroTokenJob)->everyFifteenMinutes();
 
 // Send Anthropic weekly usage digest to admin every Monday at 8:00 AM
 Schedule::command('anthropic:weekly-digest')->weeklyOn(1, '08:00');

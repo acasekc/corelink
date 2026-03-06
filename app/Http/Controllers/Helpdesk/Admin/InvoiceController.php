@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Helpdesk\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Helpdesk\Public\InvoiceController as PublicInvoiceController;
+use App\Jobs\Helpdesk\SyncInvoiceToXeroJob;
+use App\Jobs\Helpdesk\VoidXeroInvoiceJob;
 use App\Mail\InvoiceSent;
 use App\Models\Helpdesk\BillableItem;
 use App\Models\Helpdesk\Invoice;
@@ -12,6 +14,7 @@ use App\Models\Helpdesk\Project;
 use App\Models\Helpdesk\ProjectHourlyRate;
 use App\Models\Helpdesk\TimeEntry;
 use App\Services\Helpdesk\InvoicePdfService;
+use App\Services\Helpdesk\XeroService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -401,7 +404,7 @@ class InvoiceController extends Controller
         // Set due date if not already set
         if (! $invoice->due_date) {
             $settings = $invoice->project->getInvoiceSettings();
-            $invoice->due_date = now()->addDays($settings->payment_terms_days ?? 30);
+            $invoice->due_date = now()->addDays($settings->default_payment_terms ?? 30);
         }
 
         $invoice->status = Invoice::STATUS_SENT;
@@ -415,6 +418,10 @@ class InvoiceController extends Controller
         Mail::to($billingEmail)->send(
             new InvoiceSent($invoice, $publicUrl, attachPdf: true)
         );
+
+        if (app(XeroService::class)->hasActiveConnection()) {
+            SyncInvoiceToXeroJob::dispatch($invoice->id);
+        }
 
         return response()->json([
             'data' => $this->formatInvoice($invoice->fresh(['lineItems', 'payments', 'project'])),
@@ -474,8 +481,13 @@ class InvoiceController extends Controller
                 ->update(['invoice_line_item_id' => null]);
 
             $invoice->status = Invoice::STATUS_VOID;
+            $invoice->voided_at = now();
             $invoice->save();
         });
+
+        if (app(XeroService::class)->hasActiveConnection()) {
+            VoidXeroInvoiceJob::dispatch($invoice->id);
+        }
 
         return response()->json([
             'data' => $this->formatInvoice($invoice->fresh(['lineItems', 'payments', 'project'])),
@@ -629,9 +641,16 @@ class InvoiceController extends Controller
             'due_date' => $invoice->due_date?->toDateString(),
             'sent_at' => $invoice->sent_at?->toIso8601String(),
             'paid_at' => $invoice->paid_at?->toIso8601String(),
+            'voided_at' => $invoice->voided_at?->toIso8601String(),
             'is_editable' => $invoice->is_editable,
             'is_paid' => $invoice->is_paid,
             'can_void' => $invoice->can_void,
+            'xero' => [
+                'invoice_id' => $invoice->xero_invoice_id,
+                'synced_at' => $invoice->xero_synced_at?->toIso8601String(),
+                'last_error' => $invoice->xero_last_sync_error,
+                'is_synced' => filled($invoice->xero_invoice_id),
+            ],
             'line_items' => $invoice->lineItems->map(fn ($item) => [
                 'id' => $item->id,
                 'type' => $item->type,
@@ -663,6 +682,8 @@ class InvoiceController extends Controller
                 'method_name' => $payment->method_name,
                 'reference_number' => $payment->reference_number,
                 'notes' => $payment->notes,
+                'xero_payment_id' => $payment->xero_payment_id,
+                'xero_last_sync_error' => $payment->xero_last_sync_error,
                 'paid_at' => $payment->created_at->toIso8601String(),
                 'is_deleted' => $payment->trashed(),
                 'deleted_at' => $payment->deleted_at?->toIso8601String(),

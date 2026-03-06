@@ -27,6 +27,9 @@ const ProjectDetail = () => {
     const [categories, setCategories] = useState([]);
     const [hourlyRates, setHourlyRates] = useState([]);
     const [invoiceSettings, setInvoiceSettings] = useState(null);
+    const [xeroStatus, setXeroStatus] = useState(null);
+    const [xeroLoading, setXeroLoading] = useState(false);
+    const [xeroSaving, setXeroSaving] = useState(false);
     const [showRateForm, setShowRateForm] = useState(false);
     const [editingRate, setEditingRate] = useState(null);
     const [rateFormData, setRateFormData] = useState({ category_id: '', hourly_rate: '' });
@@ -38,6 +41,10 @@ const ProjectDetail = () => {
         invoice_prefix: '',
         invoice_footer: '',
         default_payment_terms: '30',
+    });
+    const [xeroFormData, setXeroFormData] = useState({
+        sales_account_code: '',
+        payment_account_code: '',
     });
 
     // Members state
@@ -79,6 +86,7 @@ const ProjectDetail = () => {
         fetchCategories();
         fetchHourlyRates();
         fetchInvoiceSettings();
+        fetchXeroStatus();
         fetchMembers();
         fetchAnthropicConfig();
         fetchPlanTiers();
@@ -171,6 +179,26 @@ const ProjectDetail = () => {
             }
         } catch (err) {
             console.error('Failed to fetch invoice settings:', err);
+        }
+    };
+
+    const fetchXeroStatus = async () => {
+        setXeroLoading(true);
+        try {
+            const response = await fetch('/api/helpdesk/admin/xero/status', {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Failed to fetch Xero status');
+            const json = await response.json();
+            setXeroStatus(json.data || null);
+            setXeroFormData({
+                sales_account_code: json.data?.sales_account_code || '',
+                payment_account_code: json.data?.payment_account_code || '',
+            });
+        } catch (err) {
+            console.error('Failed to fetch Xero status:', err);
+        } finally {
+            setXeroLoading(false);
         }
     };
 
@@ -564,6 +592,55 @@ const ProjectDetail = () => {
             setEditingSettings(false);
         } catch (err) {
             alert('Failed to save settings: ' + err.message);
+        }
+    };
+
+    const handleConnectXero = () => {
+        const returnUrl = `${window.location.pathname}${window.location.search}`;
+        window.location.href = `/api/helpdesk/admin/xero/connect?return_url=${encodeURIComponent(returnUrl)}`;
+    };
+
+    const handleSaveXeroSettings = async () => {
+        setXeroSaving(true);
+        try {
+            const response = await fetch('/api/helpdesk/admin/xero/settings', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    sales_account_code: xeroFormData.sales_account_code || null,
+                    payment_account_code: xeroFormData.payment_account_code || null,
+                }),
+            });
+            if (!response.ok) throw new Error('Failed to save Xero settings');
+            await fetchXeroStatus();
+        } catch (err) {
+            alert('Failed to save Xero settings: ' + err.message);
+        } finally {
+            setXeroSaving(false);
+        }
+    };
+
+    const handleDisconnectXero = async () => {
+        if (!confirm('Disconnect Xero? Future invoices and payments will stop syncing until you reconnect.')) return;
+
+        try {
+            const response = await fetch('/api/helpdesk/admin/xero/disconnect', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Failed to disconnect Xero');
+            await fetchXeroStatus();
+        } catch (err) {
+            alert('Failed to disconnect Xero: ' + err.message);
         }
     };
 
@@ -1717,6 +1794,90 @@ const ProjectDetail = () => {
                                         <dd className="text-slate-200">{invoiceSettings?.default_payment_terms || 30} days</dd>
                                     </div>
                                 </dl>
+                            )}
+                        </div>
+
+                        <div className="p-4 border-b border-slate-700">
+                            <div className="flex items-center justify-between mb-4 gap-4">
+                                <div>
+                                    <h4 className="text-sm font-medium text-slate-300">Xero Sync</h4>
+                                    <p className="text-xs text-slate-500 mt-1">Global Xero connection for invoice and payment sync.</p>
+                                </div>
+                                {xeroStatus?.connected ? (
+                                    <button
+                                        onClick={handleDisconnectXero}
+                                        className="px-3 py-1.5 text-xs bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded"
+                                    >
+                                        Disconnect
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleConnectXero}
+                                        disabled={!xeroStatus?.configured}
+                                        className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded"
+                                    >
+                                        Connect to Xero
+                                    </button>
+                                )}
+                            </div>
+
+                            {xeroLoading ? (
+                                <p className="text-sm text-slate-500">Loading Xero status...</p>
+                            ) : xeroStatus?.connected ? (
+                                <div className="space-y-4">
+                                    <dl className="grid grid-cols-2 gap-3 text-sm">
+                                        <div>
+                                            <dt className="text-slate-500">Organisation</dt>
+                                            <dd className="text-slate-200">{xeroStatus.tenant_name || 'Connected'}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-slate-500">Token Expires</dt>
+                                            <dd className="text-slate-200">{xeroStatus.token_expires_at ? new Date(xeroStatus.token_expires_at).toLocaleString() : 'Unknown'}</dd>
+                                        </div>
+                                    </dl>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1">Sales Account Code</label>
+                                            <input
+                                                type="text"
+                                                value={xeroFormData.sales_account_code}
+                                                onChange={(e) => setXeroFormData(prev => ({ ...prev, sales_account_code: e.target.value }))}
+                                                className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="e.g. 200"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-slate-400 mb-1">Payment Account Code</label>
+                                            <input
+                                                type="text"
+                                                value={xeroFormData.payment_account_code}
+                                                onChange={(e) => setXeroFormData(prev => ({ ...prev, payment_account_code: e.target.value }))}
+                                                className="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                placeholder="e.g. 090"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between gap-4">
+                                        <p className="text-xs text-slate-500">Sales account is used for invoice line items. Payment account is required for payment sync.</p>
+                                        <button
+                                            onClick={handleSaveXeroSettings}
+                                            disabled={xeroSaving}
+                                            className="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded"
+                                        >
+                                            {xeroSaving ? 'Saving...' : 'Save Xero Settings'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <p className="text-sm text-slate-400">
+                                        {xeroStatus?.configured
+                                            ? 'Connect Xero to push sent invoices and recorded payments into your Xero organisation.'
+                                            : 'Add XERO_CLIENT_ID and XERO_CLIENT_SECRET to the environment before connecting Xero.'}
+                                    </p>
+                                </div>
                             )}
                         </div>
 

@@ -158,7 +158,7 @@ const CreateInvite = () => {
     ] })
   ] });
 };
-const __vite_glob_0_10 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_11 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: CreateInvite
 }, Symbol.toStringTag, { value: "Module" }));
@@ -218,7 +218,7 @@ const Invites = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_11 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_12 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Invites
 }, Symbol.toStringTag, { value: "Module" }));
@@ -304,7 +304,7 @@ const PlanDetail = () => {
     ] }) })
   ] });
 };
-const __vite_glob_0_12 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_13 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: PlanDetail
 }, Symbol.toStringTag, { value: "Module" }));
@@ -360,7 +360,7 @@ const Plans = () => {
     )) })
   ] });
 };
-const __vite_glob_0_13 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_14 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Plans
 }, Symbol.toStringTag, { value: "Module" }));
@@ -433,7 +433,7 @@ const SessionDetail = () => {
     ] })
   ] });
 };
-const __vite_glob_0_14 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_15 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: SessionDetail
 }, Symbol.toStringTag, { value: "Module" }));
@@ -488,15 +488,15 @@ const Sessions = () => {
     )) })
   ] });
 };
-const __vite_glob_0_15 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_16 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Sessions
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  __vite_glob_0_15 as _,
-  __vite_glob_0_14 as a,
-  __vite_glob_0_13 as b,
-  __vite_glob_0_12 as c,
-  __vite_glob_0_11 as d,
-  __vite_glob_0_10 as e
+  __vite_glob_0_16 as _,
+  __vite_glob_0_15 as a,
+  __vite_glob_0_14 as b,
+  __vite_glob_0_13 as c,
+  __vite_glob_0_12 as d,
+  __vite_glob_0_11 as e
 };

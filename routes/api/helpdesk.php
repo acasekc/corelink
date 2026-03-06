@@ -17,6 +17,7 @@ use App\Http\Controllers\Helpdesk\Admin\TicketController;
 use App\Http\Controllers\Helpdesk\Admin\TicketWatcherController;
 use App\Http\Controllers\Helpdesk\Admin\TimeEntryController;
 use App\Http\Controllers\Helpdesk\Admin\UserController;
+use App\Http\Controllers\Helpdesk\Admin\XeroController;
 use App\Http\Controllers\Helpdesk\Api\CommentApiController;
 use App\Http\Controllers\Helpdesk\Api\ReferenceDataApiController;
 use App\Http\Controllers\Helpdesk\Api\TicketApiController;
@@ -187,6 +188,12 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     // Project Invoice Settings
     Route::get('projects/{project}/invoice-settings', [ProjectInvoiceSettingsController::class, 'show']);
     Route::patch('projects/{project}/invoice-settings', [ProjectInvoiceSettingsController::class, 'update']);
+
+    // Xero
+    Route::get('xero/status', [XeroController::class, 'status']);
+    Route::get('xero/connect', [XeroController::class, 'connect']);
+    Route::patch('xero/settings', [XeroController::class, 'updateSettings']);
+    Route::post('xero/disconnect', [XeroController::class, 'disconnect']);
 
     // Invoices
     Route::get('invoices', [InvoiceController::class, 'index']);
