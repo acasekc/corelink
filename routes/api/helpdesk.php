@@ -8,6 +8,7 @@ use App\Http\Controllers\Helpdesk\Admin\DashboardController;
 use App\Http\Controllers\Helpdesk\Admin\HourlyRateCategoryController;
 use App\Http\Controllers\Helpdesk\Admin\InvoiceController;
 use App\Http\Controllers\Helpdesk\Admin\InvoicePaymentController;
+use App\Http\Controllers\Helpdesk\Admin\OpenAiBillingController;
 use App\Http\Controllers\Helpdesk\Admin\ProjectController;
 use App\Http\Controllers\Helpdesk\Admin\ProjectHourlyRateController;
 use App\Http\Controllers\Helpdesk\Admin\ProjectInvoiceSettingsController;
@@ -249,4 +250,18 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     Route::post('projects/{project}/anthropic-config/sync', [AnthropicBillingController::class, 'sync']);
     Route::post('projects/{project}/anthropic-config/generate-invoice', [AnthropicBillingController::class, 'generateInvoice']);
     Route::post('projects/{project}/anthropic-config/reset-cycle', [AnthropicBillingController::class, 'resetCycle']);
+
+    // OpenAI API Billing
+    Route::get('projects/{project}/openai-config', [OpenAiBillingController::class, 'show']);
+    Route::post('projects/{project}/openai-config/connect', [OpenAiBillingController::class, 'connect']);
+    Route::patch('projects/{project}/openai-config', [OpenAiBillingController::class, 'update']);
+    Route::get('projects/{project}/openai-keys', [OpenAiBillingController::class, 'keys']);
+    Route::post('projects/{project}/openai-keys', [OpenAiBillingController::class, 'createKey']);
+    Route::patch('projects/{project}/openai-keys/{key}', [OpenAiBillingController::class, 'updateKey']);
+    Route::post('projects/{project}/openai-keys/{key}/revoke', [OpenAiBillingController::class, 'revokeKey']);
+    Route::post('projects/{project}/openai-keys/{key}/reactivate', [OpenAiBillingController::class, 'reactivateKey']);
+    Route::get('projects/{project}/openai-usage-logs', [OpenAiBillingController::class, 'usageLogs']);
+    Route::post('projects/{project}/openai-config/sync', [OpenAiBillingController::class, 'sync']);
+    Route::post('projects/{project}/openai-config/generate-invoice', [OpenAiBillingController::class, 'generateInvoice']);
+    Route::post('projects/{project}/openai-config/reset-cycle', [OpenAiBillingController::class, 'resetCycle']);
 });

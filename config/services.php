@@ -52,6 +52,10 @@ return [
         'dalle_quality' => env('OPENAI_DALLE_QUALITY', 'standard'),
     ],
 
+    'openai_admin' => [
+        'api_key' => env('OPENAI_ADMIN_API_KEY'),
+    ],
+
     'stripe' => [
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
@@ -65,6 +69,10 @@ return [
         'client_secret' => env('XERO_CLIENT_SECRET'),
         'redirect_uri' => env('XERO_REDIRECT_URI'),
         'webhook_key' => env('XERO_WEBHOOK_KEY'),
+    ],
+
+    'openai_admin' => [
+        'api_key' => env('OPENAI_ADMIN_API_KEY'),
     ],
 
     'helpdesk' => [

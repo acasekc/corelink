@@ -104,6 +104,11 @@ class Project extends Model
         return $this->hasOne(AnthropicApiConfig::class);
     }
 
+    public function openAiConfig(): HasOne
+    {
+        return $this->hasOne(OpenAiConfig::class);
+    }
+
     /**
      * Get or create invoice settings for this project.
      */

@@ -2,7 +2,7 @@ import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useParams, useSearchParams } from "react-router-dom";
 import { Loader2, Key, AlertTriangle, CheckCircle, Lock, EyeOff, Eye, AlertCircle, ChevronLeft, Plus, LogOut, Paperclip, Image, FileText, X, Ticket, User, Clock, CheckCircle2, FolderOpen, Mail, ArrowLeft, LogIn, Save, ChevronRight, Edit2, FolderArchive, Download, MessageSquare, Trash2, Send, Timer, Filter, Search } from "lucide-react";
-import { u as useFileUpload, L as LexicalMarkdownEditor, F as FileUploadProgress, v as validateFiles, M as Markdown } from "./route-admin-helpdesk-BFCZsZn6.js";
+import { u as useFileUpload, L as LexicalMarkdownEditor, F as FileUploadProgress, v as validateFiles, M as Markdown } from "./route-admin-helpdesk-hsrWmByL.js";
 const ChangePassword = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);

@@ -1,7 +1,7 @@
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import React, { forwardRef, useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link, useParams } from "react-router-dom";
-import { Bold, Italic, Strikethrough, List, ListOrdered, CheckCircle, AlertCircle, Loader2, ArrowLeft, Plus, LogOut, Search, X, Paperclip, Image, FileText, Ticket, Clock, FolderOpen, Check, DollarSign, Trash2, Edit2, Send, XCircle, Download, AlertTriangle, CreditCard, Eye, Save, Filter, ChevronLeft, ChevronRight, User, Mail, MapPin, Users, Shield, Bell, BellOff, EyeOff, Key, RefreshCw, Copy, Cpu, Settings2, Activity, Settings as Settings$1, GripVertical, Pencil, FolderArchive, MessageSquare, Lock, Unlock, Tag, Square, Play, Timer, RotateCcw } from "lucide-react";
+import { Bold, Italic, Strikethrough, List, ListOrdered, CheckCircle, AlertCircle, Loader2, ArrowLeft, Plus, LogOut, Search, X, Paperclip, Image, FileText, Ticket, Clock, FolderOpen, Check, DollarSign, Trash2, Edit2, Send, XCircle, Download, AlertTriangle, CreditCard, Eye, Save, Filter, ChevronLeft, ChevronRight, User, Mail, MapPin, Users, Shield, Bell, BellOff, EyeOff, Key, RefreshCw, Copy, Cpu, Settings2, Activity, Bot, Ban, Settings as Settings$1, GripVertical, Pencil, FolderArchive, MessageSquare, Lock, Unlock, Tag, Square, Play, Timer, RotateCcw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -3495,6 +3495,18 @@ const ProjectDetail = () => {
     cycle_start_day: "1"
   });
   const [newNotificationEmail, setNewNotificationEmail] = useState("");
+  const [openAiConfig, setOpenAiConfig] = useState(null);
+  const [openAiKeys, setOpenAiKeys] = useState([]);
+  const [openAiConnecting, setOpenAiConnecting] = useState(false);
+  const [editingOpenAi, setEditingOpenAi] = useState(false);
+  const [openAiLoading, setOpenAiLoading] = useState(false);
+  const [openAiSyncing, setOpenAiSyncing] = useState(false);
+  const [showCreateOpenAiKeyForm, setShowCreateOpenAiKeyForm] = useState(false);
+  const [openAiNewKey, setOpenAiNewKey] = useState(null);
+  const [showOpenAiUsageLogs, setShowOpenAiUsageLogs] = useState(false);
+  const [openAiUsageLogs, setOpenAiUsageLogs] = useState([]);
+  const [openAiForm, setOpenAiForm] = useState({ markup_percentage: "0", billing_cycle_start_day: "1", notification_emails: [] });
+  const [createKeyForm, setCreateKeyForm] = useState({ name: "", max_spend_usd: "", grace_amount_usd: "" });
   useEffect(() => {
     fetchProject();
     fetchApiKeys();
@@ -3506,6 +3518,7 @@ const ProjectDetail = () => {
     fetchMembers();
     fetchAnthropicConfig();
     fetchPlanTiers();
+    fetchOpenAiConfig();
   }, [projectId]);
   const fetchProject = async () => {
     try {
@@ -3866,6 +3879,205 @@ const ProjectDetail = () => {
       alert("Sync failed: " + err.message);
     } finally {
       setAnthropicSyncing(false);
+    }
+  };
+  const fetchOpenAiConfig = async () => {
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config`, {
+        credentials: "same-origin"
+      });
+      if (!response.ok) return;
+      const json = await response.json();
+      setOpenAiConfig(json.data);
+      if (json.data) {
+        setOpenAiForm({
+          markup_percentage: String(json.data.markup_percentage || "0"),
+          billing_cycle_start_day: String(json.data.billing_cycle_start_day || "1"),
+          notification_emails: json.data.notification_emails || []
+        });
+        setOpenAiKeys(json.data.keys || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch OpenAI config:", err);
+    }
+  };
+  const handleConnectOpenAi = async () => {
+    setOpenAiConnecting(true);
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config/connect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": getCsrfToken(), "Accept": "application/json" },
+        credentials: "same-origin"
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Connection failed");
+      }
+      const json = await response.json();
+      setOpenAiConfig(json.data);
+      setOpenAiKeys(json.data.keys || []);
+    } catch (err) {
+      alert("Failed to connect to OpenAI: " + err.message);
+    } finally {
+      setOpenAiConnecting(false);
+    }
+  };
+  const handleSaveOpenAiSettings = async (e) => {
+    e.preventDefault();
+    setOpenAiLoading(true);
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": getCsrfToken(), "Accept": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          markup_percentage: parseFloat(openAiForm.markup_percentage),
+          billing_cycle_start_day: parseInt(openAiForm.billing_cycle_start_day),
+          notification_emails: openAiForm.notification_emails
+        })
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Failed to save settings");
+      }
+      const json = await response.json();
+      setOpenAiConfig(json.data);
+      setEditingOpenAi(false);
+    } catch (err) {
+      alert("Failed to save settings: " + err.message);
+    } finally {
+      setOpenAiLoading(false);
+    }
+  };
+  const handleCreateOpenAiKey = async (e) => {
+    e.preventDefault();
+    setOpenAiLoading(true);
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-keys`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": getCsrfToken(), "Accept": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          name: createKeyForm.name,
+          max_spend_usd: createKeyForm.max_spend_usd ? parseFloat(createKeyForm.max_spend_usd) : null,
+          grace_amount_usd: createKeyForm.grace_amount_usd ? parseFloat(createKeyForm.grace_amount_usd) : 0
+        })
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Failed to create key");
+      }
+      const json = await response.json();
+      setOpenAiKeys((prev) => [json.data, ...prev]);
+      setOpenAiNewKey(json.api_key);
+      setCreateKeyForm({ name: "", max_spend_usd: "", grace_amount_usd: "" });
+      setShowCreateOpenAiKeyForm(false);
+    } catch (err) {
+      alert("Failed to create API key: " + err.message);
+    } finally {
+      setOpenAiLoading(false);
+    }
+  };
+  const handleRevokeOpenAiKey = async (keyId) => {
+    if (!confirm("Permanently revoke this key? It will be deleted from OpenAI and cannot be restored.")) {
+      return;
+    }
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-keys/${keyId}/revoke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": getCsrfToken(), "Accept": "application/json" },
+        credentials: "same-origin"
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Failed to revoke key");
+      }
+      const json = await response.json();
+      setOpenAiKeys((prev) => prev.map((k) => k.id === keyId ? json.data : k));
+    } catch (err) {
+      alert("Failed to revoke key: " + err.message);
+    }
+  };
+  const handleReactivateOpenAiKey = async (keyId) => {
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-keys/${keyId}/reactivate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": getCsrfToken(), "Accept": "application/json" },
+        credentials: "same-origin"
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Failed to reactivate key");
+      }
+      const json = await response.json();
+      setOpenAiKeys((prev) => prev.map((k) => k.id === keyId ? json.data : k));
+    } catch (err) {
+      alert("Failed to reactivate key: " + err.message);
+    }
+  };
+  const handleSyncOpenAiUsage = async () => {
+    setOpenAiSyncing(true);
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config/sync`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": getCsrfToken(), "Accept": "application/json" },
+        credentials: "same-origin"
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Sync failed");
+      }
+      const json = await response.json();
+      setOpenAiConfig(json.data);
+      setOpenAiKeys(json.data.keys || []);
+      if (showOpenAiUsageLogs) fetchOpenAiUsageLogs();
+    } catch (err) {
+      alert("Sync failed: " + err.message);
+    } finally {
+      setOpenAiSyncing(false);
+    }
+  };
+  const fetchOpenAiUsageLogs = async () => {
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-usage-logs`, {
+        credentials: "same-origin"
+      });
+      if (!response.ok) return;
+      const json = await response.json();
+      setOpenAiUsageLogs(json.data || []);
+    } catch (err) {
+      console.error("Failed to fetch OpenAI usage logs:", err);
+    }
+  };
+  const handleOpenAiGenerateInvoice = async () => {
+    if (!confirm("Generate a draft invoice for the current billing cycle?")) return;
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config/generate-invoice`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": getCsrfToken(), "Accept": "application/json" },
+        credentials: "same-origin"
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json.message || "Failed to generate invoice");
+      alert(json.message);
+    } catch (err) {
+      alert("Failed to generate invoice: " + err.message);
+    }
+  };
+  const handleOpenAiResetCycle = async () => {
+    if (!confirm("Reset billing cycle? This will zero all usage counters and key spend totals.")) return;
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config/reset-cycle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": getCsrfToken(), "Accept": "application/json" },
+        credentials: "same-origin"
+      });
+      if (!response.ok) throw new Error("Reset failed");
+      const json = await response.json();
+      setOpenAiConfig(json.data);
+      setOpenAiKeys(json.data.keys || []);
+    } catch (err) {
+      alert("Failed to reset cycle: " + err.message);
     }
   };
   const handleAddRate = async (e) => {
@@ -5015,6 +5227,346 @@ const ProjectDetail = () => {
               children: "Set Up API Billing"
             }
           )
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl", children: [
+        /* @__PURE__ */ jsx("div", { className: "p-4 border-b border-slate-700", children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ jsxs("h3", { className: "font-semibold flex items-center gap-2", children: [
+            /* @__PURE__ */ jsx(Bot, { className: "w-5 h-5 text-emerald-400" }),
+            "OpenAI API Billing"
+          ] }),
+          openAiConfig?.is_connected && /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: () => setEditingOpenAi(!editingOpenAi),
+              className: "px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded",
+              children: editingOpenAi ? "Cancel" : "Settings"
+            }
+          )
+        ] }) }),
+        !openAiConfig?.is_connected ? /* @__PURE__ */ jsxs("div", { className: "p-6 text-center space-y-3", children: [
+          /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400", children: "Connect this project to OpenAI to provision API keys and track usage costs per key." }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: handleConnectOpenAi,
+              disabled: openAiConnecting,
+              className: "px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded text-sm disabled:opacity-50",
+              children: openAiConnecting ? "Connecting..." : "Connect to OpenAI"
+            }
+          )
+        ] }) : editingOpenAi ? /* @__PURE__ */ jsxs("form", { onSubmit: handleSaveOpenAiSettings, className: "p-4 space-y-4", children: [
+          /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-4", children: [
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Markup %" }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "number",
+                  step: "0.1",
+                  min: "0",
+                  max: "100",
+                  value: openAiForm.markup_percentage,
+                  onChange: (e) => setOpenAiForm((prev) => ({ ...prev, markup_percentage: e.target.value })),
+                  className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Billing Cycle Start Day" }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "number",
+                  min: "1",
+                  max: "28",
+                  value: openAiForm.billing_cycle_start_day,
+                  onChange: (e) => setOpenAiForm((prev) => ({ ...prev, billing_cycle_start_day: e.target.value })),
+                  className: "w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                }
+              )
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex gap-2 pt-2", children: [
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "submit",
+                disabled: openAiLoading,
+                className: "px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded text-sm disabled:opacity-50",
+                children: openAiLoading ? "Saving..." : "Save Settings"
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => setEditingOpenAi(false),
+                className: "px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm",
+                children: "Cancel"
+              }
+            )
+          ] })
+        ] }) : /* @__PURE__ */ jsxs("div", { className: "p-4 space-y-4", children: [
+          /* @__PURE__ */ jsxs("dl", { className: "grid grid-cols-2 gap-x-4 gap-y-1 text-sm", children: [
+            /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "OpenAI Project" }),
+            /* @__PURE__ */ jsx("dd", { className: "font-mono text-xs", children: openAiConfig.openai_project_id }),
+            /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Cycle Usage" }),
+            /* @__PURE__ */ jsxs("dd", { className: "font-medium text-white", children: [
+              "$",
+              openAiConfig.cycle_usage_dollars?.toFixed(2) ?? "0.00"
+            ] }),
+            /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Markup" }),
+            /* @__PURE__ */ jsxs("dd", { children: [
+              parseFloat(openAiConfig.markup_percentage).toFixed(1),
+              "%"
+            ] }),
+            /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Cycle Start Day" }),
+            /* @__PURE__ */ jsx("dd", { children: openAiConfig.billing_cycle_start_day }),
+            /* @__PURE__ */ jsx("dt", { className: "text-slate-500", children: "Last Synced" }),
+            /* @__PURE__ */ jsxs("dd", { className: "flex items-center gap-2", children: [
+              openAiConfig.last_synced_at ? new Date(openAiConfig.last_synced_at).toLocaleString() : "Never",
+              /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  onClick: handleSyncOpenAiUsage,
+                  disabled: openAiSyncing,
+                  className: "inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded disabled:opacity-50",
+                  title: "Sync usage now",
+                  children: [
+                    /* @__PURE__ */ jsx(RefreshCw, { className: `w-3 h-3 ${openAiSyncing ? "animate-spin" : ""}` }),
+                    openAiSyncing ? "Syncing..." : "Sync Now"
+                  ]
+                }
+              )
+            ] })
+          ] }),
+          openAiConfig.last_sync_error && /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-400", children: [
+            /* @__PURE__ */ jsx(AlertTriangle, { className: "w-4 h-4 shrink-0" }),
+            openAiConfig.last_sync_error
+          ] }),
+          openAiNewKey && /* @__PURE__ */ jsxs("div", { className: "p-3 bg-yellow-500/10 border border-yellow-500/30 rounded space-y-2", children: [
+            /* @__PURE__ */ jsxs("p", { className: "text-xs text-yellow-400 font-medium flex items-center gap-1", children: [
+              /* @__PURE__ */ jsx(AlertTriangle, { className: "w-3.5 h-3.5" }),
+              "Copy this key now — it will not be shown again"
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsx("code", { className: "flex-1 text-xs font-mono bg-slate-900 px-2 py-1.5 rounded text-yellow-300 break-all", children: openAiNewKey }),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: () => {
+                    navigator.clipboard.writeText(openAiNewKey);
+                  },
+                  className: "p-1.5 bg-slate-700 hover:bg-slate-600 rounded",
+                  title: "Copy",
+                  children: /* @__PURE__ */ jsx(Copy, { className: "w-3.5 h-3.5" })
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: () => setOpenAiNewKey(null),
+                className: "text-xs text-slate-400 hover:text-slate-300",
+                children: "I've copied it, dismiss"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between mb-2", children: [
+              /* @__PURE__ */ jsx("span", { className: "text-xs font-medium text-slate-400 uppercase tracking-wider", children: "API Keys" }),
+              /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  onClick: () => setShowCreateOpenAiKeyForm(!showCreateOpenAiKeyForm),
+                  className: "inline-flex items-center gap-1 text-xs px-2 py-1 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded",
+                  children: [
+                    /* @__PURE__ */ jsx(Plus, { className: "w-3 h-3" }),
+                    "New Key"
+                  ]
+                }
+              )
+            ] }),
+            showCreateOpenAiKeyForm && /* @__PURE__ */ jsxs("form", { onSubmit: handleCreateOpenAiKey, className: "mb-3 p-3 bg-slate-700/50 rounded space-y-2", children: [
+              /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-3 gap-2", children: [
+                /* @__PURE__ */ jsxs("div", { children: [
+                  /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Key Name" }),
+                  /* @__PURE__ */ jsx(
+                    "input",
+                    {
+                      type: "text",
+                      required: true,
+                      value: createKeyForm.name,
+                      onChange: (e) => setCreateKeyForm((prev) => ({ ...prev, name: e.target.value })),
+                      className: "w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-xs",
+                      placeholder: "e.g. Production"
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxs("div", { children: [
+                  /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Max Spend (USD)" }),
+                  /* @__PURE__ */ jsx(
+                    "input",
+                    {
+                      type: "number",
+                      step: "0.01",
+                      min: "0.01",
+                      value: createKeyForm.max_spend_usd,
+                      onChange: (e) => setCreateKeyForm((prev) => ({ ...prev, max_spend_usd: e.target.value })),
+                      className: "w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-xs",
+                      placeholder: "e.g. 50.00"
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxs("div", { children: [
+                  /* @__PURE__ */ jsx("label", { className: "block text-xs text-slate-400 mb-1", children: "Grace Amount (USD)" }),
+                  /* @__PURE__ */ jsx(
+                    "input",
+                    {
+                      type: "number",
+                      step: "0.01",
+                      min: "0",
+                      value: createKeyForm.grace_amount_usd,
+                      onChange: (e) => setCreateKeyForm((prev) => ({ ...prev, grace_amount_usd: e.target.value })),
+                      className: "w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-xs",
+                      placeholder: "0.00 (none)"
+                    }
+                  )
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxs("div", { className: "flex gap-2 pt-1", children: [
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "submit",
+                    disabled: openAiLoading,
+                    className: "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 rounded text-xs disabled:opacity-50",
+                    children: openAiLoading ? "Creating..." : "Create Key"
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => setShowCreateOpenAiKeyForm(false),
+                    className: "px-3 py-1.5 bg-slate-600 hover:bg-slate-500 rounded text-xs",
+                    children: "Cancel"
+                  }
+                )
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "space-y-2", children: openAiKeys.length === 0 ? /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-500 text-center py-3", children: "No API keys yet." }) : openAiKeys.map((key) => /* @__PURE__ */ jsxs(
+              "div",
+              {
+                className: `flex items-center justify-between px-3 py-2 rounded text-sm ${key.status === "revoked" ? "bg-slate-700/30 opacity-60" : key.status === "suspended" ? "bg-yellow-500/5 border border-yellow-500/20" : "bg-slate-700/50"}`,
+                children: [
+                  /* @__PURE__ */ jsxs("div", { className: "space-y-0.5 min-w-0", children: [
+                    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+                      /* @__PURE__ */ jsx("span", { className: "font-medium truncate", children: key.name }),
+                      /* @__PURE__ */ jsx("span", { className: `px-1.5 py-0.5 rounded text-xs font-medium ${key.status === "active" ? "bg-emerald-500/20 text-emerald-400" : key.status === "suspended" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`, children: key.status_label }),
+                      key.grace_notified_at && key.status === "active" && /* @__PURE__ */ jsx("span", { className: "px-1.5 py-0.5 rounded text-xs bg-orange-500/20 text-orange-400", children: "Grace period" })
+                    ] }),
+                    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3 text-xs text-slate-400", children: [
+                      /* @__PURE__ */ jsxs("span", { children: [
+                        "Spend: ",
+                        /* @__PURE__ */ jsxs("span", { className: "text-white", children: [
+                          "$",
+                          parseFloat(key.spend_usd).toFixed(2)
+                        ] }),
+                        key.max_spend_usd !== null && /* @__PURE__ */ jsxs("span", { className: "text-slate-500", children: [
+                          " / $",
+                          parseFloat(key.max_spend_usd).toFixed(2),
+                          key.grace_amount_usd > 0 && /* @__PURE__ */ jsxs("span", { className: "text-slate-600", children: [
+                            " (+$",
+                            parseFloat(key.grace_amount_usd).toFixed(2),
+                            " grace)"
+                          ] })
+                        ] })
+                      ] }),
+                      key.last_used_at && /* @__PURE__ */ jsxs("span", { children: [
+                        "Last used: ",
+                        new Date(key.last_used_at).toLocaleDateString()
+                      ] }),
+                      key.revoked_reason && /* @__PURE__ */ jsx("span", { className: "text-red-400", children: key.revoked_reason })
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 ml-2 shrink-0", children: [
+                    key.status === "suspended" && /* @__PURE__ */ jsx(
+                      "button",
+                      {
+                        onClick: () => handleReactivateOpenAiKey(key.id),
+                        className: "p-1.5 text-yellow-400 hover:bg-yellow-500/10 rounded",
+                        title: "Reactivate key",
+                        children: /* @__PURE__ */ jsx(RefreshCw, { className: "w-3.5 h-3.5" })
+                      }
+                    ),
+                    (key.status === "active" || key.status === "suspended") && /* @__PURE__ */ jsx(
+                      "button",
+                      {
+                        onClick: () => handleRevokeOpenAiKey(key.id),
+                        className: "p-1.5 text-red-400 hover:bg-red-500/10 rounded",
+                        title: "Revoke key permanently",
+                        children: /* @__PURE__ */ jsx(Ban, { className: "w-3.5 h-3.5" })
+                      }
+                    )
+                  ] })
+                ]
+              },
+              key.id
+            )) })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap gap-2 pt-2 border-t border-slate-700", children: [
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: handleOpenAiGenerateInvoice,
+                className: "px-3 py-1.5 text-xs bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 rounded",
+                children: "Generate Invoice"
+              }
+            ),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: handleOpenAiResetCycle,
+                className: "px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300",
+                children: "Reset Cycle"
+              }
+            ),
+            /* @__PURE__ */ jsxs(
+              "button",
+              {
+                onClick: () => {
+                  if (!showOpenAiUsageLogs) fetchOpenAiUsageLogs();
+                  setShowOpenAiUsageLogs(!showOpenAiUsageLogs);
+                },
+                className: "flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300",
+                children: [
+                  /* @__PURE__ */ jsx(Activity, { className: "w-3.5 h-3.5" }),
+                  showOpenAiUsageLogs ? "Hide Usage History" : "Show Usage History"
+                ]
+              }
+            )
+          ] }),
+          showOpenAiUsageLogs && /* @__PURE__ */ jsx("div", { className: "mt-2 overflow-x-auto", children: openAiUsageLogs.length > 0 ? /* @__PURE__ */ jsxs("table", { className: "w-full text-xs", children: [
+            /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "text-slate-400 border-b border-slate-700", children: [
+              /* @__PURE__ */ jsx("th", { className: "text-left py-2 pr-3", children: "Date" }),
+              /* @__PURE__ */ jsx("th", { className: "text-left py-2 pr-3", children: "Key" }),
+              /* @__PURE__ */ jsx("th", { className: "text-left py-2 pr-3", children: "Model" }),
+              /* @__PURE__ */ jsx("th", { className: "text-right py-2 pr-3", children: "Tokens" }),
+              /* @__PURE__ */ jsx("th", { className: "text-right py-2", children: "Cost" })
+            ] }) }),
+            /* @__PURE__ */ jsx("tbody", { children: openAiUsageLogs.map((log) => /* @__PURE__ */ jsxs("tr", { className: "border-b border-slate-700/50", children: [
+              /* @__PURE__ */ jsx("td", { className: "py-1.5 pr-3 text-slate-300", children: log.usage_date }),
+              /* @__PURE__ */ jsx("td", { className: "py-1.5 pr-3 text-slate-400", children: log.api_key_name || "—" }),
+              /* @__PURE__ */ jsx("td", { className: "py-1.5 pr-3 text-slate-400 font-mono", children: log.model || "—" }),
+              /* @__PURE__ */ jsx("td", { className: "py-1.5 pr-3 text-right", children: log.total_tokens?.toLocaleString() }),
+              /* @__PURE__ */ jsxs("td", { className: "py-1.5 text-right text-emerald-400", children: [
+                "$",
+                log.cost_usd?.toFixed(4)
+              ] })
+            ] }, log.id)) })
+          ] }) : /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-500 text-center py-3", children: "No usage logs yet." }) })
         ] })
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl", children: [

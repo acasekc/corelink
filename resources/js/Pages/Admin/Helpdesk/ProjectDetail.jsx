@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket, DollarSign, Edit2, Save, X, User, Mail, MapPin, Users, Bell, BellOff, Eye, EyeOff, Search, Shield, Cpu, Activity, AlertTriangle, Settings2 } from 'lucide-react';
+import { FolderOpen, ArrowLeft, LogOut, Key, Plus, Copy, RefreshCw, Trash2, Check, Ticket, DollarSign, Edit2, Save, X, User, Mail, MapPin, Users, Bell, BellOff, Eye, EyeOff, Search, Shield, Cpu, Activity, AlertTriangle, Settings2, Bot, Ban } from 'lucide-react';
 
 const ProjectDetail = () => {
     const { projectId } = useParams();
@@ -79,6 +79,20 @@ const ProjectDetail = () => {
     });
     const [newNotificationEmail, setNewNotificationEmail] = useState('');
 
+    // OpenAI API Billing state
+    const [openAiConfig, setOpenAiConfig] = useState(null);
+    const [openAiKeys, setOpenAiKeys] = useState([]);
+    const [openAiConnecting, setOpenAiConnecting] = useState(false);
+    const [editingOpenAi, setEditingOpenAi] = useState(false);
+    const [openAiLoading, setOpenAiLoading] = useState(false);
+    const [openAiSyncing, setOpenAiSyncing] = useState(false);
+    const [showCreateOpenAiKeyForm, setShowCreateOpenAiKeyForm] = useState(false);
+    const [openAiNewKey, setOpenAiNewKey] = useState(null);
+    const [showOpenAiUsageLogs, setShowOpenAiUsageLogs] = useState(false);
+    const [openAiUsageLogs, setOpenAiUsageLogs] = useState([]);
+    const [openAiForm, setOpenAiForm] = useState({ markup_percentage: '0', billing_cycle_start_day: '1', notification_emails: [] });
+    const [createKeyForm, setCreateKeyForm] = useState({ name: '', max_spend_usd: '', grace_amount_usd: '' });
+
     useEffect(() => {
         fetchProject();
         fetchApiKeys();
@@ -90,6 +104,7 @@ const ProjectDetail = () => {
         fetchMembers();
         fetchAnthropicConfig();
         fetchPlanTiers();
+        fetchOpenAiConfig();
     }, [projectId]);
 
     const fetchProject = async () => {
@@ -481,6 +496,216 @@ const ProjectDetail = () => {
             alert('Sync failed: ' + err.message);
         } finally {
             setAnthropicSyncing(false);
+        }
+    };
+
+    // OpenAI API Billing handlers
+    const fetchOpenAiConfig = async () => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config`, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) return;
+            const json = await response.json();
+            setOpenAiConfig(json.data);
+            if (json.data) {
+                setOpenAiForm({
+                    markup_percentage: String(json.data.markup_percentage || '0'),
+                    billing_cycle_start_day: String(json.data.billing_cycle_start_day || '1'),
+                    notification_emails: json.data.notification_emails || [],
+                });
+                setOpenAiKeys(json.data.keys || []);
+            }
+        } catch (err) {
+            console.error('Failed to fetch OpenAI config:', err);
+        }
+    };
+
+    const handleConnectOpenAi = async () => {
+        setOpenAiConnecting(true);
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config/connect`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Connection failed');
+            }
+            const json = await response.json();
+            setOpenAiConfig(json.data);
+            setOpenAiKeys(json.data.keys || []);
+        } catch (err) {
+            alert('Failed to connect to OpenAI: ' + err.message);
+        } finally {
+            setOpenAiConnecting(false);
+        }
+    };
+
+    const handleSaveOpenAiSettings = async (e) => {
+        e.preventDefault();
+        setOpenAiLoading(true);
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    markup_percentage: parseFloat(openAiForm.markup_percentage),
+                    billing_cycle_start_day: parseInt(openAiForm.billing_cycle_start_day),
+                    notification_emails: openAiForm.notification_emails,
+                }),
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to save settings');
+            }
+            const json = await response.json();
+            setOpenAiConfig(json.data);
+            setEditingOpenAi(false);
+        } catch (err) {
+            alert('Failed to save settings: ' + err.message);
+        } finally {
+            setOpenAiLoading(false);
+        }
+    };
+
+    const handleCreateOpenAiKey = async (e) => {
+        e.preventDefault();
+        setOpenAiLoading(true);
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-keys`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    name: createKeyForm.name,
+                    max_spend_usd: createKeyForm.max_spend_usd ? parseFloat(createKeyForm.max_spend_usd) : null,
+                    grace_amount_usd: createKeyForm.grace_amount_usd ? parseFloat(createKeyForm.grace_amount_usd) : 0,
+                }),
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to create key');
+            }
+            const json = await response.json();
+            setOpenAiKeys(prev => [json.data, ...prev]);
+            setOpenAiNewKey(json.api_key);
+            setCreateKeyForm({ name: '', max_spend_usd: '', grace_amount_usd: '' });
+            setShowCreateOpenAiKeyForm(false);
+        } catch (err) {
+            alert('Failed to create API key: ' + err.message);
+        } finally {
+            setOpenAiLoading(false);
+        }
+    };
+
+    const handleRevokeOpenAiKey = async (keyId) => {
+        if (!confirm('Permanently revoke this key? It will be deleted from OpenAI and cannot be restored.')) {
+            return;
+        }
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-keys/${keyId}/revoke`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to revoke key');
+            }
+            const json = await response.json();
+            setOpenAiKeys(prev => prev.map(k => k.id === keyId ? json.data : k));
+        } catch (err) {
+            alert('Failed to revoke key: ' + err.message);
+        }
+    };
+
+    const handleReactivateOpenAiKey = async (keyId) => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-keys/${keyId}/reactivate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to reactivate key');
+            }
+            const json = await response.json();
+            setOpenAiKeys(prev => prev.map(k => k.id === keyId ? json.data : k));
+        } catch (err) {
+            alert('Failed to reactivate key: ' + err.message);
+        }
+    };
+
+    const handleSyncOpenAiUsage = async () => {
+        setOpenAiSyncing(true);
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config/sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Sync failed');
+            }
+            const json = await response.json();
+            setOpenAiConfig(json.data);
+            setOpenAiKeys(json.data.keys || []);
+            if (showOpenAiUsageLogs) fetchOpenAiUsageLogs();
+        } catch (err) {
+            alert('Sync failed: ' + err.message);
+        } finally {
+            setOpenAiSyncing(false);
+        }
+    };
+
+    const fetchOpenAiUsageLogs = async () => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-usage-logs`, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) return;
+            const json = await response.json();
+            setOpenAiUsageLogs(json.data || []);
+        } catch (err) {
+            console.error('Failed to fetch OpenAI usage logs:', err);
+        }
+    };
+
+    const handleOpenAiGenerateInvoice = async () => {
+        if (!confirm('Generate a draft invoice for the current billing cycle?')) return;
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config/generate-invoice`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            });
+            const json = await response.json();
+            if (!response.ok) throw new Error(json.message || 'Failed to generate invoice');
+            alert(json.message);
+        } catch (err) {
+            alert('Failed to generate invoice: ' + err.message);
+        }
+    };
+
+    const handleOpenAiResetCycle = async () => {
+        if (!confirm('Reset billing cycle? This will zero all usage counters and key spend totals.')) return;
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${projectId}/openai-config/reset-cycle`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrfToken(), 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Reset failed');
+            const json = await response.json();
+            setOpenAiConfig(json.data);
+            setOpenAiKeys(json.data.keys || []);
+        } catch (err) {
+            alert('Failed to reset cycle: ' + err.message);
         }
     };
 
@@ -1655,6 +1880,346 @@ const ProjectDetail = () => {
                                 >
                                     Set Up API Billing
                                 </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* OpenAI API Billing */}
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl">
+                        <div className="p-4 border-b border-slate-700">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-semibold flex items-center gap-2">
+                                    <Bot className="w-5 h-5 text-emerald-400" />
+                                    OpenAI API Billing
+                                </h3>
+                                {openAiConfig?.is_connected && (
+                                    <button
+                                        onClick={() => setEditingOpenAi(!editingOpenAi)}
+                                        className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded"
+                                    >
+                                        {editingOpenAi ? 'Cancel' : 'Settings'}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {!openAiConfig?.is_connected ? (
+                            <div className="p-6 text-center space-y-3">
+                                <p className="text-sm text-slate-400">
+                                    Connect this project to OpenAI to provision API keys and track usage costs per key.
+                                </p>
+                                <button
+                                    onClick={handleConnectOpenAi}
+                                    disabled={openAiConnecting}
+                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded text-sm disabled:opacity-50"
+                                >
+                                    {openAiConnecting ? 'Connecting...' : 'Connect to OpenAI'}
+                                </button>
+                            </div>
+                        ) : editingOpenAi ? (
+                            <form onSubmit={handleSaveOpenAiSettings} className="p-4 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Markup %</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            min="0"
+                                            max="100"
+                                            value={openAiForm.markup_percentage}
+                                            onChange={(e) => setOpenAiForm(prev => ({ ...prev, markup_percentage: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-slate-400 mb-1">Billing Cycle Start Day</label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="28"
+                                            value={openAiForm.billing_cycle_start_day}
+                                            onChange={(e) => setOpenAiForm(prev => ({ ...prev, billing_cycle_start_day: e.target.value }))}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded text-sm"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <button
+                                        type="submit"
+                                        disabled={openAiLoading}
+                                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded text-sm disabled:opacity-50"
+                                    >
+                                        {openAiLoading ? 'Saving...' : 'Save Settings'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingOpenAi(false)}
+                                        className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <div className="p-4 space-y-4">
+                                {/* Summary row */}
+                                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                                    <dt className="text-slate-500">OpenAI Project</dt>
+                                    <dd className="font-mono text-xs">{openAiConfig.openai_project_id}</dd>
+                                    <dt className="text-slate-500">Cycle Usage</dt>
+                                    <dd className="font-medium text-white">${openAiConfig.cycle_usage_dollars?.toFixed(2) ?? '0.00'}</dd>
+                                    <dt className="text-slate-500">Markup</dt>
+                                    <dd>{parseFloat(openAiConfig.markup_percentage).toFixed(1)}%</dd>
+                                    <dt className="text-slate-500">Cycle Start Day</dt>
+                                    <dd>{openAiConfig.billing_cycle_start_day}</dd>
+                                    <dt className="text-slate-500">Last Synced</dt>
+                                    <dd className="flex items-center gap-2">
+                                        {openAiConfig.last_synced_at ? new Date(openAiConfig.last_synced_at).toLocaleString() : 'Never'}
+                                        <button
+                                            onClick={handleSyncOpenAiUsage}
+                                            disabled={openAiSyncing}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded disabled:opacity-50"
+                                            title="Sync usage now"
+                                        >
+                                            <RefreshCw className={`w-3 h-3 ${openAiSyncing ? 'animate-spin' : ''}`} />
+                                            {openAiSyncing ? 'Syncing...' : 'Sync Now'}
+                                        </button>
+                                    </dd>
+                                </dl>
+
+                                {openAiConfig.last_sync_error && (
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded text-sm text-red-400">
+                                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                                        {openAiConfig.last_sync_error}
+                                    </div>
+                                )}
+
+                                {/* One-time key display */}
+                                {openAiNewKey && (
+                                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded space-y-2">
+                                        <p className="text-xs text-yellow-400 font-medium flex items-center gap-1">
+                                            <AlertTriangle className="w-3.5 h-3.5" />
+                                            Copy this key now — it will not be shown again
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <code className="flex-1 text-xs font-mono bg-slate-900 px-2 py-1.5 rounded text-yellow-300 break-all">
+                                                {openAiNewKey}
+                                            </code>
+                                            <button
+                                                onClick={() => { navigator.clipboard.writeText(openAiNewKey); }}
+                                                className="p-1.5 bg-slate-700 hover:bg-slate-600 rounded"
+                                                title="Copy"
+                                            >
+                                                <Copy className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                        <button
+                                            onClick={() => setOpenAiNewKey(null)}
+                                            className="text-xs text-slate-400 hover:text-slate-300"
+                                        >
+                                            I've copied it, dismiss
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* API Keys list */}
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">API Keys</span>
+                                        <button
+                                            onClick={() => setShowCreateOpenAiKeyForm(!showCreateOpenAiKeyForm)}
+                                            className="inline-flex items-center gap-1 text-xs px-2 py-1 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded"
+                                        >
+                                            <Plus className="w-3 h-3" />
+                                            New Key
+                                        </button>
+                                    </div>
+
+                                    {showCreateOpenAiKeyForm && (
+                                        <form onSubmit={handleCreateOpenAiKey} className="mb-3 p-3 bg-slate-700/50 rounded space-y-2">
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1">Key Name</label>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        value={createKeyForm.name}
+                                                        onChange={(e) => setCreateKeyForm(prev => ({ ...prev, name: e.target.value }))}
+                                                        className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-xs"
+                                                        placeholder="e.g. Production"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1">Max Spend (USD)</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0.01"
+                                                        value={createKeyForm.max_spend_usd}
+                                                        onChange={(e) => setCreateKeyForm(prev => ({ ...prev, max_spend_usd: e.target.value }))}
+                                                        className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-xs"
+                                                        placeholder="e.g. 50.00"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-slate-400 mb-1">Grace Amount (USD)</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        value={createKeyForm.grace_amount_usd}
+                                                        onChange={(e) => setCreateKeyForm(prev => ({ ...prev, grace_amount_usd: e.target.value }))}
+                                                        className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-xs"
+                                                        placeholder="0.00 (none)"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 pt-1">
+                                                <button
+                                                    type="submit"
+                                                    disabled={openAiLoading}
+                                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 rounded text-xs disabled:opacity-50"
+                                                >
+                                                    {openAiLoading ? 'Creating...' : 'Create Key'}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowCreateOpenAiKeyForm(false)}
+                                                    className="px-3 py-1.5 bg-slate-600 hover:bg-slate-500 rounded text-xs"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
+
+                                    <div className="space-y-2">
+                                        {openAiKeys.length === 0 ? (
+                                            <p className="text-xs text-slate-500 text-center py-3">No API keys yet.</p>
+                                        ) : openAiKeys.map(key => (
+                                            <div
+                                                key={key.id}
+                                                className={`flex items-center justify-between px-3 py-2 rounded text-sm ${
+                                                    key.status === 'revoked' ? 'bg-slate-700/30 opacity-60' :
+                                                    key.status === 'suspended' ? 'bg-yellow-500/5 border border-yellow-500/20' :
+                                                    'bg-slate-700/50'
+                                                }`}
+                                            >
+                                                <div className="space-y-0.5 min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-medium truncate">{key.name}</span>
+                                                        <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                                            key.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
+                                                            key.status === 'suspended' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                            'bg-red-500/20 text-red-400'
+                                                        }`}>
+                                                            {key.status_label}
+                                                        </span>
+                                                        {key.grace_notified_at && key.status === 'active' && (
+                                                            <span className="px-1.5 py-0.5 rounded text-xs bg-orange-500/20 text-orange-400">Grace period</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-3 text-xs text-slate-400">
+                                                        <span>
+                                                            Spend: <span className="text-white">${parseFloat(key.spend_usd).toFixed(2)}</span>
+                                                            {key.max_spend_usd !== null && (
+                                                                <span className="text-slate-500"> / ${parseFloat(key.max_spend_usd).toFixed(2)}
+                                                                    {key.grace_amount_usd > 0 && (
+                                                                        <span className="text-slate-600"> (+${parseFloat(key.grace_amount_usd).toFixed(2)} grace)</span>
+                                                                    )}
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                        {key.last_used_at && (
+                                                            <span>Last used: {new Date(key.last_used_at).toLocaleDateString()}</span>
+                                                        )}
+                                                        {key.revoked_reason && (
+                                                            <span className="text-red-400">{key.revoked_reason}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1 ml-2 shrink-0">
+                                                    {key.status === 'suspended' && (
+                                                        <button
+                                                            onClick={() => handleReactivateOpenAiKey(key.id)}
+                                                            className="p-1.5 text-yellow-400 hover:bg-yellow-500/10 rounded"
+                                                            title="Reactivate key"
+                                                        >
+                                                            <RefreshCw className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
+                                                    {(key.status === 'active' || key.status === 'suspended') && (
+                                                        <button
+                                                            onClick={() => handleRevokeOpenAiKey(key.id)}
+                                                            className="p-1.5 text-red-400 hover:bg-red-500/10 rounded"
+                                                            title="Revoke key permanently"
+                                                        >
+                                                            <Ban className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-700">
+                                    <button
+                                        onClick={handleOpenAiGenerateInvoice}
+                                        className="px-3 py-1.5 text-xs bg-purple-600/20 text-purple-400 hover:bg-purple-600/30 rounded"
+                                    >
+                                        Generate Invoice
+                                    </button>
+                                    <button
+                                        onClick={handleOpenAiResetCycle}
+                                        className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 rounded text-slate-300"
+                                    >
+                                        Reset Cycle
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (!showOpenAiUsageLogs) fetchOpenAiUsageLogs();
+                                            setShowOpenAiUsageLogs(!showOpenAiUsageLogs);
+                                        }}
+                                        className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300"
+                                    >
+                                        <Activity className="w-3.5 h-3.5" />
+                                        {showOpenAiUsageLogs ? 'Hide Usage History' : 'Show Usage History'}
+                                    </button>
+                                </div>
+
+                                {/* Usage logs */}
+                                {showOpenAiUsageLogs && (
+                                    <div className="mt-2 overflow-x-auto">
+                                        {openAiUsageLogs.length > 0 ? (
+                                            <table className="w-full text-xs">
+                                                <thead>
+                                                    <tr className="text-slate-400 border-b border-slate-700">
+                                                        <th className="text-left py-2 pr-3">Date</th>
+                                                        <th className="text-left py-2 pr-3">Key</th>
+                                                        <th className="text-left py-2 pr-3">Model</th>
+                                                        <th className="text-right py-2 pr-3">Tokens</th>
+                                                        <th className="text-right py-2">Cost</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {openAiUsageLogs.map(log => (
+                                                        <tr key={log.id} className="border-b border-slate-700/50">
+                                                            <td className="py-1.5 pr-3 text-slate-300">{log.usage_date}</td>
+                                                            <td className="py-1.5 pr-3 text-slate-400">{log.api_key_name || '—'}</td>
+                                                            <td className="py-1.5 pr-3 text-slate-400 font-mono">{log.model || '—'}</td>
+                                                            <td className="py-1.5 pr-3 text-right">{log.total_tokens?.toLocaleString()}</td>
+                                                            <td className="py-1.5 text-right text-emerald-400">${log.cost_usd?.toFixed(4)}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        ) : (
+                                            <p className="text-xs text-slate-500 text-center py-3">No usage logs yet.</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

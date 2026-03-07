@@ -31,6 +31,12 @@ Schedule::command('anthropic:sync-usage')->dailyAt('02:00');
 // Generate Anthropic billing invoices daily at 3:00 AM (checks cycle end dates)
 Schedule::command('anthropic:generate-invoices')->dailyAt('03:00');
 
+// Sync OpenAI API usage data daily at 2:30 AM
+Schedule::command('openai:sync-usage')->dailyAt('02:30');
+
+// Generate OpenAI billing invoices daily at 3:30 AM
+Schedule::command('openai:generate-invoices')->dailyAt('03:30');
+
 // Refresh Xero OAuth tokens every 15 minutes
 Schedule::job(new RefreshXeroTokenJob)->everyFifteenMinutes();
 

@@ -55,49 +55,49 @@
     "/build/assets/route-admin-wwaxJFAI.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/CreateTicket.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/Dashboard.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoiceCreate.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoiceDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoiceEdit.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoicesList.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/ProjectDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/ProjectForm.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/ProjectsList.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/Settings.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/TicketDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/TicketsList.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/UserDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/UserForm.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/UsersList.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/Pages/Admin/Login.jsx": [
     "/build/assets/route-public-CBitcHF1.js"
@@ -136,34 +136,34 @@
     "/build/assets/route-discovery-BIK4yySN.js"
   ],
   "resources/js/Pages/Helpdesk/ChangePassword.jsx": [
-    "/build/assets/route-user-helpdesk-DdwUptfP.js"
+    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
   ],
   "resources/js/Pages/Helpdesk/CreateTicket.jsx": [
-    "/build/assets/route-user-helpdesk-DdwUptfP.js"
+    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
   ],
   "resources/js/Pages/Helpdesk/Dashboard.jsx": [
-    "/build/assets/route-user-helpdesk-DdwUptfP.js"
+    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
   ],
   "resources/js/Pages/Helpdesk/ForgotPassword.jsx": [
-    "/build/assets/route-user-helpdesk-DdwUptfP.js"
+    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
   ],
   "resources/js/Pages/Helpdesk/Login.jsx": [
-    "/build/assets/route-user-helpdesk-DdwUptfP.js"
+    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
   ],
   "resources/js/Pages/Helpdesk/Profile.jsx": [
-    "/build/assets/route-user-helpdesk-DdwUptfP.js"
+    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
   ],
   "resources/js/Pages/Helpdesk/ProjectDetail.jsx": [
-    "/build/assets/route-user-helpdesk-DdwUptfP.js"
+    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
   ],
   "resources/js/Pages/Helpdesk/ResetPassword.jsx": [
-    "/build/assets/route-user-helpdesk-DdwUptfP.js"
+    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
   ],
   "resources/js/Pages/Helpdesk/TicketDetail.jsx": [
-    "/build/assets/route-user-helpdesk-DdwUptfP.js"
+    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
   ],
   "resources/js/Pages/Helpdesk/TicketsList.jsx": [
-    "/build/assets/route-user-helpdesk-DdwUptfP.js"
+    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
   ],
   "resources/js/Pages/Home.jsx": [
     "/build/assets/route-public-CBitcHF1.js"
@@ -190,7 +190,7 @@
     "/build/assets/route-public-CBitcHF1.js"
   ],
   "resources/js/components/FileUploadProgress.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/components/Hero.jsx": [
     "/build/assets/route-public-CBitcHF1.js"
@@ -201,11 +201,11 @@
     "/build/assets/route-admin-articles-CbXnKHqn.js"
   ],
   "resources/js/components/LexicalMarkdownEditor.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/components/Logo.jsx": [],
   "resources/js/components/Markdown.jsx": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/components/SeoHead.jsx": [
     "/build/assets/route-blog-CWQU3YQn.js"
@@ -214,7 +214,7 @@
     "/build/assets/route-public-CBitcHF1.js"
   ],
   "resources/js/hooks/useFileUpload.js": [
-    "/build/assets/route-admin-helpdesk-BFCZsZn6.js"
+    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
   ],
   "resources/js/ssr.jsx": []
 }
