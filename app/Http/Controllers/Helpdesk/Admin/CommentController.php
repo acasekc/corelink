@@ -113,7 +113,9 @@ class CommentController extends Controller
                 'human_size' => $attachment->human_size,
                 'is_image' => $attachment->isImage(),
                 'url' => route('helpdesk.attachments.download', $attachment),
-            ]),
+            ] + ($attachment->isImage() ? [
+                'view_url' => $attachment->viewUrl(),
+            ] : [])),
             'created_at' => $comment->created_at->toIso8601String(),
         ];
     }

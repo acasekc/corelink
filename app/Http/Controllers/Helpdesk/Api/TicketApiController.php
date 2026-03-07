@@ -169,13 +169,7 @@ class TicketApiController extends Controller
                     'size' => $size,
                 ]);
 
-                $attachmentData[] = [
-                    'id' => $attachment->id,
-                    'filename' => $attachment->filename,
-                    'mime_type' => $attachment->mime_type,
-                    'size' => $attachment->size,
-                    'is_image' => $attachment->isImage(),
-                ];
+                $attachmentData[] = $this->formatAttachment($attachment);
             }
         }
 
@@ -307,7 +301,9 @@ class TicketApiController extends Controller
             'mime_type' => $attachment->mime_type,
             'size' => $attachment->size,
             'is_image' => $attachment->isImage(),
-            'url' => $attachment->url,
-        ];
+            'url' => $attachment->downloadUrl('helpdesk.api.attachments.download'),
+        ] + ($attachment->isImage()
+            ? ['view_url' => $attachment->viewUrl('helpdesk.api.attachments.view')]
+            : []);
     }
 }

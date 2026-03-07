@@ -132,7 +132,9 @@ class CommentController extends Controller
                 'human_size' => $this->humanFileSize($a->size),
                 'is_image' => str_starts_with($a->mime_type, 'image/'),
                 'url' => route('helpdesk.attachments.download', $a),
-            ])->toArray(),
+            ] + ($a->isImage() ? [
+                'view_url' => $a->viewUrl(),
+            ] : []))->toArray(),
             'created_at' => $comment->created_at,
             'updated_at' => $comment->updated_at,
         ];

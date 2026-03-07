@@ -104,15 +104,7 @@ class AttachmentController extends Controller
                 'size' => $size,
             ]);
 
-            $attachments[] = [
-                'id' => $attachment->id,
-                'filename' => $attachment->filename,
-                'mime_type' => $attachment->mime_type,
-                'size' => $attachment->size,
-                'human_size' => $attachment->human_size,
-                'is_image' => $attachment->isImage(),
-                'url' => route('helpdesk.attachments.download', $attachment),
-            ];
+            $attachments[] = $this->formatAttachment($attachment);
         }
 
         return response()->json([
@@ -124,17 +116,18 @@ class AttachmentController extends Controller
     /**
      * Download an attachment
      */
-    public function download(Request $request, Attachment $attachment): StreamedResponse|JsonResponse
+    public function download(Request $request, int $attachment): StreamedResponse|JsonResponse
     {
-        $user = $request->user();
+        $attachment = Attachment::find($attachment);
 
-        // Check if user can access the parent ticket
-        $ticket = $attachment->attachable instanceof Ticket
-            ? $attachment->attachable
-            : $attachment->attachable->ticket;
+        if (! $attachment) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
 
-        if (! $user->canViewTicket($ticket)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        $authorization = $this->authorizeAttachmentAccess($request, $attachment);
+
+        if ($authorization instanceof JsonResponse) {
+            return $authorization;
         }
 
         if (! $attachment->exists()) {
@@ -149,10 +142,51 @@ class AttachmentController extends Controller
     }
 
     /**
+     * View an image attachment inline.
+     */
+    public function view(Request $request, int $attachment): StreamedResponse|JsonResponse
+    {
+        $attachment = Attachment::find($attachment);
+
+        if (! $attachment) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        $authorization = $this->authorizeAttachmentAccess($request, $attachment);
+
+        if ($authorization instanceof JsonResponse) {
+            return $authorization;
+        }
+
+        if (! $attachment->isImage()) {
+            return response()->json(['message' => 'Attachment is not an image'], 422);
+        }
+
+        if (! $attachment->exists()) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        return Storage::disk($attachment->disk)->response(
+            $attachment->path,
+            $attachment->filename,
+            [
+                'Content-Type' => $attachment->mime_type,
+                'Content-Disposition' => 'inline; filename="'.$attachment->filename.'"',
+            ]
+        );
+    }
+
+    /**
      * Delete an attachment
      */
-    public function destroy(Request $request, Attachment $attachment): JsonResponse
+    public function destroy(Request $request, int $attachment): JsonResponse
     {
+        $attachment = Attachment::find($attachment);
+
+        if (! $attachment) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
         $user = $request->user();
 
         // Only the uploader or an admin can delete
@@ -179,18 +213,66 @@ class AttachmentController extends Controller
         $attachments = $ticket->attachments()->with('uploader:id,name')->get();
 
         return response()->json([
-            'data' => $attachments->map(fn ($a) => [
-                'id' => $a->id,
-                'filename' => $a->filename,
-                'mime_type' => $a->mime_type,
-                'size' => $a->size,
-                'human_size' => $a->human_size,
-                'is_image' => $a->isImage(),
-                'url' => route('helpdesk.attachments.download', $a),
+            'data' => $attachments->map(fn ($a) => $this->formatAttachment($a) + [
                 'uploaded_by' => $a->uploader?->name,
                 'created_at' => $a->created_at,
             ]),
         ]);
+    }
+
+    /**
+     * Build a consistent attachment response payload.
+     *
+     * @return array<string, mixed>
+     */
+    private function formatAttachment(Attachment $attachment): array
+    {
+        return [
+            'id' => $attachment->id,
+            'filename' => $attachment->filename,
+            'mime_type' => $attachment->mime_type,
+            'size' => $attachment->size,
+            'human_size' => $attachment->human_size,
+            'is_image' => $attachment->isImage(),
+            'url' => $attachment->downloadUrl(),
+        ] + ($attachment->isImage() ? ['view_url' => $attachment->viewUrl()] : []);
+    }
+
+    private function authorizeAttachmentAccess(Request $request, Attachment $attachment): ?JsonResponse
+    {
+        $project = $request->attributes->get('helpdesk_project');
+        if ($project) {
+            $attachmentBelongsToProject = Ticket::query()
+                ->where('project_id', $project->id)
+                ->where(function ($query) use ($attachment) {
+                    $query->whereHas('attachments', fn ($attachmentQuery) => $attachmentQuery->whereKey($attachment->id))
+                        ->orWhereHas('comments.attachments', fn ($attachmentQuery) => $attachmentQuery->whereKey($attachment->id));
+                })
+                ->exists();
+
+            if (! $attachmentBelongsToProject) {
+                return response()->json(['message' => 'File not found'], 404);
+            }
+
+            return null;
+        }
+
+        $ticket = Ticket::query()
+            ->whereHas('attachments', fn ($query) => $query->whereKey($attachment->id))
+            ->orWhereHas('comments.attachments', fn ($query) => $query->whereKey($attachment->id))
+            ->first();
+
+        if (! $ticket) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
+        $user = $request->user();
+
+        if (! $user || ! $user->canViewTicket($ticket)) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return null;
     }
 
     /**

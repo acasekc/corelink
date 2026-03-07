@@ -150,11 +150,17 @@
       "filename": "screenshot.png",
       "mime_type": "image/png",
       "size": 45678,
-      "is_image": true
+            "is_image": true,
+            "url": "https://corelink.dev/api/helpdesk/v1/attachments/1/download",
+            "view_url": "https://corelink.dev/api/helpdesk/v1/attachments/1/view"
     }
   ],
   "message": "Ticket created successfully"
 }</code></pre>
+
+                                <div class="mt-4 rounded-lg border border-slate-700 bg-slate-900/60 p-4 text-sm text-slate-300">
+                                        <p><strong class="text-white">Attachment URLs:</strong> <code class="text-amber-400">url</code> is the download endpoint for any attachment. <code class="text-amber-400">view_url</code> is only included for image attachments and serves the file inline for preview/display.</p>
+                                </div>
             </div>
 
             <!-- List Tickets -->
@@ -232,7 +238,8 @@
           "mime_type": "image/png",
           "size": 45678,
           "is_image": true,
-          "url": "https://corelink.dev/helpdesk/attachments/1/download"
+                    "url": "https://corelink.dev/api/helpdesk/v1/attachments/1/download",
+                    "view_url": "https://corelink.dev/api/helpdesk/v1/attachments/1/view"
         }
       ],
       "created_at": "2026-01-19T10:30:00+00:00",
@@ -279,7 +286,8 @@
         "mime_type": "image/png",
         "size": 45678,
         "is_image": true,
-        "url": "https://corelink.dev/helpdesk/attachments/1/download"
+                "url": "https://corelink.dev/api/helpdesk/v1/attachments/1/download",
+                "view_url": "https://corelink.dev/api/helpdesk/v1/attachments/1/view"
       }
     ],
     "comments": [
@@ -295,7 +303,7 @@
             "mime_type": "text/plain",
             "size": 1234,
             "is_image": false,
-            "url": "https://corelink.dev/helpdesk/attachments/2/download"
+                        "url": "https://corelink.dev/api/helpdesk/v1/attachments/2/download"
           }
         ],
         "created_at": "2026-01-19T11:00:00+00:00"
@@ -332,6 +340,21 @@
                     <code class="text-lg text-white">/tickets/{id}/comments</code>
                 </div>
                 <p class="text-slate-300">Get all public comments on a ticket.</p>
+            </div>
+
+            <div class="mb-10 bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded">GET</span>
+                    <code class="text-lg text-white">/attachments/{id}/view</code>
+                </div>
+                <p class="text-slate-300 mb-4">Render an image attachment inline. This endpoint is only valid for image attachments and requires the same <code class="text-amber-400">X-API-Key</code> authentication as the rest of the helpdesk API.</p>
+
+                <h4 class="text-white font-semibold mb-3">Notes</h4>
+                <ul class="list-disc space-y-2 pl-5 text-slate-300">
+                    <li>Use <code class="text-amber-400">url</code> to download any attachment.</li>
+                    <li>Use <code class="text-amber-400">view_url</code> only when <code class="text-amber-400">is_image</code> is <code>true</code>.</li>
+                    <li>Non-image files return <code class="text-amber-400">422 Unprocessable Entity</code> from this endpoint.</li>
+                </ul>
             </div>
 
             <div class="mb-10 bg-slate-800/50 border border-slate-700 rounded-xl p-6">

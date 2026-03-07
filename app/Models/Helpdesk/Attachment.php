@@ -65,7 +65,27 @@ class Attachment extends Model
      */
     public function getUrlAttribute(): string
     {
-        return route('helpdesk.attachments.download', $this);
+        return $this->downloadUrl();
+    }
+
+    /**
+     * Get the download URL for the attachment.
+     */
+    public function downloadUrl(string $routeName = 'helpdesk.attachments.download'): string
+    {
+        return route($routeName, $this);
+    }
+
+    /**
+     * Get the inline view URL for image attachments.
+     */
+    public function viewUrl(string $routeName = 'helpdesk.attachments.view'): ?string
+    {
+        if (! $this->isImage()) {
+            return null;
+        }
+
+        return route($routeName, $this);
     }
 
     /**

@@ -52,6 +52,10 @@ Route::prefix('api/helpdesk/v1')->middleware('helpdesk.api-key')->group(function
     Route::get('tickets/{ticket}', [TicketApiController::class, 'show']);
     Route::patch('tickets/{ticket}', [TicketApiController::class, 'update']);
 
+    // Attachment viewing
+    Route::get('attachments/{attachment}/download', [AttachmentController::class, 'download'])->name('helpdesk.api.attachments.download');
+    Route::get('attachments/{attachment}/view', [AttachmentController::class, 'view'])->name('helpdesk.api.attachments.view');
+
     // Comments
     Route::get('tickets/{ticket}/comments', [CommentApiController::class, 'index']);
     Route::post('tickets/{ticket}/comments', [CommentApiController::class, 'store']);
@@ -102,6 +106,7 @@ Route::prefix('api/helpdesk/user')->middleware(['web', 'auth', 'force-password-c
     Route::post('tickets/{ticket}/attachments', [AttachmentController::class, 'uploadToTicket']);
     Route::post('comments/{comment}/attachments', [AttachmentController::class, 'uploadToComment']);
     Route::get('attachments/{attachment}/download', [AttachmentController::class, 'download'])->name('helpdesk.attachments.download');
+    Route::get('attachments/{attachment}/view', [AttachmentController::class, 'view'])->name('helpdesk.attachments.view');
     Route::delete('attachments/{attachment}', [AttachmentController::class, 'destroy']);
 
     // Ticket Watchers

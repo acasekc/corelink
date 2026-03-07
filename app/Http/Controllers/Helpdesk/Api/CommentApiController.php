@@ -36,8 +36,10 @@ class CommentApiController extends Controller
                     'mime_type' => $att->mime_type,
                     'size' => $att->size,
                     'is_image' => $att->isImage(),
-                    'url' => $att->url,
-                ])->values()->all(),
+                    'url' => $att->downloadUrl('helpdesk.api.attachments.download'),
+                ] + ($att->isImage() ? [
+                    'view_url' => $att->viewUrl('helpdesk.api.attachments.view'),
+                ] : []))->values()->all(),
                 'created_at' => $comment->created_at->toIso8601String(),
             ]),
         ]);
