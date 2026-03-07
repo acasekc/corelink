@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Ticket,
@@ -9,6 +9,7 @@ import {
     Filter,
     ChevronLeft,
     ChevronRight,
+    RefreshCw,
 } from 'lucide-react';
 
 export default function HelpdeskUserTicketsList() {
@@ -21,6 +22,10 @@ export default function HelpdeskUserTicketsList() {
     const [projects, setProjects] = useState([]);
     const [statuses, setStatuses] = useState([]);
     const [priorities, setPriorities] = useState([]);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [bulkStatuses, setBulkStatuses] = useState([]);
+    const [bulkStatusId, setBulkStatusId] = useState('');
+    const [updatingStatus, setUpdatingStatus] = useState(false);
 
     const [filters, setFilters] = useState({
         status: searchParams.get('status') || '',
@@ -86,6 +91,7 @@ export default function HelpdeskUserTicketsList() {
                 const result = await response.json();
                 setTickets(result.data || []);
                 setMeta(result.meta || {});
+                setSelectedIds([]);
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -95,6 +101,48 @@ export default function HelpdeskUserTicketsList() {
 
         fetchTickets();
     }, [filters, searchParams, navigate]);
+
+    const selectedTickets = useMemo(
+        () => tickets.filter((ticket) => selectedIds.includes(ticket.id)),
+        [tickets, selectedIds]
+    );
+
+    const selectedProjectIds = useMemo(
+        () => [...new Set(selectedTickets.map((ticket) => ticket.project?.id).filter(Boolean))],
+        [selectedTickets]
+    );
+
+    const selectedProjectId = selectedProjectIds.length === 1 ? selectedProjectIds[0] : null;
+    const selectedProject = projects.find((project) => project.id === selectedProjectId);
+    const canBulkChangeStatus = selectedProject?.role === 'owner';
+
+    useEffect(() => {
+        const fetchBulkStatuses = async () => {
+            if (!selectedProjectId || !canBulkChangeStatus) {
+                setBulkStatuses([]);
+                setBulkStatusId('');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/helpdesk/user/projects/${selectedProjectId}/reference-data`, {
+                    credentials: 'include',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch statuses');
+                }
+
+                const data = await response.json();
+                setBulkStatuses(data.data?.statuses || []);
+            } catch (err) {
+                console.error('Failed to fetch bulk statuses:', err);
+                setBulkStatuses([]);
+            }
+        };
+
+        fetchBulkStatuses();
+    }, [selectedProjectId, canBulkChangeStatus]);
 
     const handleFilterChange = (key, value) => {
         const newFilters = { ...filters, [key]: value };
@@ -119,6 +167,69 @@ export default function HelpdeskUserTicketsList() {
             window.location.href = '/helpdesk/login';
         } catch (err) {
             console.error('Logout failed:', err);
+        }
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === tickets.length) {
+            setSelectedIds([]);
+            return;
+        }
+
+        setSelectedIds(tickets.map((ticket) => ticket.id));
+    };
+
+    const toggleSelect = (id) => {
+        setSelectedIds((prev) => (
+            prev.includes(id) ? prev.filter((currentId) => currentId !== id) : [...prev, id]
+        ));
+    };
+
+    const handleBulkStatusUpdate = async () => {
+        if (!canBulkChangeStatus || !selectedProjectId || !bulkStatusId || selectedIds.length === 0) {
+            return;
+        }
+
+        setUpdatingStatus(true);
+        try {
+            const response = await fetch('/api/helpdesk/user/tickets/bulk-status', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+                body: JSON.stringify({ ids: selectedIds, status_id: Number(bulkStatusId) }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to update ticket statuses');
+            }
+
+            setBulkStatusId('');
+            setSelectedIds([]);
+
+            const params = new URLSearchParams();
+            if (filters.status) params.append('status', filters.status);
+            if (filters.priority) params.append('priority', filters.priority);
+            if (filters.project) params.append('project', filters.project);
+            if (filters.search) params.append('search', filters.search);
+            if (filters.assigned_to_me) params.append('assigned_to_me', '1');
+            params.append('page', searchParams.get('page') || '1');
+
+            const refreshed = await fetch(`/api/helpdesk/user/tickets?${params}`, {
+                credentials: 'include',
+            });
+            const refreshedResult = await refreshed.json();
+            setTickets(refreshedResult.data || []);
+            setMeta(refreshedResult.meta || {});
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setUpdatingStatus(false);
         }
     };
 
@@ -198,7 +309,7 @@ export default function HelpdeskUserTicketsList() {
                                 ))}
                             </select>
 
-                            <div className="relative flex-1 min-w-[200px]">
+                            <div className="relative flex-1 min-w-50">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                 <input
                                     type="text"
@@ -229,10 +340,60 @@ export default function HelpdeskUserTicketsList() {
                             </Link>
                         </div>
                     ) : (
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+                        <>
+                            {selectedIds.length > 0 && (
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-4 flex items-center justify-between gap-4">
+                                    <div>
+                                        <p className="text-slate-300">
+                                            {selectedIds.length} ticket{selectedIds.length !== 1 ? 's' : ''} selected
+                                        </p>
+                                        {!selectedProjectId && (
+                                            <p className="mt-1 text-sm text-amber-400">
+                                                Bulk status updates require all selected tickets to belong to the same project.
+                                            </p>
+                                        )}
+                                        {selectedProjectId && !canBulkChangeStatus && (
+                                            <p className="mt-1 text-sm text-amber-400">
+                                                Only project owners can bulk change ticket statuses.
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <select
+                                            value={bulkStatusId}
+                                            onChange={(e) => setBulkStatusId(e.target.value)}
+                                            disabled={!selectedProjectId || !canBulkChangeStatus || updatingStatus}
+                                            className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                                        >
+                                            <option value="">Change status...</option>
+                                            {bulkStatuses.map((status) => (
+                                                <option key={status.id} value={status.id}>{status.title}</option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            onClick={handleBulkStatusUpdate}
+                                            disabled={!selectedProjectId || !canBulkChangeStatus || !bulkStatusId || updatingStatus}
+                                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg transition"
+                                        >
+                                            <RefreshCw className="w-4 h-4" />
+                                            {updatingStatus ? 'Updating...' : 'Update Status'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
                             <table className="w-full">
                                 <thead className="bg-slate-800">
                                     <tr>
+                                        <th className="px-4 py-3 w-10">
+                                            <input
+                                                type="checkbox"
+                                                checked={tickets.length > 0 && selectedIds.length === tickets.length}
+                                                onChange={toggleSelectAll}
+                                                className="w-4 h-4 rounded border-slate-500 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                                            />
+                                        </th>
                                         <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Ticket</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Project</th>
                                         <th className="px-4 py-3 text-left text-sm font-medium text-slate-400">Status</th>
@@ -243,7 +404,15 @@ export default function HelpdeskUserTicketsList() {
                                 </thead>
                                 <tbody className="divide-y divide-slate-700">
                                     {tickets.map((ticket) => (
-                                        <tr key={ticket.id} className="hover:bg-slate-800/50">
+                                        <tr key={ticket.id} className={`hover:bg-slate-800/50 ${selectedIds.includes(ticket.id) ? 'bg-slate-700/20' : ''}`}>
+                                            <td className="px-4 py-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedIds.includes(ticket.id)}
+                                                    onChange={() => toggleSelect(ticket.id)}
+                                                    className="w-4 h-4 rounded border-slate-500 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                                                />
+                                            </td>
                                             <td className="px-4 py-3">
                                                 <Link
                                                     to={`/helpdesk/tickets/${ticket.id}`}
@@ -323,7 +492,8 @@ export default function HelpdeskUserTicketsList() {
                                     </div>
                                 </div>
                             )}
-                        </div>
+                            </div>
+                        </>
                     )}
                 </div>
             </main>

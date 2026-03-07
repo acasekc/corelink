@@ -92,6 +92,7 @@ Route::prefix('api/helpdesk/user')->middleware(['web', 'auth', 'force-password-c
     // Tickets
     Route::get('tickets', [UserTicketController::class, 'index']);
     Route::post('tickets', [UserTicketController::class, 'store']);
+    Route::post('tickets/bulk-status', [UserTicketController::class, 'bulkChangeStatus']);
     Route::get('tickets/{ticket}', [UserTicketController::class, 'show']);
     Route::patch('tickets/{ticket}', [UserTicketController::class, 'update']);
 
@@ -151,6 +152,7 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     Route::patch('tickets/{ticket}', [TicketController::class, 'update']);
     Route::delete('tickets/{ticket}', [TicketController::class, 'destroy']);
     Route::post('tickets/bulk-delete', [TicketController::class, 'bulkDestroy']);
+    Route::post('tickets/bulk-status', [TicketController::class, 'bulkChangeStatus']);
     Route::post('tickets/{ticket}/assign', [TicketController::class, 'assign']);
     Route::post('tickets/{ticket}/status', [TicketController::class, 'changeStatus']);
     Route::post('tickets/{ticket}/priority', [TicketController::class, 'changePriority']);

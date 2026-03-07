@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Ticket, ArrowLeft, LogOut, Search, Filter, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
+import { Ticket, ArrowLeft, LogOut, Search, Filter, ChevronLeft, ChevronRight, Plus, Trash2, RefreshCw } from 'lucide-react';
 
 const TicketsList = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -10,6 +10,9 @@ const TicketsList = () => {
     const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
     const [selectedIds, setSelectedIds] = useState([]);
     const [deleting, setDeleting] = useState(false);
+    const [bulkStatuses, setBulkStatuses] = useState([]);
+    const [bulkStatusId, setBulkStatusId] = useState('');
+    const [updatingStatus, setUpdatingStatus] = useState(false);
     const [filters, setFilters] = useState({
         status: searchParams.get('status') || '',
         priority: searchParams.get('priority') || '',
@@ -25,6 +28,46 @@ const TicketsList = () => {
     useEffect(() => {
         fetchTickets();
     }, [searchParams]);
+
+    const selectedTickets = useMemo(
+        () => tickets.filter((ticket) => selectedIds.includes(ticket.id)),
+        [tickets, selectedIds]
+    );
+
+    const selectedProjectIds = useMemo(
+        () => [...new Set(selectedTickets.map((ticket) => ticket.project?.id).filter(Boolean))],
+        [selectedTickets]
+    );
+
+    const selectedProjectId = selectedProjectIds.length === 1 ? selectedProjectIds[0] : null;
+
+    useEffect(() => {
+        const fetchBulkStatuses = async () => {
+            if (!selectedProjectId) {
+                setBulkStatuses([]);
+                setBulkStatusId('');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/helpdesk/admin/statuses?project_id=${selectedProjectId}`, {
+                    credentials: 'same-origin',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch statuses');
+                }
+
+                const data = await response.json();
+                setBulkStatuses(data.data || []);
+            } catch (err) {
+                console.error('Failed to fetch bulk statuses:', err);
+                setBulkStatuses([]);
+            }
+        };
+
+        fetchBulkStatuses();
+    }, [selectedProjectId]);
 
     const fetchReferenceData = async () => {
         try {
@@ -74,6 +117,7 @@ const TicketsList = () => {
             if (!response.ok) throw new Error('Failed to fetch tickets');
             const data = await response.json();
             setTickets(data.data || []);
+            setSelectedIds([]);
             setPagination({
                 current_page: data.current_page || 1,
                 last_page: data.last_page || 1,
@@ -164,6 +208,39 @@ const TicketsList = () => {
             alert(err.message);
         } finally {
             setDeleting(false);
+        }
+    };
+
+    const handleBulkStatusUpdate = async () => {
+        if (selectedIds.length === 0 || !bulkStatusId || !selectedProjectId) return;
+
+        setUpdatingStatus(true);
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/api/helpdesk/admin/tickets/bulk-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ ids: selectedIds, status_id: Number(bulkStatusId) }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to update ticket statuses');
+            }
+
+            setBulkStatusId('');
+            setSelectedIds([]);
+            fetchTickets();
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setUpdatingStatus(false);
         }
     };
 
@@ -283,17 +360,47 @@ const TicketsList = () => {
                     {/* Bulk Actions */}
                     {selectedIds.length > 0 && (
                         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-4 flex items-center justify-between">
-                            <span className="text-slate-300">
-                                {selectedIds.length} ticket{selectedIds.length !== 1 ? 's' : ''} selected
-                            </span>
-                            <button
-                                onClick={handleBulkDelete}
-                                disabled={deleting}
-                                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                                {deleting ? 'Deleting...' : 'Delete Selected'}
-                            </button>
+                            <div>
+                                <span className="text-slate-300">
+                                    {selectedIds.length} ticket{selectedIds.length !== 1 ? 's' : ''} selected
+                                </span>
+                                {!selectedProjectId && (
+                                    <p className="mt-1 text-sm text-amber-400">
+                                        Bulk status updates require all selected tickets to belong to the same project.
+                                    </p>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <select
+                                    value={bulkStatusId}
+                                    onChange={(e) => setBulkStatusId(e.target.value)}
+                                    disabled={!selectedProjectId || updatingStatus}
+                                    className="bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                                >
+                                    <option value="">Change status...</option>
+                                    {bulkStatuses.map((status) => (
+                                        <option key={status.id} value={status.id}>
+                                            {status.title}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    onClick={handleBulkStatusUpdate}
+                                    disabled={!selectedProjectId || !bulkStatusId || updatingStatus}
+                                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg transition"
+                                >
+                                    <RefreshCw className="w-4 h-4" />
+                                    {updatingStatus ? 'Updating...' : 'Update Status'}
+                                </button>
+                                <button
+                                    onClick={handleBulkDelete}
+                                    disabled={deleting}
+                                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    {deleting ? 'Deleting...' : 'Delete Selected'}
+                                </button>
+                            </div>
                         </div>
                     )}
 

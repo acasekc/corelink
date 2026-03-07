@@ -272,6 +272,70 @@ class TicketController extends Controller
         ]);
     }
 
+    public function bulkChangeStatus(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer', 'exists:helpdesk_tickets,id'],
+            'status_id' => ['required', 'integer', 'exists:helpdesk_ticket_statuses,id'],
+        ]);
+
+        $tickets = Ticket::with(['project', 'status'])
+            ->whereIn('id', $validated['ids'])
+            ->get();
+
+        $projectIds = $tickets->pluck('project_id')->unique();
+
+        if ($projectIds->count() !== 1) {
+            return response()->json([
+                'message' => 'Bulk status updates require all selected tickets to belong to the same project',
+            ], 422);
+        }
+
+        $projectId = (int) $projectIds->first();
+        $newStatus = TicketStatus::query()
+            ->where('id', $validated['status_id'])
+            ->where(function ($query) use ($projectId) {
+                $query->where('project_id', $projectId)
+                    ->orWhereNull('project_id');
+            })
+            ->first();
+
+        if (! $newStatus) {
+            return response()->json([
+                'message' => 'The selected status is not available for these tickets',
+            ], 422);
+        }
+
+        $notificationService = app(\App\Services\Helpdesk\TicketNotificationService::class);
+        $changedCount = 0;
+
+        foreach ($tickets as $ticket) {
+            if ($ticket->status_id === $newStatus->id) {
+                continue;
+            }
+
+            $oldStatus = $ticket->status;
+            $ticket->update(['status_id' => $newStatus->id]);
+            $ticket->logActivity('status_changed', $oldStatus?->title, $newStatus->title, $user?->id);
+            $notificationService->notifyStatusChanged($ticket, $oldStatus, $newStatus);
+            $changedCount++;
+        }
+
+        return response()->json([
+            'message' => "{$changedCount} ticket(s) updated successfully",
+            'count' => $changedCount,
+            'status' => [
+                'id' => $newStatus->id,
+                'title' => $newStatus->title,
+                'slug' => $newStatus->slug,
+                'color' => $newStatus->bg_color,
+            ],
+        ]);
+    }
+
     public function assign(Request $request, Ticket $ticket): JsonResponse
     {
         $validated = $request->validate([
