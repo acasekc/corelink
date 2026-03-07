@@ -2,7 +2,6 @@
 
 namespace App\Services\Helpdesk;
 
-use App\Mail\Helpdesk\NewTicketNotification;
 use App\Mail\Helpdesk\UserWelcome;
 use App\Models\Helpdesk\Project;
 use App\Models\Helpdesk\Ticket;
@@ -11,6 +10,8 @@ use Illuminate\Support\Facades\Mail;
 
 class NotificationService
 {
+    public function __construct(private NotificationDigestService $notificationDigestService) {}
+
     /**
      * Notify project staff about a new ticket
      */
@@ -24,9 +25,13 @@ class NotificationService
             ->wherePivotIn('role', ['owner', 'manager', 'agent'])
             ->get();
 
-        foreach ($usersToNotify as $user) {
-            Mail::to($user->email)->queue(new NewTicketNotification($ticket));
-        }
+        $recipients = $usersToNotify
+            ->pluck('email')
+            ->filter()
+            ->values()
+            ->all();
+
+        $this->notificationDigestService->queueNewTicket($ticket, $recipients);
     }
 
     /**

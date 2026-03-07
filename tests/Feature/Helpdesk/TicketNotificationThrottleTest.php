@@ -2,9 +2,10 @@
 
 namespace Tests\Feature\Helpdesk;
 
-use App\Mail\Helpdesk\TicketCommentAdded;
-use App\Mail\Helpdesk\TicketStatusChanged;
+use App\Jobs\Helpdesk\SendNotificationDigestJob;
+use App\Mail\Helpdesk\TicketActivityDigest;
 use App\Models\Helpdesk\Comment;
+use App\Models\Helpdesk\NotificationDigest;
 use App\Models\Helpdesk\Project;
 use App\Models\Helpdesk\Ticket;
 use App\Models\Helpdesk\TicketPriority;
@@ -12,8 +13,8 @@ use App\Models\Helpdesk\TicketStatus;
 use App\Models\Helpdesk\TicketType;
 use App\Services\Helpdesk\TicketNotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class TicketNotificationThrottleTest extends TestCase
@@ -58,53 +59,61 @@ class TicketNotificationThrottleTest extends TestCase
         ]);
 
         Mail::fake();
+        Queue::fake();
     }
 
-    public function test_first_notification_is_sent(): void
+    public function test_status_change_creates_digest_job_and_event(): void
+    {
+        config(['helpdesk.notification_digest_delay_minutes' => 10]);
+
+        $service = app(TicketNotificationService::class);
+
+        $service->notifyStatusChanged($this->ticket, $this->openStatus, $this->closedStatus);
+
+        Queue::assertPushed(SendNotificationDigestJob::class, 1);
+
+        $digest = NotificationDigest::query()
+            ->with('events')
+            ->where('recipient_email', 'submitter@example.com')
+            ->first();
+
+        $this->assertNotNull($digest);
+        $this->assertSame(1, $digest->events->count());
+        $this->assertSame('status_changed', $digest->events->first()->event_type);
+        $this->assertSame('Closed', $digest->events->first()->payload['new_status_title']);
+    }
+
+    public function test_status_change_and_comment_share_a_single_digest(): void
     {
         $service = app(TicketNotificationService::class);
 
         $service->notifyStatusChanged($this->ticket, $this->openStatus, $this->closedStatus);
 
-        Mail::assertQueued(TicketStatusChanged::class);
+        $comment = Comment::create([
+            'ticket_id' => $this->ticket->id,
+            'content' => 'Test comment',
+            'is_internal' => false,
+            'submitter_name' => 'Admin User',
+            'submitter_email' => 'admin@example.com',
+        ]);
+
+        $service->notifyCommentAdded($this->ticket, $comment);
+
+        Queue::assertPushed(SendNotificationDigestJob::class, 1);
+
+        $digest = NotificationDigest::query()
+            ->with('events')
+            ->where('recipient_email', 'submitter@example.com')
+            ->firstOrFail();
+
+        $this->assertSame(2, $digest->events->count());
+        $this->assertSame(['status_changed', 'comment_added'], $digest->events->pluck('event_type')->all());
     }
 
-    public function test_second_notification_within_throttle_window_is_blocked(): void
+    public function test_multiple_tickets_for_same_recipient_share_one_digest(): void
     {
         $service = app(TicketNotificationService::class);
 
-        // First notification should go through
-        $service->notifyStatusChanged($this->ticket, $this->openStatus, $this->closedStatus);
-
-        // Second notification within 5 minutes should be blocked
-        $service->notifyStatusChanged($this->ticket, $this->closedStatus, $this->openStatus);
-
-        // Only one email should be queued
-        Mail::assertQueued(TicketStatusChanged::class, 1);
-    }
-
-    public function test_notification_after_throttle_expires_is_sent(): void
-    {
-        $service = app(TicketNotificationService::class);
-
-        // First notification
-        $service->notifyStatusChanged($this->ticket, $this->openStatus, $this->closedStatus);
-
-        // Clear the cache to simulate time passing
-        Cache::flush();
-
-        // Second notification should now go through
-        $service->notifyStatusChanged($this->ticket, $this->closedStatus, $this->openStatus);
-
-        // Both emails should be queued
-        Mail::assertQueued(TicketStatusChanged::class, 2);
-    }
-
-    public function test_different_tickets_can_send_notifications_simultaneously(): void
-    {
-        $service = app(TicketNotificationService::class);
-
-        // Create another ticket
         $ticket2 = Ticket::create([
             'project_id' => $this->project->id,
             'number' => 2,
@@ -117,38 +126,21 @@ class TicketNotificationThrottleTest extends TestCase
             'submitter_email' => 'submitter@example.com',
         ]);
 
-        // Notifications for both tickets should go through
         $service->notifyStatusChanged($this->ticket, $this->openStatus, $this->closedStatus);
         $service->notifyStatusChanged($ticket2, $this->openStatus, $this->closedStatus);
 
-        Mail::assertQueued(TicketStatusChanged::class, 2);
+        Queue::assertPushed(SendNotificationDigestJob::class, 1);
+
+        $digest = NotificationDigest::query()
+            ->with('events')
+            ->where('recipient_email', 'submitter@example.com')
+            ->firstOrFail();
+
+        $this->assertSame(2, $digest->events->count());
+        $this->assertEqualsCanonicalizing([$this->ticket->id, $ticket2->id], $digest->events->pluck('ticket_id')->all());
     }
 
-    public function test_comment_notification_is_throttled_after_status_change(): void
-    {
-        $service = app(TicketNotificationService::class);
-
-        // Send status change notification first
-        $service->notifyStatusChanged($this->ticket, $this->openStatus, $this->closedStatus);
-
-        // Create a comment
-        $comment = Comment::create([
-            'ticket_id' => $this->ticket->id,
-            'content' => 'Test comment',
-            'is_internal' => false,
-            'submitter_name' => 'Admin User',
-            'submitter_email' => 'admin@example.com',
-        ]);
-
-        // Comment notification should be blocked (same ticket, same recipient within window)
-        $service->notifyCommentAdded($this->ticket, $comment);
-
-        // Only the status change email should be queued
-        Mail::assertQueued(TicketStatusChanged::class, 1);
-        Mail::assertNotQueued(TicketCommentAdded::class);
-    }
-
-    public function test_internal_comment_does_not_send_notification(): void
+    public function test_internal_comment_does_not_create_a_digest_event(): void
     {
         $service = app(TicketNotificationService::class);
 
@@ -162,6 +154,42 @@ class TicketNotificationThrottleTest extends TestCase
 
         $service->notifyCommentAdded($this->ticket, $comment);
 
-        Mail::assertNotQueued(TicketCommentAdded::class);
+        Queue::assertNothingPushed();
+        $this->assertDatabaseCount('helpdesk_notification_digests', 0);
+    }
+
+    public function test_digest_job_sends_combined_email_and_marks_digest_sent(): void
+    {
+        config(['helpdesk.notification_digest_delay_minutes' => 0]);
+
+        $service = app(TicketNotificationService::class);
+
+        $service->notifyStatusChanged($this->ticket, $this->openStatus, $this->closedStatus);
+
+        $comment = Comment::create([
+            'ticket_id' => $this->ticket->id,
+            'content' => 'Visible comment',
+            'is_internal' => false,
+            'submitter_name' => 'Admin User',
+            'submitter_email' => 'admin@example.com',
+        ]);
+
+        $service->notifyCommentAdded($this->ticket, $comment);
+
+        $digest = NotificationDigest::query()
+            ->where('recipient_email', 'submitter@example.com')
+            ->firstOrFail();
+
+        $digest->update(['dispatch_after' => now()->subMinute()]);
+
+        (new SendNotificationDigestJob($digest->id))->handle();
+
+        Mail::assertSent(TicketActivityDigest::class, function (TicketActivityDigest $mail): bool {
+            return $mail->hasTo('submitter@example.com')
+                && $mail->totalEvents === 2
+                && $mail->ticketCount === 1;
+        });
+
+        $this->assertNotNull($digest->fresh()->sent_at);
     }
 }
