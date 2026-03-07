@@ -30,6 +30,8 @@ class ListStatusesTool extends Tool
         $result = $statuses->map(fn ($s) => [
             'id' => $s->id,
             'name' => $s->title,
+            'title' => $s->title,
+            'slug' => $s->slug,
             'text_color' => $s->text_color,
             'bg_color' => $s->bg_color,
             'is_default' => $s->is_default,

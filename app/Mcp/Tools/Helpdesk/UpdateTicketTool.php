@@ -34,17 +34,34 @@ class UpdateTicketTool extends Tool
         $updates = [];
         $oldStatus = null;
         $newStatus = null;
+        $statusReference = null;
 
-        if ($statusId = $request->get('status_id')) {
-            $status = TicketStatus::where('id', $statusId)
+        if ($request->has('status_id') || $request->has('status')) {
+            $statusReference = $request->has('status_id')
+                ? $request->get('status_id')
+                : trim((string) $request->get('status'));
+
+            $status = TicketStatus::query()
+                ->where(function ($query) use ($statusReference) {
+                    if (is_numeric($statusReference)) {
+                        $query->where('id', (int) $statusReference);
+
+                        return;
+                    }
+
+                    $query->where('slug', $statusReference)
+                        ->orWhere('title', $statusReference);
+                })
                 ->where(fn ($q) => $q->where('project_id', $project->id)->orWhereNull('project_id'))
                 ->first();
+
             if (! $status) {
-                return Response::error("Invalid status_id: {$statusId}");
+                return Response::error("Invalid status: {$statusReference}");
             }
+
             $oldStatus = $ticket->status;
             $newStatus = $status;
-            $ticket->status_id = $statusId;
+            $ticket->status_id = $status->id;
             $updates[] = "status: {$oldStatus?->title} → {$status->title}";
         }
 
@@ -109,8 +126,8 @@ class UpdateTicketTool extends Tool
         }
 
         // Log activity for significant changes
-        if ($request->get('status_id')) {
-            $ticket->logActivity('status_changed', null, $ticket->status?->name);
+        if ($statusReference !== null && $statusReference !== '') {
+            $ticket->logActivity('status_changed', $oldStatus?->title, $newStatus?->title);
         }
 
         return Response::text(json_encode([
@@ -132,11 +149,14 @@ class UpdateTicketTool extends Tool
                 ->required(),
             'status_id' => $schema->integer()
                 ->description('New status ID for the ticket'),
+            'status' => $schema->string()
+                ->description('Alternative status reference. Accepts a status slug, title, or numeric ID from list_statuses'),
             'priority_id' => $schema->integer()
                 ->description('New priority ID for the ticket'),
             'type_id' => $schema->integer()
                 ->description('New type ID for the ticket'),
             'assignee_id' => $schema->integer()
+                ->nullable()
                 ->description('New assignee user ID (use null to unassign)'),
             'time_estimate_minutes' => $schema->integer()
                 ->description('Time estimate in minutes'),

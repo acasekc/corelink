@@ -46,6 +46,8 @@ class GetTicketTool extends Tool
             'status' => [
                 'id' => $ticket->status?->id,
                 'name' => $ticket->status?->title,
+                'title' => $ticket->status?->title,
+                'slug' => $ticket->status?->slug,
             ],
             'priority' => [
                 'id' => $ticket->priority?->id,
