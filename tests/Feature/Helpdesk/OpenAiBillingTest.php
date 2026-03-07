@@ -3,6 +3,7 @@
 namespace Tests\Feature\Helpdesk;
 
 use App\Enums\Helpdesk\OpenAiKeyStatus;
+use App\Mail\Helpdesk\OpenAiKeyLimitWarning;
 use App\Models\Helpdesk\OpenAiApiKey;
 use App\Models\Helpdesk\OpenAiConfig;
 use App\Models\Helpdesk\OpenAiUsageLog;
@@ -10,6 +11,7 @@ use App\Models\Helpdesk\Project;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class OpenAiBillingTest extends TestCase
@@ -374,6 +376,298 @@ class OpenAiBillingTest extends TestCase
     }
 
     // =====================================================================
+    // updateKey
+    // =====================================================================
+
+    public function test_admin_can_update_key_limits(): void
+    {
+        $config = $this->makeConfig();
+        $key = $this->makeKey($config, maxSpend: 50.00, grace: 0.00);
+
+        $response = $this->actingAs($this->admin)
+            ->patchJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-keys/{$key->id}", [
+                'max_spend_usd' => 100.00,
+                'grace_amount_usd' => 20.00,
+            ]);
+
+        $response->assertOk();
+        $this->assertEquals(100, $response->json('data.max_spend_usd'));
+        $this->assertEquals(20, $response->json('data.grace_amount_usd'));
+        $this->assertEquals(120, $response->json('data.grace_threshold_usd'));
+
+        $this->assertDatabaseHas('helpdesk_openai_api_keys', [
+            'id' => $key->id,
+            'max_spend_usd' => 100.0,
+            'grace_amount_usd' => 20.0,
+        ]);
+    }
+
+    public function test_update_key_auto_reactivates_suspended_key_when_limits_raised(): void
+    {
+        $config = $this->makeConfig();
+        $key = $this->makeKey($config, maxSpend: 50.00, grace: 5.00);
+        $key->update([
+            'status' => OpenAiKeyStatus::Suspended,
+            'suspended_at' => now(),
+            'spend_usd' => 56.00,  // just over grace threshold of $55
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->patchJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-keys/{$key->id}", [
+                'max_spend_usd' => 100.00,
+                'grace_amount_usd' => 20.00,
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'active');
+
+        $this->assertDatabaseHas('helpdesk_openai_api_keys', [
+            'id' => $key->id,
+            'status' => 'active',
+        ]);
+    }
+
+    public function test_update_key_does_not_reactivate_if_still_over_new_threshold(): void
+    {
+        $config = $this->makeConfig();
+        $key = $this->makeKey($config, maxSpend: 50.00, grace: 5.00);
+        $key->update([
+            'status' => OpenAiKeyStatus::Suspended,
+            'suspended_at' => now(),
+            'spend_usd' => 100.00,
+        ]);
+
+        // New max=80, grace=10 → threshold=90, still below spend=100
+        $response = $this->actingAs($this->admin)
+            ->patchJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-keys/{$key->id}", [
+                'max_spend_usd' => 80.00,
+                'grace_amount_usd' => 10.00,
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'suspended');
+    }
+
+    public function test_update_key_name(): void
+    {
+        $config = $this->makeConfig();
+        $key = $this->makeKey($config);
+
+        $response = $this->actingAs($this->admin)
+            ->patchJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-keys/{$key->id}", [
+                'name' => 'Renamed Key',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.name', 'Renamed Key');
+    }
+
+    // =====================================================================
+    // reactivateKey
+    // =====================================================================
+
+    public function test_admin_can_manually_reactivate_suspended_key(): void
+    {
+        $config = $this->makeConfig();
+        $key = $this->makeKey($config);
+        $key->update(['status' => OpenAiKeyStatus::Suspended, 'suspended_at' => now()]);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-keys/{$key->id}/reactivate");
+
+        $response->assertOk()
+            ->assertJsonPath('data.status', 'active');
+
+        $this->assertDatabaseHas('helpdesk_openai_api_keys', [
+            'id' => $key->id,
+            'status' => 'active',
+        ]);
+
+        $key->refresh();
+        $this->assertNull($key->suspended_at);
+        $this->assertNull($key->grace_notified_at);
+    }
+
+    public function test_cannot_reactivate_active_key(): void
+    {
+        $config = $this->makeConfig();
+        $key = $this->makeKey($config);  // active by default
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-keys/{$key->id}/reactivate")
+            ->assertUnprocessable();
+    }
+
+    public function test_cannot_reactivate_revoked_key(): void
+    {
+        $config = $this->makeConfig();
+        $key = $this->makeKey($config);
+        $key->update(['status' => OpenAiKeyStatus::Revoked, 'revoked_at' => now()]);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-keys/{$key->id}/reactivate")
+            ->assertUnprocessable();
+    }
+
+    // =====================================================================
+    // Grace / suspend threshold enforcement (via sync)
+    // =====================================================================
+
+    /**
+     * Sync with costs=0 so allocateKeySpend doesn't overwrite pre-set spend_usd.
+     * This lets us test checkMaxSpendLimits with controlled spend values.
+     */
+    private function zeroCostSyncFakes(): void
+    {
+        Http::fake([
+            'api.openai.com/v1/organization/usage/completions*' => Http::response([
+                'data' => [],
+                'has_more' => false,
+            ]),
+            'api.openai.com/v1/organization/costs*' => Http::response([
+                'data' => [['results' => [['amount' => ['value' => 0.0, 'currency' => 'usd'], 'project_id' => 'proj_abc123']]]],
+                'has_more' => false,
+            ]),
+            'api.openai.com/v1/organization/projects/*' => Http::response(['id' => 'proj_abc123'], 200),
+        ]);
+    }
+
+    public function test_key_notified_when_spend_exceeds_max_but_within_grace(): void
+    {
+        Mail::fake();
+        $this->zeroCostSyncFakes();
+
+        $config = $this->makeConfig();
+        $config->update(['notification_emails' => ['admin@example.com']]);
+
+        $key = $this->makeKey($config, maxSpend: 50.00, grace: 10.00);
+        $key->update(['spend_usd' => 52.00]);  // over max, within grace
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-config/sync")
+            ->assertOk();
+
+        $key->refresh();
+        $this->assertEquals(OpenAiKeyStatus::Active, $key->status);
+        $this->assertNotNull($key->grace_notified_at);
+
+        Mail::assertQueued(OpenAiKeyLimitWarning::class, function (OpenAiKeyLimitWarning $mail) {
+            return $mail->type === 'limit_reached';
+        });
+    }
+
+    public function test_key_suspended_when_spend_exceeds_grace_threshold(): void
+    {
+        Mail::fake();
+        $this->zeroCostSyncFakes();
+
+        $config = $this->makeConfig();
+        $config->update(['notification_emails' => ['admin@example.com']]);
+
+        $key = $this->makeKey($config, maxSpend: 50.00, grace: 10.00);
+        $key->update([
+            'spend_usd' => 62.00,  // over grace threshold of $60
+            'grace_notified_at' => now()->subHour(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-config/sync")
+            ->assertOk();
+
+        $key->refresh();
+        $this->assertEquals(OpenAiKeyStatus::Suspended, $key->status);
+        $this->assertNotNull($key->suspended_at);
+
+        Mail::assertQueued(OpenAiKeyLimitWarning::class, function (OpenAiKeyLimitWarning $mail) {
+            return $mail->type === 'suspended';
+        });
+    }
+
+    public function test_key_suspended_immediately_when_grace_is_zero(): void
+    {
+        Mail::fake();
+        $this->zeroCostSyncFakes();
+
+        $config = $this->makeConfig();
+        $key = $this->makeKey($config, maxSpend: 50.00, grace: 0.00);
+        $key->update(['spend_usd' => 50.01]);  // just over max, no grace buffer
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-config/sync")
+            ->assertOk();
+
+        $key->refresh();
+        $this->assertEquals(OpenAiKeyStatus::Suspended, $key->status);
+    }
+
+    public function test_limit_warning_not_sent_twice_once_already_notified(): void
+    {
+        Mail::fake();
+        $this->zeroCostSyncFakes();
+
+        $config = $this->makeConfig();
+        $config->update(['notification_emails' => ['admin@example.com']]);
+
+        $key = $this->makeKey($config, maxSpend: 50.00, grace: 10.00);
+        $key->update([
+            'spend_usd' => 52.00,
+            'grace_notified_at' => now()->subHour(),  // already notified
+        ]);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-config/sync")
+            ->assertOk();
+
+        Mail::assertNothingQueued();
+    }
+
+    public function test_key_without_max_spend_is_never_suspended(): void
+    {
+        Mail::fake();
+        $this->zeroCostSyncFakes();
+
+        $config = $this->makeConfig();
+        $key = $this->makeKey($config);  // no max_spend_usd
+        $key->update(['spend_usd' => 999.99]);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-config/sync")
+            ->assertOk();
+
+        $key->refresh();
+        $this->assertEquals(OpenAiKeyStatus::Active, $key->status);
+        Mail::assertNothingQueued();
+    }
+
+    // =====================================================================
+    // createKey — grace amount
+    // =====================================================================
+
+    public function test_create_key_stores_grace_amount(): void
+    {
+        $config = $this->makeConfig();
+
+        Http::fake([
+            'api.openai.com/v1/organization/projects/*/service_accounts' => Http::response([
+                'id' => 'sa_grace',
+                'api_key' => ['id' => 'key_grace', 'value' => 'sk-svcacct-grace'],
+            ], 201),
+        ]);
+
+        $response = $this->actingAs($this->admin)
+            ->postJson("/api/helpdesk/admin/projects/{$this->project->id}/openai-keys", [
+                'name' => 'Grace Key',
+                'max_spend_usd' => 100.00,
+                'grace_amount_usd' => 25.00,
+            ]);
+
+        $response->assertCreated();
+        $this->assertEquals(100, $response->json('data.max_spend_usd'));
+        $this->assertEquals(25, $response->json('data.grace_amount_usd'));
+        $this->assertEquals(125, $response->json('data.grace_threshold_usd'));
+    }
+
+    // =====================================================================
     // Helpers
     // =====================================================================
 
@@ -396,6 +690,8 @@ class OpenAiBillingTest extends TestCase
         OpenAiConfig $config,
         string $serviceAccountId = 'sa_default',
         string $name = 'Test Key',
+        ?float $maxSpend = null,
+        float $grace = 0.00,
     ): OpenAiApiKey {
         return OpenAiApiKey::create([
             'openai_config_id' => $config->id,
@@ -405,6 +701,8 @@ class OpenAiBillingTest extends TestCase
             'api_key_encrypted' => 'sk-svcacct-placeholder',
             'status' => OpenAiKeyStatus::Active,
             'spend_usd' => 0,
+            'max_spend_usd' => $maxSpend,
+            'grace_amount_usd' => $grace,
         ]);
     }
 }
