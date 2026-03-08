@@ -73,4 +73,24 @@ class ApiKey extends Model
             'last_used_ip' => $ip,
         ]);
     }
+
+    public function hasPermission(string $permission): bool
+    {
+        return $this->hasAnyPermission([$permission]);
+    }
+
+    /**
+     * @param  array<int, string>  $permissions
+     */
+    public function hasAnyPermission(array $permissions): bool
+    {
+        $assignedPermissions = $this->permissions ?? [];
+
+        if ($assignedPermissions === []) {
+            return true;
+        }
+
+        return collect($permissions)
+            ->contains(fn (string $permission) => in_array($permission, $assignedPermissions, true));
+    }
 }

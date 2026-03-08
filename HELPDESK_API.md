@@ -18,6 +18,8 @@ X-API-Key: your-api-key-here
 
 API keys are project-scoped. Contact CoreLink to obtain an API key for your project.
 
+If your API key has explicit permissions assigned, the usage endpoints described below require the `usage.read` permission.
+
 ---
 
 ## Endpoints
@@ -389,6 +391,174 @@ GET /types
     { "slug": "question", "title": "Question", "color": "#3b82f6", "icon": "help-circle" },
     { "slug": "task", "title": "Task", "color": "#22c55e", "icon": "check-square" }
   ]
+}
+```
+
+---
+
+### Usage
+
+#### Get Usage Summary
+
+Retrieve a summary of the current billing-cycle usage for the authenticated project.
+
+```
+GET /usage/summary
+```
+
+**Response:**
+
+```json
+{
+  "data": {
+    "project": {
+      "id": 12,
+      "name": "PantryLink",
+      "slug": "pantrylink",
+      "ticket_prefix": "PL"
+    },
+    "openai": {
+      "is_connected": true,
+      "openai_project_id": "proj_123",
+      "openai_project_name": "PantryLink",
+      "cycle_usage_cents": 125,
+      "cycle_usage_dollars": 1.25,
+      "keys_total": 2,
+      "keys_active": 2,
+      "last_synced_at": "2026-03-08T02:30:00+00:00"
+    },
+    "anthropic": {
+      "api_key_name": "Production",
+      "plan_tier": "growth",
+      "cycle_usage_cents": 250,
+      "cycle_usage_dollars": 2.5,
+      "key_status": "active",
+      "last_synced_at": "2026-03-08T02:00:00+00:00"
+    }
+  }
+}
+```
+
+#### Get OpenAI Usage
+
+Retrieve OpenAI billing config, per-key spend information, and paginated stored usage logs for the current project.
+
+```
+GET /usage/openai
+```
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `per_page` | integer | Results per page (default: 30, max: 100) |
+| `page` | integer | Page number |
+
+**Response:**
+
+```json
+{
+  "data": {
+    "config": {
+      "is_connected": true,
+      "openai_project_id": "proj_123",
+      "openai_project_name": "PantryLink",
+      "cycle_usage_cents": 125,
+      "cycle_usage_dollars": 1.25,
+      "keys_total": 1,
+      "keys_active": 1
+    },
+    "keys": [
+      {
+        "id": 4,
+        "name": "Production",
+        "masked_api_key": "sk-live...1234",
+        "status": "active",
+        "spend_usd": 12.5,
+        "spend_remaining_usd": 37.5,
+        "max_spend_usd": 50,
+        "grace_threshold_usd": 60
+      }
+    ],
+    "logs": [
+      {
+        "id": 9,
+        "usage_date": "2026-03-08",
+        "model": "gpt-4o",
+        "input_tokens": 1000,
+        "output_tokens": 500,
+        "total_tokens": 1500,
+        "requests": 2,
+        "cost_usd": 0.05,
+        "cost_cents": 5,
+        "api_key_name": "Production"
+      }
+    ]
+  },
+  "meta": {
+    "total": 1,
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 30
+  }
+}
+```
+
+#### Get Anthropic Usage
+
+Retrieve Anthropic billing config and paginated stored usage logs for the current project.
+
+```
+GET /usage/anthropic
+```
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `per_page` | integer | Results per page (default: 30, max: 100) |
+| `page` | integer | Page number |
+
+**Response:**
+
+```json
+{
+  "data": {
+    "config": {
+      "api_key_name": "Production",
+      "plan_tier": "growth",
+      "cycle_usage_cents": 250,
+      "cycle_usage_dollars": 2.5,
+      "key_status": "active",
+      "overage_cents": 0,
+      "overage_with_markup_cents": 0
+    },
+    "logs": [
+      {
+        "id": 3,
+        "synced_at": "2026-03-08T02:00:00+00:00",
+        "period_start": "2026-03-01",
+        "period_end": "2026-03-08",
+        "tokens_input": 2000,
+        "tokens_output": 750,
+        "total_tokens": 2750,
+        "cost_cents": 25,
+        "cost_dollars": 0.25,
+        "model_breakdown": {
+          "claude-3-5-sonnet": {
+            "input_tokens": 2000,
+            "output_tokens": 750
+          }
+        }
+      }
+    ]
+  },
+  "meta": {
+    "total": 1,
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 30
+  }
 }
 ```
 

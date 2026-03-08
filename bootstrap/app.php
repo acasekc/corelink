@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'helpdesk.api-key' => \App\Http\Middleware\HelpdeskApiKeyAuth::class,
+            'helpdesk.api-key.permission' => \App\Http\Middleware\EnsureHelpdeskApiKeyPermission::class,
             'force-password-change' => \App\Http\Middleware\ForcePasswordChange::class,
             'no-cache' => \App\Http\Middleware\NoCacheHeaders::class,
         ]);

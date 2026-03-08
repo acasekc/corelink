@@ -22,6 +22,7 @@ use App\Http\Controllers\Helpdesk\Admin\XeroController;
 use App\Http\Controllers\Helpdesk\Api\CommentApiController;
 use App\Http\Controllers\Helpdesk\Api\ReferenceDataApiController;
 use App\Http\Controllers\Helpdesk\Api\TicketApiController;
+use App\Http\Controllers\Helpdesk\Api\UsageApiController;
 use App\Http\Controllers\Helpdesk\AttachmentController;
 use App\Http\Controllers\Helpdesk\User\CommentController as UserCommentController;
 use App\Http\Controllers\Helpdesk\User\DashboardController as UserDashboardController;
@@ -64,6 +65,12 @@ Route::prefix('api/helpdesk/v1')->middleware('helpdesk.api-key')->group(function
     Route::get('statuses', [ReferenceDataApiController::class, 'statuses']);
     Route::get('priorities', [ReferenceDataApiController::class, 'priorities']);
     Route::get('types', [ReferenceDataApiController::class, 'types']);
+
+    Route::middleware('helpdesk.api-key.permission:usage.read')->prefix('usage')->group(function () {
+        Route::get('summary', [UsageApiController::class, 'summary']);
+        Route::get('openai', [UsageApiController::class, 'openAi']);
+        Route::get('anthropic', [UsageApiController::class, 'anthropic']);
+    });
 });
 
 /*
