@@ -115,8 +115,7 @@ class TicketApiController extends Controller
                 ->first();
         }
 
-        $ticket = $project->tickets()->create([
-            'number' => $project->getNextTicketNumber(),
+        $ticket = $project->createTicket([
             'title' => $validated['title'],
             'content' => $validated['content'],
             'status_id' => $status->id,

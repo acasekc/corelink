@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\Helpdesk\NotificationService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class TicketService
 {
@@ -61,7 +62,10 @@ class TicketService
      */
     public function create(array $data, ?User $currentUser = null): Ticket
     {
-        $currentUser = $currentUser ?? auth()->user();
+        /** @var User|null $authenticatedUser */
+        $authenticatedUser = Auth::user();
+
+        $currentUser = $currentUser ?? $authenticatedUser;
 
         $project = Project::findOrFail($data['project_id']);
 
@@ -89,9 +93,7 @@ class TicketService
             $timeEstimateMinutes = TimeEntry::parseTimeString($data['time_estimate']);
         }
 
-        $ticket = Ticket::create([
-            'project_id' => $project->id,
-            'number' => $project->getNextTicketNumber(),
+        $ticket = $project->createTicket([
             'title' => $data['title'],
             'content' => $data['content'],
             'status_id' => $status?->id,
@@ -124,7 +126,10 @@ class TicketService
      */
     public function update(Ticket $ticket, array $data, ?User $currentUser = null): Ticket
     {
-        $currentUser = $currentUser ?? auth()->user();
+        /** @var User|null $authenticatedUser */
+        $authenticatedUser = Auth::user();
+
+        $currentUser = $currentUser ?? $authenticatedUser;
 
         $updateData = [];
 

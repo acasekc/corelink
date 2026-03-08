@@ -3,11 +3,15 @@
 namespace App\Mcp\Tools\Helpdesk;
 
 use App\Mcp\McpContext;
+use App\Models\Helpdesk\Project;
+use App\Models\Helpdesk\Ticket;
 use App\Models\Helpdesk\TicketPriority;
 use App\Models\Helpdesk\TicketStatus;
 use App\Models\Helpdesk\TicketType;
 use App\Services\Helpdesk\NotificationService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Str;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Tool;
@@ -81,9 +85,7 @@ class CreateTicketTool extends Tool
                 ->first();
         }
 
-        // Create the ticket
-        $ticket = $project->tickets()->create([
-            'number' => $project->getNextTicketNumber(),
+        $ticketAttributes = [
             'title' => $title,
             'content' => $content,
             'status_id' => $status->id,
@@ -92,7 +94,28 @@ class CreateTicketTool extends Tool
             'submitter_name' => $submitterName,
             'submitter_email' => $submitterEmail,
             'metadata' => $metadata,
-        ]);
+        ];
+
+        try {
+            $ticket = $this->createTicket($project, $ticketAttributes);
+        } catch (QueryException $exception) {
+            if ($this->isDuplicateTicketNumberError($exception)) {
+                $existingTicket = $this->findRecentMatchingTicket(
+                    $project,
+                    $title,
+                    $content,
+                    $submitterEmail
+                );
+
+                if ($existingTicket) {
+                    return $this->successResponse($existingTicket, true);
+                }
+
+                return Response::error('Ticket creation hit a duplicate numbering conflict. The ticket may already exist, so please check recent tickets before retrying.');
+            }
+
+            return Response::error('Ticket creation failed because the database rejected the request.');
+        }
 
         $ticket->logActivity('created', null, null, null);
 
@@ -104,8 +127,46 @@ class CreateTicketTool extends Tool
         $notificationService->notifyNewTicket($ticket);
         $notificationService->addAutoWatchers($ticket);
 
+        return $this->successResponse($ticket);
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    protected function createTicket(Project $project, array $attributes): Ticket
+    {
+        return $project->createTicket($attributes);
+    }
+
+    protected function isDuplicateTicketNumberError(QueryException $exception): bool
+    {
+        return Str::contains($exception->getMessage(), [
+            'Duplicate entry',
+            'helpdesk_tickets_project_id_number_unique',
+            'UNIQUE constraint failed',
+        ]);
+    }
+
+    protected function findRecentMatchingTicket(Project $project, string $title, string $content, string $submitterEmail): ?Ticket
+    {
+        return $project->tickets()
+            ->with(['status', 'priority', 'type', 'project'])
+            ->where('title', $title)
+            ->where('content', $content)
+            ->where('submitter_email', $submitterEmail)
+            ->where('created_at', '>=', now()->subMinutes(10))
+            ->latest('id')
+            ->first();
+    }
+
+    protected function successResponse(Ticket $ticket, bool $duplicate = false): Response
+    {
         return Response::text(json_encode([
             'success' => true,
+            'duplicate' => $duplicate,
+            'message' => $duplicate
+                ? 'A matching recent ticket was already created, so the existing ticket was returned.'
+                : 'Ticket created successfully.',
             'ticket' => [
                 'id' => $ticket->id,
                 'number' => $ticket->number,

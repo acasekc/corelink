@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Project extends Model
 {
@@ -198,5 +199,29 @@ class Project extends Model
     public function getNextTicketNumber(): int
     {
         return ($this->tickets()->withTrashed()->max('number') ?? 0) + 1;
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    public function createTicket(array $attributes): Ticket
+    {
+        /** @var Ticket $ticket */
+        $ticket = DB::transaction(function () use ($attributes): Ticket {
+            /** @var self $lockedProject */
+            $lockedProject = self::query()
+                ->whereKey($this->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            unset($attributes['project_id'], $attributes['number']);
+
+            return $lockedProject->tickets()->create([
+                ...$attributes,
+                'number' => $lockedProject->getNextTicketNumber(),
+            ]);
+        }, 5);
+
+        return $ticket;
     }
 }

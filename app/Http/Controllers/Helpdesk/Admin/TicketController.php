@@ -140,9 +140,7 @@ class TicketController extends Controller
             $timeEstimateMinutes = TimeEntry::parseTimeString($validated['time_estimate']);
         }
 
-        $ticket = Ticket::create([
-            'project_id' => $project->id,
-            'number' => $project->getNextTicketNumber(),
+        $ticket = $project->createTicket([
             'title' => $validated['title'],
             'content' => $validated['content'],
             'status_id' => $defaultStatus?->id,

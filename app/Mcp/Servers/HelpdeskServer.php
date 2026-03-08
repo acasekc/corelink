@@ -69,6 +69,15 @@ class HelpdeskServer extends Server
           - Spent 1 hour fixing code → Log "2h" or 120 minutes
           - Spent 30 minutes testing → Log "1h" or 60 minutes
         - Always include a brief description of the work done in the time entry
+
+                ## REQUIRED WHEN WORK IS COMPLETE:
+                **CRITICAL:** When you finish work on a ticket, you must complete all of the following before ending your task:
+                - Add a brief comment describing what was done using `add_comment`
+                - Include any special instructions in that comment, such as how to use the change, setup steps, URLs, menu locations, new environment variables, or other follow-up details the user will need
+                - Set the ticket status to `resolved` using `update_ticket`
+                - Log all time spent using `add_time_entry`
+                - If you are not sure which status to use, call `list_statuses` and pick the `resolved` status or the closest equivalent completion status available for that project
+                - Do not leave a completed ticket without a completion comment, a completion status update, and a time entry
         
         ## Comment Style:
         - Keep comments brief and factual - avoid lengthy explanations

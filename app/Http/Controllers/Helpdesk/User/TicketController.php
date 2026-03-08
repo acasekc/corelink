@@ -222,9 +222,7 @@ class TicketController extends Controller
                 ?? TicketType::whereNull('project_id')->where('slug', 'question')->first()
                 ?? TicketType::whereNull('project_id')->first();
 
-        $ticket = Ticket::create([
-            'project_id' => $project->id,
-            'number' => $project->getNextTicketNumber(),
+        $ticket = $project->createTicket([
             'title' => $validated['title'],
             'content' => $validated['content'],
             'status_id' => $defaultStatus?->id,
