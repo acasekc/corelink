@@ -8,13 +8,14 @@ use App\Models\Helpdesk\TicketStatus;
 use App\Models\Helpdesk\TicketType;
 use App\Services\Helpdesk\TicketNotificationService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Support\Str;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Tool;
 
 class UpdateTicketTool extends Tool
 {
-    protected string $description = 'Update a ticket\'s status, priority, type, assignee, or time estimate.';
+    protected string $description = 'Update a ticket\'s status, priority, type, assignee, or time estimate. Status accepts either status_id or status (slug, title, or numeric ID).';
 
     public function handle(Request $request): Response
     {
@@ -41,19 +42,7 @@ class UpdateTicketTool extends Tool
                 ? $request->get('status_id')
                 : trim((string) $request->get('status'));
 
-            $status = TicketStatus::query()
-                ->where(function ($query) use ($statusReference) {
-                    if (is_numeric($statusReference)) {
-                        $query->where('id', (int) $statusReference);
-
-                        return;
-                    }
-
-                    $query->where('slug', $statusReference)
-                        ->orWhere('title', $statusReference);
-                })
-                ->where(fn ($q) => $q->where('project_id', $project->id)->orWhereNull('project_id'))
-                ->first();
+            $status = $this->resolveStatus($statusReference, $project->id);
 
             if (! $status) {
                 return Response::error("Invalid status: {$statusReference}");
@@ -61,7 +50,7 @@ class UpdateTicketTool extends Tool
 
             $oldStatus = $ticket->status;
             $newStatus = $status;
-            $ticket->status_id = $status->id;
+            $ticket->status()->associate($status);
             $updates[] = "status: {$oldStatus?->title} → {$status->title}";
         }
 
@@ -119,6 +108,7 @@ class UpdateTicketTool extends Tool
         }
 
         $ticket->save();
+        $ticket->refresh()->load(['status', 'priority', 'type', 'assignee']);
 
         // Send notification if status changed
         if ($oldStatus && $newStatus) {
@@ -134,8 +124,48 @@ class UpdateTicketTool extends Tool
             'success' => true,
             'ticket_id' => $ticket->id,
             'ticket_number' => $ticket->ticket_number,
+            'status' => [
+                'id' => $ticket->status?->id,
+                'name' => $ticket->status?->title,
+                'title' => $ticket->status?->title,
+                'slug' => $ticket->status?->slug,
+            ],
             'updates' => $updates,
         ], JSON_PRETTY_PRINT));
+    }
+
+    private function resolveStatus(mixed $statusReference, int $projectId): ?TicketStatus
+    {
+        if ($statusReference === null || $statusReference === '') {
+            return null;
+        }
+
+        $query = TicketStatus::query()
+            ->where(fn ($builder) => $builder->where('project_id', $projectId)->orWhereNull('project_id'));
+
+        if (is_numeric($statusReference)) {
+            return $query->whereKey((int) $statusReference)->first();
+        }
+
+        $normalizedReference = $this->normalizeStatusReference((string) $statusReference);
+
+        return $query->get()->first(function (TicketStatus $status) use ($normalizedReference) {
+            $normalizedSlug = $this->normalizeStatusReference($status->slug ?? '');
+            $normalizedTitle = $this->normalizeStatusReference($status->title);
+
+            return $normalizedReference === $normalizedSlug
+                || $normalizedReference === $normalizedTitle;
+        });
+    }
+
+    private function normalizeStatusReference(string $value): string
+    {
+        return Str::of($value)
+            ->lower()
+            ->replaceMatches('/[^a-z0-9]+/', ' ')
+            ->trim()
+            ->replace(' ', '-')
+            ->value();
     }
 
     /**

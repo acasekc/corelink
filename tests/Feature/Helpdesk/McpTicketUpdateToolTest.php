@@ -92,6 +92,9 @@ class McpTicketUpdateToolTest extends TestCase
         $this->assertFalse($response->isError());
         $this->assertSame($this->ticket->id, $payload['ticket_id']);
         $this->assertContains('status: Open → Closed', $payload['updates']);
+        $this->assertSame($this->closedStatus->id, $payload['status']['id']);
+        $this->assertSame('Closed', $payload['status']['title']);
+        $this->assertSame('closed', $payload['status']['slug']);
 
         $this->assertDatabaseHas('helpdesk_tickets', [
             'id' => $this->ticket->id,
@@ -136,6 +139,63 @@ class McpTicketUpdateToolTest extends TestCase
         $this->assertSame('Open', $payload['status']['name']);
         $this->assertSame('Open', $payload['status']['title']);
         $this->assertSame('open', $payload['status']['slug']);
+    }
+
+    /**
+     * @throws JsonException
+     */
+    public function test_update_ticket_tool_can_change_status_using_normalized_title_input(): void
+    {
+        $resolvedStatus = TicketStatus::factory()->create([
+            'project_id' => $this->project->id,
+            'slug' => 'resolved',
+            'title' => 'Resolved',
+        ]);
+
+        $response = app(UpdateTicketTool::class)->handle(new Request([
+            'ticket_id' => $this->ticket->id,
+            'status' => 'RESOLVED',
+        ]));
+
+        $payload = $this->decodeResponse($response);
+
+        $this->assertFalse($response->isError());
+        $this->assertSame($resolvedStatus->id, $payload['status']['id']);
+        $this->assertSame('resolved', $payload['status']['slug']);
+
+        $this->assertDatabaseHas('helpdesk_tickets', [
+            'id' => $this->ticket->id,
+            'status_id' => $resolvedStatus->id,
+        ]);
+    }
+
+    /**
+     * @throws JsonException
+     */
+    public function test_update_ticket_tool_can_change_status_using_underscore_variant(): void
+    {
+        $inProgressStatus = TicketStatus::factory()->create([
+            'project_id' => $this->project->id,
+            'slug' => 'in-progress',
+            'title' => 'In Progress',
+        ]);
+
+        $response = app(UpdateTicketTool::class)->handle(new Request([
+            'ticket_id' => $this->ticket->id,
+            'status' => 'in_progress',
+        ]));
+
+        $payload = $this->decodeResponse($response);
+
+        $this->assertFalse($response->isError());
+        $this->assertSame($inProgressStatus->id, $payload['status']['id']);
+        $this->assertSame('In Progress', $payload['status']['title']);
+        $this->assertSame('in-progress', $payload['status']['slug']);
+
+        $this->assertDatabaseHas('helpdesk_tickets', [
+            'id' => $this->ticket->id,
+            'status_id' => $inProgressStatus->id,
+        ]);
     }
 
     /**

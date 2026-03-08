@@ -60,6 +60,8 @@ class HelpdeskServer extends Server
         
         ## Guidelines:
         - Use `list_statuses` first to get valid status IDs for filtering or updating
+        - `update_ticket` supports both `status_id` and `status`; `status` accepts a slug, title, or numeric ID from `list_statuses`
+        - `list_tickets` and `get_ticket` return status metadata so you can confirm the current ticket state after updates
         - Time can be logged using shorthand like "1h 30m" or just minutes
         - Internal comments are only visible to staff
         - Prefer `start_time_entry_session` when work begins and `end_time_entry_session` when work ends so exact time is recorded automatically
