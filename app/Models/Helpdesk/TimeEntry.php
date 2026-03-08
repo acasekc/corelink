@@ -3,14 +3,14 @@
 namespace App\Models\Helpdesk;
 
 use App\Models\User;
-use Database\Factories\Helpdesk\TimeEntryFactory;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TimeEntry extends Model
 {
-    /** @use HasFactory<TimeEntryFactory> */
+    /** @use HasFactory<\Database\Factories\Helpdesk\TimeEntryFactory> */
     use HasFactory;
 
     protected $table = 'helpdesk_time_entries';
@@ -21,6 +21,8 @@ class TimeEntry extends Model
         'minutes',
         'description',
         'date_worked',
+        'started_at',
+        'ended_at',
         'hourly_rate_category_id',
         'is_billable',
         'billable_minutes',
@@ -31,6 +33,8 @@ class TimeEntry extends Model
     {
         return [
             'date_worked' => 'date',
+            'started_at' => 'datetime',
+            'ended_at' => 'datetime',
             'is_billable' => 'boolean',
             'billable_minutes' => 'integer',
         ];
@@ -112,6 +116,22 @@ class TimeEntry extends Model
     public function getFormattedTimeAttribute(): string
     {
         return self::formatMinutes($this->minutes);
+    }
+
+    public function isActive(): bool
+    {
+        return $this->started_at !== null && $this->ended_at === null;
+    }
+
+    public static function calculateTrackedMinutes(CarbonInterface $startedAt, CarbonInterface $endedAt): int
+    {
+        $seconds = max($startedAt->diffInSeconds($endedAt, false), 0);
+
+        if ($seconds === 0) {
+            return 1;
+        }
+
+        return (int) ceil($seconds / 60);
     }
 
     /**

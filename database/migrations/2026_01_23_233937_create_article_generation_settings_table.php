@@ -37,8 +37,6 @@ return new class extends Migration
             'auto_publish_hours' => 24,
             'max_articles_per_day' => 1,
             'max_articles_per_week' => 3,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
     }
 

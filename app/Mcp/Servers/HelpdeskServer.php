@@ -5,6 +5,7 @@ namespace App\Mcp\Servers;
 use App\Mcp\Tools\Helpdesk\AddCommentTool;
 use App\Mcp\Tools\Helpdesk\AddTimeEntryTool;
 use App\Mcp\Tools\Helpdesk\CreateTicketTool;
+use App\Mcp\Tools\Helpdesk\EndTimeEntrySessionTool;
 use App\Mcp\Tools\Helpdesk\GetProjectTool;
 use App\Mcp\Tools\Helpdesk\GetTicketTool;
 use App\Mcp\Tools\Helpdesk\ListLabelsTool;
@@ -12,6 +13,7 @@ use App\Mcp\Tools\Helpdesk\ListPrioritiesTool;
 use App\Mcp\Tools\Helpdesk\ListStatusesTool;
 use App\Mcp\Tools\Helpdesk\ListTicketsTool;
 use App\Mcp\Tools\Helpdesk\ListTypesTool;
+use App\Mcp\Tools\Helpdesk\StartTimeEntrySessionTool;
 use App\Mcp\Tools\Helpdesk\UpdateTicketTool;
 use Laravel\Mcp\Server;
 
@@ -52,32 +54,33 @@ class HelpdeskServer extends Server
         
         **Comments & Time:**
         - `add_comment` - Add a comment to a ticket (can be internal or public)
+        - `start_time_entry_session` - Start a tracked work session for a ticket
+        - `end_time_entry_session` - End a tracked work session and automatically log the elapsed time
         - `add_time_entry` - Log time worked on a ticket
         
         ## Guidelines:
         - Use `list_statuses` first to get valid status IDs for filtering or updating
         - Time can be logged using shorthand like "1h 30m" or just minutes
         - Internal comments are only visible to staff
+        - Prefer `start_time_entry_session` when work begins and `end_time_entry_session` when work ends so exact time is recorded automatically
+        - Use `add_time_entry` only when you need to record work retroactively or correct time manually
         
         ## MANDATORY TIME TRACKING:
-        **CRITICAL:** You MUST log time for ANY work done on tickets. This is required for all bot interactions.
-        - Track the actual time you spend working on a ticket (reading, analyzing, implementing fixes, testing, etc.)
-        - MULTIPLY your actual time by 2 before logging it (e.g., if you spent 15 minutes, log 30 minutes)
-        - Use the `add_time_entry` tool EVERY time you work on a ticket
-        - Examples: 
-          - Spent 10 minutes investigating → Log "20m" or 20 minutes
-          - Spent 1 hour fixing code → Log "2h" or 120 minutes
-          - Spent 30 minutes testing → Log "1h" or 60 minutes
-        - Always include a brief description of the work done in the time entry
+                **CRITICAL:** You MUST track time for ANY work done on tickets. This is required for all bot interactions.
+                - When you begin work on a ticket, call `start_time_entry_session`
+                - When you stop or complete that work, call `end_time_entry_session`
+                - Always include a brief description of the work in the tracked session or final time entry
+                - Use `add_time_entry` only for retroactive/manual corrections when a tracked session was not possible
+                - Do not estimate time if you can track it with the session tools
 
                 ## REQUIRED WHEN WORK IS COMPLETE:
                 **CRITICAL:** When you finish work on a ticket, you must complete all of the following before ending your task:
+                - End the active work session using `end_time_entry_session`
                 - Add a brief comment describing what was done using `add_comment`
                 - Include any special instructions in that comment, such as how to use the change, setup steps, URLs, menu locations, new environment variables, or other follow-up details the user will need
                 - Set the ticket status to `resolved` using `update_ticket`
-                - Log all time spent using `add_time_entry`
                 - If you are not sure which status to use, call `list_statuses` and pick the `resolved` status or the closest equivalent completion status available for that project
-                - Do not leave a completed ticket without a completion comment, a completion status update, and a time entry
+                - Do not leave a completed ticket without an ended work session, a completion comment, and a completion status update
         
         ## Comment Style:
         - Keep comments brief and factual - avoid lengthy explanations
@@ -104,6 +107,8 @@ class HelpdeskServer extends Server
         CreateTicketTool::class,
         UpdateTicketTool::class,
         AddCommentTool::class,
+        StartTimeEntrySessionTool::class,
+        EndTimeEntrySessionTool::class,
         AddTimeEntryTool::class,
     ];
 

@@ -79,12 +79,26 @@ class GetTicketTool extends Tool
                 'is_internal' => $c->is_internal,
                 'created_at' => $c->created_at->toIso8601String(),
             ])->toArray(),
+            'active_time_entry' => optional(
+                $ticket->timeEntries->first(fn ($timeEntry) => $timeEntry->started_at !== null && $timeEntry->ended_at === null),
+                fn ($timeEntry) => [
+                    'id' => $timeEntry->id,
+                    'user' => $timeEntry->user?->name,
+                    'description' => $timeEntry->description,
+                    'started_at' => $timeEntry->started_at?->toIso8601String(),
+                    'is_billable' => $timeEntry->is_billable,
+                    'status' => 'active',
+                ]
+            ),
             'time_entries' => $ticket->timeEntries->map(fn ($t) => [
                 'id' => $t->id,
                 'user' => $t->user?->name,
                 'minutes' => $t->minutes,
+                'formatted' => $t->formatted_time,
                 'description' => $t->description,
                 'date_worked' => $t->date_worked?->toDateString(),
+                'started_at' => $t->started_at?->toIso8601String(),
+                'ended_at' => $t->ended_at?->toIso8601String(),
                 'is_billable' => $t->is_billable,
             ])->toArray(),
         ];
