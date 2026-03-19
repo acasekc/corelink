@@ -46,7 +46,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('api/helpdesk/v1')->middleware('helpdesk.api-key')->group(function () {
+Route::prefix('api/helpdesk/v1')->middleware(['api', 'helpdesk.api-key'])->group(function () {
     // Tickets
     Route::get('tickets', [TicketApiController::class, 'index']);
     Route::post('tickets', [TicketApiController::class, 'store']);

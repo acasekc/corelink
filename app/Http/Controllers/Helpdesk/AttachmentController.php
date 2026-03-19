@@ -116,14 +116,8 @@ class AttachmentController extends Controller
     /**
      * Download an attachment
      */
-    public function download(Request $request, int $attachment): StreamedResponse|JsonResponse
+    public function download(Request $request, Attachment $attachment): StreamedResponse|JsonResponse
     {
-        $attachment = Attachment::find($attachment);
-
-        if (! $attachment) {
-            return response()->json(['message' => 'File not found'], 404);
-        }
-
         $authorization = $this->authorizeAttachmentAccess($request, $attachment);
 
         if ($authorization instanceof JsonResponse) {
@@ -134,7 +128,10 @@ class AttachmentController extends Controller
             return response()->json(['message' => 'File not found'], 404);
         }
 
-        return Storage::disk($attachment->disk)->download(
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk($attachment->disk);
+
+        return $disk->download(
             $attachment->path,
             $attachment->filename,
             ['Content-Type' => $attachment->mime_type]
@@ -144,14 +141,8 @@ class AttachmentController extends Controller
     /**
      * View an image attachment inline.
      */
-    public function view(Request $request, int $attachment): StreamedResponse|JsonResponse
+    public function view(Request $request, Attachment $attachment): StreamedResponse|JsonResponse
     {
-        $attachment = Attachment::find($attachment);
-
-        if (! $attachment) {
-            return response()->json(['message' => 'File not found'], 404);
-        }
-
         $authorization = $this->authorizeAttachmentAccess($request, $attachment);
 
         if ($authorization instanceof JsonResponse) {
@@ -166,7 +157,10 @@ class AttachmentController extends Controller
             return response()->json(['message' => 'File not found'], 404);
         }
 
-        return Storage::disk($attachment->disk)->response(
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk($attachment->disk);
+
+        return $disk->response(
             $attachment->path,
             $attachment->filename,
             [
@@ -179,14 +173,8 @@ class AttachmentController extends Controller
     /**
      * Delete an attachment
      */
-    public function destroy(Request $request, int $attachment): JsonResponse
+    public function destroy(Request $request, Attachment $attachment): JsonResponse
     {
-        $attachment = Attachment::find($attachment);
-
-        if (! $attachment) {
-            return response()->json(['message' => 'File not found'], 404);
-        }
-
         $user = $request->user();
 
         // Only the uploader or an admin can delete
@@ -240,36 +228,40 @@ class AttachmentController extends Controller
 
     private function authorizeAttachmentAccess(Request $request, Attachment $attachment): ?JsonResponse
     {
+        $ticket = $this->resolveAttachmentTicket($attachment);
+
+        if (! $ticket) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+
         $project = $request->attributes->get('helpdesk_project');
         if ($project) {
-            $attachmentBelongsToProject = Ticket::query()
-                ->where('project_id', $project->id)
-                ->where(function ($query) use ($attachment) {
-                    $query->whereHas('attachments', fn ($attachmentQuery) => $attachmentQuery->whereKey($attachment->id))
-                        ->orWhereHas('comments.attachments', fn ($attachmentQuery) => $attachmentQuery->whereKey($attachment->id));
-                })
-                ->exists();
-
-            if (! $attachmentBelongsToProject) {
+            if ((int) $ticket->project_id !== (int) $project->id) {
                 return response()->json(['message' => 'File not found'], 404);
             }
 
             return null;
         }
 
-        $ticket = Ticket::query()
-            ->whereHas('attachments', fn ($query) => $query->whereKey($attachment->id))
-            ->orWhereHas('comments.attachments', fn ($query) => $query->whereKey($attachment->id))
-            ->first();
-
-        if (! $ticket) {
-            return response()->json(['message' => 'File not found'], 404);
-        }
-
         $user = $request->user();
 
         if (! $user || ! $user->canViewTicket($ticket)) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return null;
+    }
+
+    private function resolveAttachmentTicket(Attachment $attachment): ?Ticket
+    {
+        if ($attachment->attachable_type === Ticket::class) {
+            return Ticket::query()->find($attachment->attachable_id);
+        }
+
+        if ($attachment->attachable_type === Comment::class) {
+            return Comment::query()
+                ->find($attachment->attachable_id)
+                ?->ticket;
         }
 
         return null;

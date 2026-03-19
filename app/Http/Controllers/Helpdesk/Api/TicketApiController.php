@@ -191,28 +191,36 @@ class TicketApiController extends Controller
         ], 201);
     }
 
-    public function show(Request $request, int $id): JsonResponse
+    public function show(Request $request, Ticket $ticket): JsonResponse
     {
         /** @var Project $project */
         $project = $request->attributes->get('helpdesk_project');
 
-        $ticket = $project->tickets()
-            ->with(['status', 'priority', 'type', 'assignee', 'labels', 'attachments', 'comments' => function ($q) {
+        abort_unless((int) $ticket->project_id === (int) $project->id, 404);
+
+        $ticket->load([
+            'status',
+            'priority',
+            'type',
+            'assignee',
+            'labels',
+            'attachments',
+            'comments' => function ($q) {
                 $q->where('is_internal', false)->with('attachments');
-            }])
-            ->findOrFail($id);
+            },
+        ]);
 
         return response()->json([
             'data' => $this->formatTicket($ticket, true),
         ]);
     }
 
-    public function update(Request $request, int $id): JsonResponse
+    public function update(Request $request, Ticket $ticket): JsonResponse
     {
         /** @var Project $project */
         $project = $request->attributes->get('helpdesk_project');
 
-        $ticket = $project->tickets()->findOrFail($id);
+        abort_unless((int) $ticket->project_id === (int) $project->id, 404);
 
         $validated = $request->validate([
             'title' => 'sometimes|string|max:255',

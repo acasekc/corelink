@@ -116,6 +116,19 @@ class AttachmentZipDownloadTest extends TestCase
         $response->assertDownload("ticket-{$ticket->number}-attachments.zip");
     }
 
+    public function test_user_can_download_a_single_attachment(): void
+    {
+        $ticket = $this->createTicket();
+        $attachment = $this->createAttachment($ticket, 'single-download.pdf');
+
+        $response = $this->actingAs($this->user)
+            ->get("/api/helpdesk/user/attachments/{$attachment->id}/download");
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/pdf');
+        $response->assertDownload('single-download.pdf');
+    }
+
     public function test_zip_includes_comment_attachments(): void
     {
         $ticket = $this->createTicket();
@@ -152,6 +165,7 @@ class AttachmentZipDownloadTest extends TestCase
         $ticket = $this->createTicket();
         $this->createAttachment($ticket, 'doc.pdf');
 
+        /** @var User $otherUser */
         $otherUser = User::factory()->create(['is_admin' => false]);
 
         $response = $this->actingAs($otherUser)

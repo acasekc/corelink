@@ -10,12 +10,12 @@ use Illuminate\Http\Request;
 
 class CommentApiController extends Controller
 {
-    public function index(Request $request, int $ticketId): JsonResponse
+    public function index(Request $request, \App\Models\Helpdesk\Ticket $ticket): JsonResponse
     {
         /** @var Project $project */
         $project = $request->attributes->get('helpdesk_project');
 
-        $ticket = $project->tickets()->findOrFail($ticketId);
+        abort_unless((int) $ticket->project_id === (int) $project->id, 404);
 
         // External API only sees non-internal comments
         $comments = $ticket->comments()
@@ -45,12 +45,12 @@ class CommentApiController extends Controller
         ]);
     }
 
-    public function store(Request $request, int $ticketId): JsonResponse
+    public function store(Request $request, \App\Models\Helpdesk\Ticket $ticket): JsonResponse
     {
         /** @var Project $project */
         $project = $request->attributes->get('helpdesk_project');
 
-        $ticket = $project->tickets()->findOrFail($ticketId);
+        abort_unless((int) $ticket->project_id === (int) $project->id, 404);
 
         $validated = $request->validate([
             'content' => 'required|string',
