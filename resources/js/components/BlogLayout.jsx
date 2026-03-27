@@ -16,21 +16,6 @@ export default function BlogLayout({ children }) {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
-  // Update canonical tag on route change
-  useEffect(() => {
-    const canonical = document.querySelector('link[rel="canonical"]');
-    const url = "https://corelink.dev" + location.pathname + location.search;
-
-    if (canonical) {
-      canonical.href = url;
-    } else {
-      const link = document.createElement("link");
-      link.rel = "canonical";
-      link.href = url;
-      document.head.appendChild(link);
-    }
-  }, [location.pathname, location.search]);
-
   const navItems = [
     { label: "Home", href: "/" },
     { label: "Blog", href: "/blog" },

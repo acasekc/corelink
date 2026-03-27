@@ -12,11 +12,11 @@ class PageController extends Controller
     /**
      * Page-specific meta descriptions for SEO.
      *
-     * @return array{title: string|null, description: string|null}
+     * @return array{title: string|null, description: string|null, canonical: string}
      */
     private function getPageMeta(string $page): array
     {
-        return match ($page) {
+        $meta = match ($page) {
             'home' => [
                 'title' => 'AI-Powered Web & Mobile Development',
                 'description' => 'CoreLink Development builds intelligent, scalable web and mobile applications using AI technology with expert developer oversight. Based in Missouri, serving clients nationwide.',
@@ -62,6 +62,10 @@ class PageController extends Controller
                 'description' => null,
             ],
         };
+
+        $meta['canonical'] = url()->current();
+
+        return $meta;
     }
 
     public function home(): InertiaResponse
@@ -111,6 +115,7 @@ class PageController extends Controller
                 'meta' => [
                     'title' => $caseStudy->title,
                     'description' => $caseStudy->description,
+                    'canonical' => url()->current(),
                 ],
                 'caseStudy' => $caseStudy,
             ]);

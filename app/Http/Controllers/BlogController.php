@@ -31,6 +31,7 @@ class BlogController extends Controller
             'meta' => [
                 'title' => 'Blog',
                 'description' => 'Insights on web development, AI, Laravel, React, and building modern applications. Tips and tutorials from the CoreLink Development team.',
+                'canonical' => url()->current(),
             ],
             'articles' => $articles,
             'categories' => $categories,
@@ -54,6 +55,7 @@ class BlogController extends Controller
             'meta' => [
                 'title' => $category->name.' Articles',
                 'description' => $category->description ?? "Browse our {$category->name} articles. Insights and tutorials from CoreLink Development.",
+                'canonical' => url()->current(),
             ],
             'category' => $category,
             'articles' => $articles,
@@ -88,6 +90,7 @@ class BlogController extends Controller
                 'description' => $article->meta_description ?? $article->excerpt,
                 'image' => $article->featured_image,
                 'type' => 'article',
+                'canonical' => url()->current(),
             ],
             'article' => $article,
             'recentArticles' => $recentArticles,

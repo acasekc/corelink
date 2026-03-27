@@ -18,6 +18,7 @@ class DiscoveryController extends Controller
             'meta' => [
                 'title' => 'Project Discovery',
                 'description' => 'Start your project with our AI-powered discovery process. Get a detailed project plan, timeline, and estimate tailored to your business needs.',
+                'canonical' => url()->current(),
             ],
         ]);
     }
