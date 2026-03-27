@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class UploadController extends Controller
@@ -32,14 +33,19 @@ class UploadController extends Controller
         // Generate a unique filename
         $extension = $file->getClientOriginalExtension() ?: 'png';
         $filename = Str::uuid().'.'.$extension;
+        $disk = $this->getPublicAssetDisk();
 
         try {
-            // Store in public storage under articles folder
-            $destinationPath = storage_path('app/public/articles');
-            $file->move($destinationPath, $filename);
-
             $path = 'articles/'.$filename;
-            $url = '/storage/'.$path;
+            Storage::disk($disk)->putFileAs('articles', $file, $filename);
+
+            if ($disk === 'public') {
+                $url = '/storage/'.$path;
+            } else {
+                /** @var \Illuminate\Filesystem\FilesystemAdapter $storage */
+                $storage = Storage::disk($disk);
+                $url = $storage->url($path);
+            }
 
             return response()->json([
                 'success' => true,
@@ -49,5 +55,12 @@ class UploadController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to upload image'], 500);
         }
+    }
+
+    private function getPublicAssetDisk(): string
+    {
+        $defaultDisk = (string) config('filesystems.default', 'local');
+
+        return $defaultDisk === 'local' ? 'public' : $defaultDisk;
     }
 }

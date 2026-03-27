@@ -169,22 +169,73 @@ class CaseStudyService
 
         $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
         $relativePath = 'case-studies/'.$filename;
+        $disk = $this->getPublicAssetDisk();
 
-        $stored = Storage::disk('public')->put($relativePath, $file->getContent());
+        $stored = Storage::disk($disk)->put($relativePath, $file->getContent());
 
         if (! $stored) {
             throw new \RuntimeException('Failed to store uploaded file. Please try again.');
         }
 
-        return '/storage/'.$relativePath;
+        if ($disk === 'public') {
+            return '/storage/'.$relativePath;
+        }
+
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $storage */
+        $storage = Storage::disk($disk);
+
+        return $storage->url($relativePath);
     }
 
     protected function deleteHeroImage(string $imagePath): void
     {
-        if (str_starts_with($imagePath, '/storage/')) {
-            $relativePath = str_replace('/storage/', '', $imagePath);
-            Storage::disk('public')->delete($relativePath);
+        $relativePath = $this->extractRelativePath($imagePath);
+
+        if ($relativePath === null) {
+            return;
         }
+
+        $publicDisk = 'public';
+        $assetDisk = $this->getPublicAssetDisk();
+
+        if ($publicDisk === $assetDisk) {
+            Storage::disk($publicDisk)->delete($relativePath);
+
+            return;
+        }
+
+        Storage::disk($publicDisk)->delete($relativePath);
+        Storage::disk($assetDisk)->delete($relativePath);
+    }
+
+    private function getPublicAssetDisk(): string
+    {
+        $defaultDisk = (string) config('filesystems.default', 'local');
+
+        return $defaultDisk === 'local' ? 'public' : $defaultDisk;
+    }
+
+    private function extractRelativePath(string $storedPath): ?string
+    {
+        if (str_starts_with($storedPath, '/storage/')) {
+            return ltrim(str_replace('/storage/', '', $storedPath), '/');
+        }
+
+        if (str_starts_with($storedPath, 'http://') || str_starts_with($storedPath, 'https://')) {
+            $path = parse_url($storedPath, PHP_URL_PATH);
+
+            if (! is_string($path) || $path === '') {
+                return null;
+            }
+
+            if (str_starts_with($path, '/storage/')) {
+                return ltrim(str_replace('/storage/', '', $path), '/');
+            }
+
+            return ltrim($path, '/');
+        }
+
+        return ltrim($storedPath, '/');
     }
 
     protected function applyFilters($query, array $filters): void

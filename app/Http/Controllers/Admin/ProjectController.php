@@ -82,8 +82,18 @@ class ProjectController extends Controller
     {
         if ($adminProject->screenshots) {
             foreach ($adminProject->screenshots as $screenshot) {
-                $path = str_replace('/storage/', '', $screenshot);
+                $path = $this->extractRelativePath((string) $screenshot);
+
+                if ($path === null) {
+                    continue;
+                }
+
                 Storage::disk('public')->delete($path);
+
+                $assetDisk = $this->getPublicAssetDisk();
+                if ($assetDisk !== 'public') {
+                    Storage::disk($assetDisk)->delete($path);
+                }
             }
         }
 
@@ -98,12 +108,52 @@ class ProjectController extends Controller
     private function storeScreenshots(array $files): array
     {
         $paths = [];
+        $disk = $this->getPublicAssetDisk();
 
         foreach ($files as $file) {
-            $path = $file->store('projects', 'public');
-            $paths[] = '/storage/'.$path;
+            $path = $file->store('projects', $disk);
+
+            if ($disk === 'public') {
+                $paths[] = '/storage/'.$path;
+
+                continue;
+            }
+
+            /** @var \Illuminate\Filesystem\FilesystemAdapter $storage */
+            $storage = Storage::disk($disk);
+            $paths[] = $storage->url($path);
         }
 
         return $paths;
+    }
+
+    private function getPublicAssetDisk(): string
+    {
+        $defaultDisk = (string) config('filesystems.default', 'local');
+
+        return $defaultDisk === 'local' ? 'public' : $defaultDisk;
+    }
+
+    private function extractRelativePath(string $storedPath): ?string
+    {
+        if (str_starts_with($storedPath, '/storage/')) {
+            return ltrim(str_replace('/storage/', '', $storedPath), '/');
+        }
+
+        if (str_starts_with($storedPath, 'http://') || str_starts_with($storedPath, 'https://')) {
+            $path = parse_url($storedPath, PHP_URL_PATH);
+
+            if (! is_string($path) || $path === '') {
+                return null;
+            }
+
+            if (str_starts_with($path, '/storage/')) {
+                return ltrim(str_replace('/storage/', '', $path), '/');
+            }
+
+            return ltrim($path, '/');
+        }
+
+        return ltrim($storedPath, '/');
     }
 }
