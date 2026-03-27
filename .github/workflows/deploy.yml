@@ -20,10 +20,12 @@ jobs:
             set -e
             cd /var/www/corelink.dev
             
-            echo "� Fixing permissions for git..."
-            sudo chown -R ec2-user:ec2-user .
+            echo "🔐 Fixing permissions for git..."
+            DEPLOY_USER="$(whoami)"
+            DEPLOY_GROUP="$(id -gn)"
+            sudo chown -R "${DEPLOY_USER}:${DEPLOY_GROUP}" .
             
-            echo "�📥 Pulling latest changes..."
+            echo "📥 Pulling latest changes..."
             git fetch origin
             git reset --hard origin/main
             
@@ -36,10 +38,10 @@ jobs:
             echo "🔨 Building frontend assets..."
             npm run build
             
-            echo "� Stopping SSR server..."
+            echo "🛑 Stopping SSR server..."
             php artisan inertia:stop-ssr 2>/dev/null || true
             
-            echo "�🗄️ Running migrations..."
+            echo "🗄️ Running migrations..."
             php artisan migrate --force
             
             echo "🌱 Seeding projects..."
@@ -54,8 +56,15 @@ jobs:
             php artisan view:cache
             php artisan event:cache
             
-            echo "� Setting permissions..."
-            sudo chown -R nginx:nginx storage bootstrap/cache public/build
+            echo "🔐 Setting permissions..."
+            if getent group nginx >/dev/null 2>&1; then
+              WEB_GROUP="nginx"
+            elif getent group www-data >/dev/null 2>&1; then
+              WEB_GROUP="www-data"
+            else
+              WEB_GROUP="${DEPLOY_GROUP}"
+            fi
+            sudo chown -R "${DEPLOY_USER}:${WEB_GROUP}" storage bootstrap/cache public/build
             sudo chmod -R 775 storage bootstrap/cache
             
             echo "🔄 Restarting services..."
