@@ -12,6 +12,13 @@ class PostmarkWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['services.postmark.webhook_token' => null]);
+    }
+
     public function test_hard_bounce_creates_suppression(): void
     {
         $response = $this->postJson('/webhooks/postmark', [

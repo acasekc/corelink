@@ -112,8 +112,8 @@ class ForgotPasswordTest extends TestCase
         $response = $this->postJson('/helpdesk/reset-password', [
             'token' => $token,
             'email' => 'test@example.com',
-            'password' => 'new-secure-password',
-            'password_confirmation' => 'new-secure-password',
+            'password' => 'new-secure-password1',
+            'password_confirmation' => 'new-secure-password1',
         ]);
 
         $response->assertStatus(200);
@@ -122,7 +122,7 @@ class ForgotPasswordTest extends TestCase
         ]);
 
         $user->refresh();
-        $this->assertTrue(Hash::check('new-secure-password', $user->password));
+        $this->assertTrue(Hash::check('new-secure-password1', $user->password));
         $this->assertFalse($user->force_password_change);
 
         $this->assertDatabaseMissing('password_reset_tokens', [
@@ -218,8 +218,8 @@ class ForgotPasswordTest extends TestCase
         $response = $this->postJson('/helpdesk/reset-password', [
             'token' => $token,
             'email' => 'test@example.com',
-            'password' => 'new-secure-password',
-            'password_confirmation' => 'new-secure-password',
+            'password' => 'new-secure-password1',
+            'password_confirmation' => 'new-secure-password1',
         ]);
 
         $response->assertStatus(200);

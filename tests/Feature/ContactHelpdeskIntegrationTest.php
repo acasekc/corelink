@@ -12,6 +12,13 @@ class ContactHelpdeskIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['services.recaptcha.secret_key' => null]);
+    }
+
     public function test_contact_form_creates_helpdesk_ticket(): void
     {
         Mail::fake();

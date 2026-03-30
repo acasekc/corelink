@@ -10,6 +10,13 @@ class ContactFormTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['services.recaptcha.secret_key' => null]);
+    }
+
     public function test_contact_form_sends_email(): void
     {
         Mail::fake();
