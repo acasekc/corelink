@@ -14,7 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
         then: function () {
-            Route::middleware('api')
+            Route::prefix('api')
+                ->middleware('api')
                 ->group(base_path('routes/api/discovery-bot.php'));
 
             // Helpdesk routes (handles its own middleware per group)
