@@ -239,6 +239,14 @@ Output ONLY valid JSON matching this schema:
     \"dependencies\": [\"string\"],
     \"other\": [\"string\"]
   },
+  \"references\": {
+    \"current_property\": [\"string\"],
+    \"reference_examples\": [\"string\"],
+    \"competitors\": [\"string\"],
+    \"design_inspirations\": [\"string\"],
+    \"feature_patterns_to_consider\": [\"string\"],
+    \"notes\": [\"string\"]
+  },
   \"estimation\": {
     \"complexity\": \"Simple|Medium|Complex\",
     \"confidence\": \"low|medium|high\",
@@ -251,7 +259,7 @@ Output ONLY valid JSON matching this schema:
 Conversation:
 {$transcript}{$referenceContext}
 
-Extract requirements. Be precise. Only include information explicitly stated by the user, or clearly label website observations as assumptions_required or gaps rather than confirmed scope.";
+Extract requirements. Be precise. If the user supplied URLs, domains, or example sites, capture them in the references section. Only include information explicitly stated by the user, or clearly label website observations as references, assumptions_required, or gaps rather than confirmed scope.";
     }
 
     /**

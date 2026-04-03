@@ -38,12 +38,21 @@ class LLMServicePromptTest extends TestCase
 
         $prompt = $service->getStage2Prompt([
             ['role' => 'user', 'content' => 'We need a client portal.'],
-        ]);
+        ], [[
+            'url' => 'https://example.com',
+            'source_type' => 'reference_example',
+            'status' => 'analyzed',
+            'title' => 'Example Site',
+            'summary' => 'Observed patterns: clean navigation and gated client access.',
+        ]]);
 
         $this->assertStringContainsString('roles_and_permissions', $prompt);
+        $this->assertStringContainsString('"references"', $prompt);
+        $this->assertStringContainsString('feature_patterns_to_consider', $prompt);
         $this->assertStringContainsString('admin_workflows', $prompt);
         $this->assertStringContainsString('estimate_blockers', $prompt);
         $this->assertStringContainsString('assumptions_required', $prompt);
+        $this->assertStringContainsString('capture them in the references section', $prompt);
     }
 
     public function test_admin_plan_prompt_includes_default_stack_and_confidence_requirements(): void
