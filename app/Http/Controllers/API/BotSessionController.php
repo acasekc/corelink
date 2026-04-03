@@ -6,6 +6,7 @@ use App\Enums\PlanStatus;
 use App\Enums\SessionStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateSessionRequest;
+use App\Jobs\GeneratePlanJob;
 use App\Services\ConversationService;
 use App\Services\InviteCodeService;
 use App\Services\WebsiteReferenceService;
@@ -210,8 +211,7 @@ class BotSessionController extends Controller
 
         // Check if we should auto-generate the plan
         if ($result['should_generate_plan'] ?? false) {
-            // Dispatch job for async plan generation
-            \App\Jobs\GeneratePlanJob::dispatch($session);
+            $this->dispatchPlanGeneration($session);
 
             return response()->json([
                 'message' => $result['message'],
@@ -293,8 +293,7 @@ class BotSessionController extends Controller
             ], 422);
         }
 
-        // Dispatch job for async plan generation
-        \App\Jobs\GeneratePlanJob::dispatch($session);
+        $this->dispatchPlanGeneration($session);
 
         return response()->json([
             'success' => true,
@@ -335,5 +334,10 @@ class BotSessionController extends Controller
             'summary' => $plan->user_summary,
             'created_at' => $plan->created_at,
         ], 200);
+    }
+
+    private function dispatchPlanGeneration($session): void
+    {
+        GeneratePlanJob::dispatch($session)->onConnection('background');
     }
 }

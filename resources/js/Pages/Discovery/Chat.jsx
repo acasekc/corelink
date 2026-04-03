@@ -36,6 +36,12 @@ const Chat = ({ meta }) => {
   const [turnNumber, setTurnNumber] = useState(0);
   const [turnStatus, setTurnStatus] = useState('discovery');
   const maxTurns = 16;
+  const canShowFinishButton = turnNumber >= 3 && (
+    botOfferedSummary ||
+    turnStatus === 'soft_nudge' ||
+    turnStatus === 'force_summary' ||
+    turnNumber >= maxTurns - 2
+  );
   
   const messagesContainerRef = useRef(null);
   const messageInputRef = useRef(null);
@@ -341,12 +347,16 @@ const Chat = ({ meta }) => {
           role: 'assistant',
           content: "I'm now creating your project summary. This may take a moment..."
         }]);
+        setBotOfferedSummary(false);
         pollForPlanCompletion();
       } else {
         setPlanGenerating(false);
+        const missingTopics = Array.isArray(data.missing_topics) && data.missing_topics.length > 0
+          ? ` We still need a little more detail on: ${data.missing_topics.join(', ')}.`
+          : '';
         setMessages(prev => [...prev, {
           role: 'assistant',
-          content: data.error || 'Failed to start plan generation.'
+          content: `${data.error || 'Failed to start plan generation.'}${missingTopics}`
         }]);
       }
     } catch (error) {
@@ -571,6 +581,26 @@ const Chat = ({ meta }) => {
                 <div className="text-sm text-orange-300">Final questions...</div>
               )}
             </div>
+
+            {sessionStatus === 'active' && canShowFinishButton && !planGenerating && (
+              <div className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-medium text-emerald-200">Ready to wrap this up?</p>
+                    <p className="text-sm text-slate-300">
+                      If you feel like you've shared enough, you can end the discovery session and send it for estimate processing now.
+                    </p>
+                  </div>
+                  <button
+                    onClick={requestPlan}
+                    disabled={planGenerating}
+                    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Finish & generate estimate
+                  </button>
+                </div>
+              </div>
+            )}
             
             {/* Messages Container */}
             <div 
@@ -636,13 +666,13 @@ const Chat = ({ meta }) => {
                   >
                     Send
                   </button>
-                  {turnNumber >= 3 && botOfferedSummary && (
+                  {canShowFinishButton && (
                     <button
                       onClick={requestPlan}
                       disabled={planGenerating}
-                      className="px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700 transition disabled:opacity-50"
+                      className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium transition hover:bg-green-700 disabled:opacity-50"
                     >
-                      Generate Plan
+                      Finish & generate estimate
                     </button>
                   )}
                 </div>
