@@ -4,8 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Services\InviteCodeService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class InviteCodeController extends Controller
 {
@@ -18,9 +18,6 @@ class InviteCodeController extends Controller
 
     /**
      * Validate an invite code
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function validateCode(Request $request): JsonResponse
     {
@@ -30,7 +27,7 @@ class InviteCodeController extends Controller
 
         $result = $this->inviteCodeService->validateCode($request->input('code'));
 
-        if (!$result['valid']) {
+        if (! $result['valid']) {
             return response()->json($result, 400);
         }
 
@@ -43,9 +40,6 @@ class InviteCodeController extends Controller
 
     /**
      * Create a new invite code (admin only)
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -61,7 +55,7 @@ class InviteCodeController extends Controller
             auth()->id(),
             $request->input('email'),
             $request->input('expires_in_days'),
-            $request->input('max_uses', 1)
+            $request->input('max_uses')
         );
 
         return response()->json([
@@ -74,9 +68,6 @@ class InviteCodeController extends Controller
 
     /**
      * List invite codes (admin only)
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
@@ -90,9 +81,6 @@ class InviteCodeController extends Controller
 
     /**
      * Revoke an invite code (admin only)
-     *
-     * @param string $codeId
-     * @return JsonResponse
      */
     public function revoke(string $codeId): JsonResponse
     {

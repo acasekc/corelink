@@ -5,17 +5,38 @@ namespace App\Services;
 use App\Enums\PlanStatus;
 use App\Enums\SessionStatus;
 use App\Events\DiscoveryMessageReceived;
-use App\Events\DiscoveryPlanReady;
-use App\Models\BotSession;
 use App\Models\BotConversation;
+use App\Models\BotSession;
 use App\Models\DiscoveryPlan;
 use Illuminate\Support\Facades\Log;
 
 class ConversationService
 {
-    public const MAX_TURNS = 12;
-    public const SOFT_NUDGE_AT = 7;
-    public const FORCE_SUMMARY_AT = 10;
+    private const COVERAGE_PROMPTS = [
+        'business_goal' => 'What is the main business outcome or problem this project needs to solve first?',
+        'users' => 'Who will use this product day to day, and are there any different user roles or permission levels?',
+        'workflows' => 'What are the main steps users or staff need to complete inside the product?',
+        'scope_features' => 'What features are absolute must-haves for the first release versus nice-to-haves for later?',
+        'integrations' => 'Does this need to connect with any existing systems, third-party tools, payments, or external services?',
+        'data_content' => 'What kind of data, content, uploads, or records will the system need to store or manage?',
+        'delivery_constraints' => 'Do you already have a target launch window, budget range, or other delivery constraints we should plan around?',
+    ];
+
+    private const COVERAGE_KEYWORDS = [
+        'business_goal' => ['problem', 'goal', 'outcome', 'opportunity', 'replace', 'improve', 'manual', 'inefficient'],
+        'users' => ['user', 'customer', 'client', 'staff', 'admin', 'team', 'role', 'permission'],
+        'workflows' => ['workflow', 'process', 'step', 'book', 'schedule', 'submit', 'approve', 'manage'],
+        'scope_features' => ['feature', 'must-have', 'mvp', 'portal', 'dashboard', 'search', 'report', 'notification'],
+        'integrations' => ['integrate', 'integration', 'api', 'stripe', 'quickbooks', 'mailchimp', 'webhook', 'sync'],
+        'data_content' => ['data', 'content', 'upload', 'document', 'file', 'record', 'inventory', 'catalog'],
+        'delivery_constraints' => ['timeline', 'launch', 'budget', 'cost', 'phase', 'deadline', 'asap', 'month'],
+    ];
+
+    public const MAX_TURNS = 16;
+
+    public const SOFT_NUDGE_AT = 10;
+
+    public const FORCE_SUMMARY_AT = 14;
 
     protected LLMService $llmService;
 
@@ -26,30 +47,25 @@ class ConversationService
 
     /**
      * Create a new bot session
-     *
-     * @param string $inviteCodeId
-     * @param string|null $userEmail
-     * @param int|null $userId
-     * @return BotSession
      */
-    public function createSession(string $inviteCodeId, ?string $userEmail = null, ?int $userId = null): BotSession
+    public function createSession(string $inviteCodeId, ?string $userEmail = null, ?int $userId = null, array $metadata = []): BotSession
     {
+        $sessionMetadata = array_filter([
+            'user_email' => $userEmail,
+            ...$metadata,
+        ], static fn ($value) => $value !== null && $value !== []);
+
         return BotSession::create([
             'invite_code_id' => $inviteCodeId,
             'user_id' => $userId,
             'started_at' => now(),
             'status' => SessionStatus::Active,
-            'metadata' => [
-                'user_email' => $userEmail,
-            ],
+            'metadata' => $sessionMetadata,
         ]);
     }
 
     /**
      * Get a session by ID
-     *
-     * @param string $sessionId
-     * @return BotSession|null
      */
     public function getSession(string $sessionId): ?BotSession
     {
@@ -58,16 +74,6 @@ class ConversationService
 
     /**
      * Save a conversation turn
-     *
-     * @param string $sessionId
-     * @param string|null $userMessage
-     * @param string|null $assistantMessage
-     * @param string $interactionMode
-     * @param string|null $userAudioUrl
-     * @param string|null $assistantAudioUrl
-     * @param array|null $tokensUsed
-     * @param array|null $turnContext
-     * @return BotConversation
      */
     public function saveTurn(
         string $sessionId,
@@ -78,10 +84,9 @@ class ConversationService
         ?string $assistantAudioUrl = null,
         ?array $tokensUsed = null,
         ?array $turnContext = null
-    ): BotConversation
-    {
+    ): BotConversation {
         $session = BotSession::findOrFail($sessionId);
-        
+
         // Get the next turn number
         $turnNumber = $session->conversations()->max('turn_number') + 1 ?? 1;
 
@@ -102,7 +107,6 @@ class ConversationService
     /**
      * Get conversation history
      *
-     * @param string $sessionId
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getHistory(string $sessionId)
@@ -115,8 +119,6 @@ class ConversationService
     /**
      * Get recent conversation for context (sliding window)
      *
-     * @param string $sessionId
-     * @param int $windowSize
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getRecentContext(string $sessionId, int $windowSize = 10)
@@ -130,9 +132,6 @@ class ConversationService
 
     /**
      * Complete a session
-     *
-     * @param string $sessionId
-     * @return BotSession
      */
     public function completeSession(string $sessionId): BotSession
     {
@@ -141,40 +140,34 @@ class ConversationService
             'status' => SessionStatus::Completed,
             'completed_at' => now(),
         ]);
+
         return $session;
     }
 
     /**
      * Pause a session
-     *
-     * @param string $sessionId
-     * @return BotSession
      */
     public function pauseSession(string $sessionId): BotSession
     {
         $session = BotSession::findOrFail($sessionId);
         $session->update(['status' => SessionStatus::Paused]);
+
         return $session;
     }
 
     /**
      * Resume a session
-     *
-     * @param string $sessionId
-     * @return BotSession
      */
     public function resumeSession(string $sessionId): BotSession
     {
         $session = BotSession::findOrFail($sessionId);
         $session->update(['status' => SessionStatus::Active]);
+
         return $session;
     }
 
     /**
      * Build conversation transcript
-     *
-     * @param string $sessionId
-     * @return string
      */
     public function buildTranscript(string $sessionId): string
     {
@@ -195,9 +188,6 @@ class ConversationService
 
     /**
      * Check if we should force summary generation
-     *
-     * @param int $turnNumber
-     * @return bool
      */
     public function shouldForceSummary(int $turnNumber): bool
     {
@@ -206,9 +196,6 @@ class ConversationService
 
     /**
      * Check if conversation is at hard limit
-     *
-     * @param int $turnNumber
-     * @return bool
      */
     public function isAtHardLimit(int $turnNumber): bool
     {
@@ -217,9 +204,6 @@ class ConversationService
 
     /**
      * Detect if bot has offered to summarize
-     *
-     * @param string $message
-     * @return bool
      */
     public function getSummaryTriggerPhrase(string $message): bool
     {
@@ -236,7 +220,7 @@ class ConversationService
         ];
 
         $lowerMessage = strtolower($message);
-        
+
         foreach ($triggerPhrases as $phrase) {
             if (str_contains($lowerMessage, $phrase)) {
                 return true;
@@ -248,9 +232,6 @@ class ConversationService
 
     /**
      * Get the current turn guidance level
-     *
-     * @param int $turnNumber
-     * @return string
      */
     public function getTurnGuidanceLevel(int $turnNumber): string
     {
@@ -263,6 +244,7 @@ class ConversationService
         if ($turnNumber >= self::SOFT_NUDGE_AT) {
             return 'soft_nudge';
         }
+
         return 'discovery';
     }
 
@@ -275,13 +257,14 @@ class ConversationService
     ): array {
         $turnNumber = $session->turn_count + 1;
         $conversationHistory = $session->getConversationHistory();
+        $coverage = $this->assessDiscoveryCoverage($session, $userMessage);
 
         // Check if at hard limit
         if ($this->isAtHardLimit($turnNumber)) {
             return [
                 'success' => true,
                 'should_generate_plan' => true,
-                'message' => "I have a great understanding of your project now. Let me put together a comprehensive summary and plan for you!",
+                'message' => 'I have a great understanding of your project now. Let me put together a comprehensive summary and plan for you!',
                 'turn_status' => 'hard_limit',
                 'turn_number' => $turnNumber,
             ];
@@ -290,18 +273,21 @@ class ConversationService
         // Get turn-aware prompt
         $systemPrompt = $this->llmService->getStage1Prompt(
             $turnNumber,
-            $session->extracted_requirements
+            $session->extracted_requirements,
+            $session->metadata['reference_summaries'] ?? [],
+            $coverage
         );
-        
+
         // Call LLM
         $result = $this->llmService->callLLM(
             $systemPrompt,
             $userMessage,
             $conversationHistory,
-            2000
+            2200,
+            0.45
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return $result;
         }
 
@@ -320,6 +306,15 @@ class ConversationService
 
         // Check if bot is offering to summarize
         $botOfferedSummary = $this->getSummaryTriggerPhrase($result['message']);
+
+        if ($botOfferedSummary && ! $coverage['ready_for_wrap_up'] && $turnNumber < self::FORCE_SUMMARY_AT) {
+            $result['message'] = $this->buildCoverageFollowUpQuestion($coverage);
+            $botOfferedSummary = false;
+
+            $conversation->update([
+                'assistant_message' => $result['message'],
+            ]);
+        }
 
         // Broadcast the assistant's response
         broadcast(new DiscoveryMessageReceived(
@@ -340,6 +335,98 @@ class ConversationService
             'bot_offered_summary' => $botOfferedSummary,
             'should_generate_plan' => false,
         ];
+    }
+
+    /**
+     * @return array{coverage_score: int, covered_topics: array<int, string>, missing_topics: array<int, string>, ready_for_wrap_up: bool}
+     */
+    public function assessDiscoveryCoverage(BotSession $session, ?string $latestUserMessage = null): array
+    {
+        $conversationHistory = $session->getConversationHistory();
+        $historyText = collect($conversationHistory)
+            ->map(function (array $turn): string {
+                return implode("\n", array_filter([
+                    $turn['user'] ?? null,
+                    $turn['assistant'] ?? null,
+                    $turn['content'] ?? null,
+                ]));
+            })
+            ->implode("\n");
+
+        $metadata = $session->metadata ?? [];
+        $referenceText = collect($metadata['reference_summaries'] ?? [])
+            ->map(function (array $summary): string {
+                return implode(' ', array_filter([
+                    $summary['source_type'] ?? null,
+                    $summary['title'] ?? null,
+                    $summary['summary'] ?? null,
+                ]));
+            })
+            ->implode("\n");
+
+        $haystack = strtolower(trim(implode("\n", array_filter([
+            $historyText,
+            $latestUserMessage,
+            $referenceText,
+            json_encode($session->extracted_requirements ?? []),
+        ]))));
+
+        $coveredTopics = [];
+        $missingTopics = [];
+
+        foreach (array_keys(self::COVERAGE_PROMPTS) as $bucket) {
+            if ($this->coverageBucketIsSatisfied($bucket, $haystack)) {
+                $coveredTopics[] = $bucket;
+
+                continue;
+            }
+
+            $missingTopics[] = $bucket;
+        }
+
+        $coverageScore = count($coveredTopics);
+        $requiredCoverage = count(self::COVERAGE_PROMPTS) - 1;
+
+        return [
+            'coverage_score' => $coverageScore,
+            'covered_topics' => $coveredTopics,
+            'missing_topics' => $missingTopics,
+            'ready_for_wrap_up' => $coverageScore >= $requiredCoverage,
+        ];
+    }
+
+    /**
+     * @param  array{coverage_score: int, covered_topics: array<int, string>, missing_topics: array<int, string>, ready_for_wrap_up: bool}  $coverage
+     */
+    private function buildCoverageFollowUpQuestion(array $coverage): string
+    {
+        $firstMissingTopic = $coverage['missing_topics'][0] ?? null;
+
+        if ($firstMissingTopic === null) {
+            return 'I have enough to wrap this up. If you are ready, I can turn this into a project summary and plan.';
+        }
+
+        return self::COVERAGE_PROMPTS[$firstMissingTopic];
+    }
+
+    private function coverageBucketIsSatisfied(string $bucket, string $haystack): bool
+    {
+        if ($haystack === '') {
+            return false;
+        }
+
+        $matches = 0;
+
+        foreach (self::COVERAGE_KEYWORDS[$bucket] ?? [] as $keyword) {
+            if (str_contains($haystack, $keyword)) {
+                $matches++;
+            }
+        }
+
+        return match ($bucket) {
+            'business_goal', 'users', 'scope_features', 'delivery_constraints' => $matches >= 1,
+            default => $matches >= 2,
+        };
     }
 
     /**
@@ -382,21 +469,25 @@ class ConversationService
             ]);
 
             // Stage 2: Extract structured requirements
-            $stage2Prompt = $this->llmService->getStage2Prompt($conversationHistory);
+            $stage2Prompt = $this->llmService->getStage2Prompt(
+                $conversationHistory,
+                $session->metadata['reference_summaries'] ?? []
+            );
             $extractionResult = $this->llmService->callLLM(
-                "You are a requirements extraction specialist. Extract structured data from conversations. Output ONLY valid JSON.",
+                'You are a requirements extraction specialist. Extract structured data from conversations. Output ONLY valid JSON.',
                 $stage2Prompt,
                 null,
-                4000
+                4500,
+                0.2
             );
 
-            if (!$extractionResult['success']) {
+            if (! $extractionResult['success']) {
                 $plan->markAsFailed();
-                throw new \Exception('Failed to extract requirements: ' . ($extractionResult['error'] ?? 'Unknown error'));
+                throw new \Exception('Failed to extract requirements: '.($extractionResult['error'] ?? 'Unknown error'));
             }
 
             $structuredRequirements = $this->llmService->parseJsonResponse($extractionResult['message']);
-            if (!$structuredRequirements) {
+            if (! $structuredRequirements) {
                 $plan->markAsFailed();
                 throw new \Exception('Failed to parse structured requirements');
             }
@@ -406,36 +497,41 @@ class ConversationService
             // Stage 3: Generate user summary (friendly, no specs)
             $userSummaryPrompt = $this->llmService->generateUserSummary($structuredRequirements);
             $userSummaryResult = $this->llmService->callLLM(
-                "You are a friendly project communicator. Create warm, non-technical summaries. Output ONLY valid JSON.",
+                'You are a friendly project communicator. Create warm, non-technical summaries. Output ONLY valid JSON.',
                 $userSummaryPrompt,
                 null,
-                2000
+                2200,
+                0.4
             );
 
-            if (!$userSummaryResult['success']) {
+            if (! $userSummaryResult['success']) {
                 $plan->markAsFailed();
-                throw new \Exception('Failed to generate user summary: ' . ($userSummaryResult['error'] ?? 'Unknown error'));
+                throw new \Exception('Failed to generate user summary: '.($userSummaryResult['error'] ?? 'Unknown error'));
             }
 
             $userSummary = $this->llmService->parseJsonResponse($userSummaryResult['message']);
             $plan->update(['user_summary' => $userSummary]);
 
             // Stage 4: Generate admin plan (full technical details)
-            $adminPlanPrompt = $this->llmService->generateAdminPlan($structuredRequirements);
+            $adminPlanPrompt = $this->llmService->generateAdminPlan(
+                $structuredRequirements,
+                $session->metadata['reference_summaries'] ?? []
+            );
             $adminPlanResult = $this->llmService->callLLM(
-                "You are a senior technical architect and project planner. Create comprehensive technical plans. Output ONLY valid JSON.",
+                'You are a senior technical architect and project planner. Create comprehensive technical plans. Output ONLY valid JSON.',
                 $adminPlanPrompt,
                 null,
-                6000
+                6500,
+                0.25
             );
 
-            if (!$adminPlanResult['success']) {
+            if (! $adminPlanResult['success']) {
                 $plan->markAsFailed();
-                throw new \Exception('Failed to generate admin plan: ' . ($adminPlanResult['error'] ?? 'Unknown error'));
+                throw new \Exception('Failed to generate admin plan: '.($adminPlanResult['error'] ?? 'Unknown error'));
             }
 
             $adminPlan = $this->llmService->parseJsonResponse($adminPlanResult['message']);
-            
+
             $plan->update([
                 'technical_plan' => $adminPlan,
                 'cost_estimate' => $adminPlan['cost_estimates'] ?? null,

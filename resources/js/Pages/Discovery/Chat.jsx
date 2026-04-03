@@ -5,10 +5,18 @@ import SeoHead from '@/components/SeoHead';
 const Chat = ({ meta }) => {
   const { url } = usePage();
   const urlParams = new URLSearchParams((url || '').split('?')[1] || '');
+  const referenceTypeOptions = [
+    { value: 'reference_example', label: 'General example' },
+    { value: 'competitor', label: 'Competitor' },
+    { value: 'feature_reference', label: 'Feature reference' },
+    { value: 'design_reference', label: 'Design inspiration' },
+  ];
   
   // State for invite code entry
   const [inviteCode, setInviteCode] = useState(urlParams.get('code') || '');
   const [userEmail, setUserEmail] = useState('');
+  const [currentWebsiteUrl, setCurrentWebsiteUrl] = useState('');
+  const [references, setReferences] = useState([{ type: 'reference_example', url: '' }]);
   const [inviteError, setInviteError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   
@@ -27,12 +35,34 @@ const Chat = ({ meta }) => {
   // Turn state
   const [turnNumber, setTurnNumber] = useState(0);
   const [turnStatus, setTurnStatus] = useState('discovery');
-  const maxTurns = 12;
+  const maxTurns = 16;
   
   const messagesContainerRef = useRef(null);
   const messageInputRef = useRef(null);
   const echoChannelRef = useRef(null);
   const apiBase = '/api/bot';
+
+  const updateReference = (index, field, value) => {
+    setReferences((prev) => prev.map((reference, referenceIndex) => (
+      referenceIndex === index
+        ? { ...reference, [field]: value }
+        : reference
+    )));
+  };
+
+  const addReferenceRow = () => {
+    setReferences((prev) => [...prev, { type: 'reference_example', url: '' }]);
+  };
+
+  const removeReferenceRow = (index) => {
+    setReferences((prev) => {
+      if (prev.length === 1) {
+        return [{ type: 'reference_example', url: '' }];
+      }
+
+      return prev.filter((_, referenceIndex) => referenceIndex !== index);
+    });
+  };
   
   // Auto-scroll to bottom when messages change and focus input
   useEffect(() => {
@@ -185,13 +215,21 @@ const Chat = ({ meta }) => {
         body: JSON.stringify({
           invite_code: inviteCode,
           email: userEmail || null,
+          current_website_url: currentWebsiteUrl.trim() || null,
+          references: references
+            .map((reference) => ({
+              type: reference.type,
+              url: reference.url.trim(),
+            }))
+            .filter((reference) => reference.url),
         }),
       });
       
       const sessionData = await sessionResponse.json();
       
       if (!sessionResponse.ok) {
-        setInviteError(sessionData.message || 'Failed to create session');
+        const sessionErrors = Object.values(sessionData.errors || {}).flat().join(' ');
+        setInviteError(sessionData.message || sessionErrors || 'Failed to create session');
         return;
       }
       
@@ -425,6 +463,80 @@ const Chat = ({ meta }) => {
                   disabled={isValidating}
                 />
               </div>
+
+              <div className="mb-4">
+                <label htmlFor="currentWebsiteUrl" className="block text-sm font-semibold mb-2">
+                  Current Website or Product URL <span className="text-slate-400 text-xs">(optional)</span>
+                </label>
+                <input
+                  id="currentWebsiteUrl"
+                  type="text"
+                  value={currentWebsiteUrl}
+                  onChange={(e) => setCurrentWebsiteUrl(e.target.value)}
+                  placeholder="example.com or https://example.com"
+                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  disabled={isValidating}
+                />
+              </div>
+
+              <div className="mb-4">
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <label className="block text-sm font-semibold">
+                    Reference URLs <span className="text-slate-400 text-xs">(optional)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={addReferenceRow}
+                    disabled={isValidating || references.length >= 5}
+                    className="text-xs font-medium text-cyan-300 transition hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    + Add reference
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {references.map((reference, index) => (
+                    <div key={index} className="rounded-lg border border-slate-700 bg-slate-900/40 p-3">
+                      <div className="grid gap-3 sm:grid-cols-[180px_minmax(0,1fr)_auto] sm:items-start">
+                        <select
+                          value={reference.type}
+                          onChange={(e) => updateReference(index, 'type', e.target.value)}
+                          className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          disabled={isValidating}
+                        >
+                          {referenceTypeOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        <input
+                          type="text"
+                          value={reference.url}
+                          onChange={(e) => updateReference(index, 'url', e.target.value)}
+                          placeholder="example.com or https://example.com"
+                          className="w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          disabled={isValidating}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => removeReferenceRow(index)}
+                          className="rounded-lg border border-slate-600 px-3 py-3 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white"
+                          disabled={isValidating}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-2 text-xs text-slate-400">
+                  Add competitor, feature, or design references. The bot treats them as context only and still confirms what belongs in scope.
+                </p>
+              </div>
               
               {inviteError && (
                 <p className="text-red-400 text-sm mb-4">{inviteError}</p>
@@ -433,7 +545,7 @@ const Chat = ({ meta }) => {
               <button
                 type="submit"
                 disabled={isValidating || !inviteCode}
-                className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-linear-to-r from-blue-500 to-cyan-500 rounded-lg py-3 font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isValidating ? 'Validating...' : 'Start Discovery'}
               </button>
@@ -520,7 +632,7 @@ const Chat = ({ meta }) => {
                   <button
                     onClick={sendMessage}
                     disabled={!userMessage.trim() || isTyping || planGenerating}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-linear-to-r from-blue-500 to-cyan-500 rounded-lg px-6 py-3 font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Send
                   </button>

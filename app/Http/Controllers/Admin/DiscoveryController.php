@@ -88,19 +88,18 @@ class DiscoveryController extends Controller
         ]);
 
         $code = $validated['code'] ?? strtoupper(Str::random(8));
-        
+
         $invite = InviteCode::create([
             'admin_user_id' => auth()->id(),
             'code' => $code,
             'email' => $validated['email'] ?? null,
-            // Default max_uses to 1 if not provided to avoid DB integrity errors
-            'max_uses' => $validated['max_uses'] ?? 1,
+            'max_uses' => $validated['max_uses'] ?? null,
             'expires_at' => isset($validated['expires_days']) ? now()->addDays($validated['expires_days']) : null,
             'is_active' => true,
         ]);
 
         // Send email if requested and email provided
-        if ($request->boolean('send_email') && !empty($validated['email'])) {
+        if ($request->boolean('send_email') && ! empty($validated['email'])) {
             Mail::to($validated['email'])->send(new InviteCodeMail($invite));
         }
 
@@ -115,7 +114,7 @@ class DiscoveryController extends Controller
     {
         $this->authorize('update', $invite);
 
-        $invite->update(['is_active' => !$invite->is_active]);
+        $invite->update(['is_active' => ! $invite->is_active]);
 
         return back()->with('success', 'Invite status updated.');
     }
@@ -164,7 +163,7 @@ class DiscoveryController extends Controller
             $msgs = [];
             if ($conv->user_message) {
                 $msgs[] = [
-                    'id' => $conv->id . '_user',
+                    'id' => $conv->id.'_user',
                     'role' => 'user',
                     'content' => $conv->user_message,
                     'created_at' => $conv->created_at,
@@ -172,12 +171,13 @@ class DiscoveryController extends Controller
             }
             if ($conv->assistant_message) {
                 $msgs[] = [
-                    'id' => $conv->id . '_assistant',
+                    'id' => $conv->id.'_assistant',
                     'role' => 'assistant',
                     'content' => $conv->assistant_message,
                     'created_at' => $conv->created_at,
                 ];
             }
+
             return $msgs;
         })->values();
 

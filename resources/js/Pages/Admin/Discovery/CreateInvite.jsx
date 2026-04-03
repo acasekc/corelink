@@ -40,8 +40,8 @@ const CreateInvite = () => {
           code: form.code,
           email: form.email,
           send_email: form.send_email,
-          max_uses: form.max_uses,
-          expires_days: form.expires_days,
+          max_uses: form.max_uses === "" ? null : Number(form.max_uses),
+          expires_days: !form.expires_days ? null : Number(form.expires_days),
         }),
       });
       if (!res.ok) {

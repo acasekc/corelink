@@ -5,49 +5,90 @@ namespace App\Http\Controllers\API;
 use App\Enums\PlanStatus;
 use App\Enums\SessionStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateSessionRequest;
 use App\Services\ConversationService;
 use App\Services\InviteCodeService;
-use Illuminate\Http\Request;
+use App\Services\WebsiteReferenceService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class BotSessionController extends Controller
 {
     protected ConversationService $conversationService;
+
     protected InviteCodeService $inviteCodeService;
+
+    protected WebsiteReferenceService $websiteReferenceService;
 
     public function __construct(
         ConversationService $conversationService,
-        InviteCodeService $inviteCodeService
+        InviteCodeService $inviteCodeService,
+        WebsiteReferenceService $websiteReferenceService
     ) {
         $this->conversationService = $conversationService;
         $this->inviteCodeService = $inviteCodeService;
+        $this->websiteReferenceService = $websiteReferenceService;
     }
 
     /**
      * Create a new bot session with validated invite code
      */
-    public function create(Request $request): JsonResponse
+    public function create(CreateSessionRequest $request): JsonResponse
     {
-        $request->validate([
-            'invite_code' => 'required|string',
-            'email' => 'nullable|email',
-        ]);
-
         // Validate the invite code
         $validation = $this->inviteCodeService->validateCode($request->input('invite_code'));
 
-        if (!$validation['valid']) {
+        if (! $validation['valid']) {
             return response()->json([
                 'success' => false,
                 'message' => $validation['message'],
             ], 400);
         }
 
+        $referencePreparation = $this->websiteReferenceService->prepareSessionReferences(
+            $request->input('current_website_url'),
+            $request->input('references', []),
+            $request->input('reference_urls', [])
+        );
+
+        if ($referencePreparation['invalid'] !== []) {
+            return response()->json([
+                'success' => false,
+                'message' => 'One or more website references could not be understood. Please enter valid public domains or URLs.',
+                'errors' => [
+                    'reference_urls' => $referencePreparation['invalid'],
+                ],
+            ], 422);
+        }
+
+        $referenceSummaries = $this->websiteReferenceService->analyzeReferences($referencePreparation['references']);
+
+        $metadata = [
+            'user_email' => $request->input('email'),
+        ];
+
+        if ($referencePreparation['current_website_url'] !== null) {
+            $metadata['current_website_url'] = $referencePreparation['current_website_url'];
+        }
+
+        if ($referencePreparation['reference_urls'] !== []) {
+            $metadata['reference_urls'] = $referencePreparation['reference_urls'];
+        }
+
+        if ($referencePreparation['references'] !== []) {
+            $metadata['references'] = $referencePreparation['references'];
+        }
+
+        if ($referenceSummaries !== []) {
+            $metadata['reference_summaries'] = $referenceSummaries;
+        }
+
         // Create the session (public - protected by invite code)
         $session = $this->conversationService->createSession(
             $validation['invite_code_id'],
             $request->input('email'),
-            null
+            null,
+            $metadata
         );
 
         // Mark the invite code as used
@@ -68,7 +109,7 @@ class BotSessionController extends Controller
     {
         $session = $this->conversationService->getSession($sessionId);
 
-        if (!$session) {
+        if (! $session) {
             return response()->json(['error' => 'Session not found'], 404);
         }
 
@@ -87,7 +128,7 @@ class BotSessionController extends Controller
     {
         $session = $this->conversationService->getSession($sessionId);
 
-        if (!$session) {
+        if (! $session) {
             return response()->json(['error' => 'Session not found'], 404);
         }
 
@@ -117,8 +158,30 @@ class BotSessionController extends Controller
 
         $session = $this->conversationService->getSession($sessionId);
 
-        if (!$session) {
+        if (! $session) {
             return response()->json(['error' => 'Session not found'], 404);
+        }
+
+        $message = $request->input('message');
+        $detectedReferences = $this->websiteReferenceService->extractReferencesFromText(
+            $message,
+            $session->metadata['reference_summaries'] ?? []
+        );
+
+        if ($detectedReferences !== []) {
+            $referenceSummaries = $this->websiteReferenceService->analyzeReferences($detectedReferences);
+            $metadata = $session->metadata ?? [];
+            $metadata['reference_summaries'] = $this->websiteReferenceService->mergeReferenceSummaries(
+                $metadata['reference_summaries'] ?? [],
+                $referenceSummaries
+            );
+            $metadata['reference_urls'] = array_values(array_unique(array_map(
+                static fn (array $summary): string => $summary['url'],
+                $metadata['reference_summaries']
+            )));
+
+            $session->update(['metadata' => $metadata]);
+            $session->refresh();
         }
 
         // Check session status
@@ -136,10 +199,10 @@ class BotSessionController extends Controller
         // Process the message
         $result = $this->conversationService->processMessage(
             $session,
-            $request->input('message')
+            $message
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'error' => $result['error'] ?? 'Failed to process message',
             ], 500);
@@ -174,7 +237,7 @@ class BotSessionController extends Controller
     {
         $session = $this->conversationService->getSession($sessionId);
 
-        if (!$session) {
+        if (! $session) {
             return response()->json(['error' => 'Session not found'], 404);
         }
 
@@ -201,7 +264,7 @@ class BotSessionController extends Controller
     {
         $session = $this->conversationService->getSession($sessionId);
 
-        if (!$session) {
+        if (! $session) {
             return response()->json(['error' => 'Session not found'], 404);
         }
 
@@ -220,6 +283,16 @@ class BotSessionController extends Controller
             ], 400);
         }
 
+        $coverage = $this->conversationService->assessDiscoveryCoverage($session);
+
+        if (! $coverage['ready_for_wrap_up'] && $session->turn_count < ConversationService::FORCE_SUMMARY_AT) {
+            return response()->json([
+                'error' => 'We still need a bit more detail before generating a reliable plan.',
+                'missing_topics' => $coverage['missing_topics'],
+                'coverage_score' => $coverage['coverage_score'],
+            ], 422);
+        }
+
         // Dispatch job for async plan generation
         \App\Jobs\GeneratePlanJob::dispatch($session);
 
@@ -236,21 +309,21 @@ class BotSessionController extends Controller
     {
         $session = $this->conversationService->getSession($sessionId);
 
-        if (!$session) {
+        if (! $session) {
             return response()->json(['error' => 'Session not found'], 404);
         }
 
         $plan = $session->discoveryPlan;
 
-        if (!$plan) {
+        if (! $plan) {
             return response()->json(['error' => 'No plan has been generated yet'], 404);
         }
 
         if ($plan->status !== PlanStatus::Completed) {
             return response()->json([
                 'status' => $plan->status->value,
-                'message' => $plan->status === PlanStatus::Generating 
-                    ? 'Plan is still being generated...' 
+                'message' => $plan->status === PlanStatus::Generating
+                    ? 'Plan is still being generated...'
                     : 'Plan generation failed',
             ], 200);
         }

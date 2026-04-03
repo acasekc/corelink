@@ -3,21 +3,15 @@
 namespace App\Services;
 
 use App\Models\InviteCode;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class InviteCodeService
 {
     /**
      * Generate a new invite code
-     *
-     * @param int $adminUserId
-     * @param string|null $email
-     * @param int|null $expiresInDays
-     * @param int $maxUses
-     * @return InviteCode
      */
-    public function createInviteCode(int $adminUserId, ?string $email = null, ?int $expiresInDays = null, int $maxUses = 1): InviteCode
+    public function createInviteCode(int $adminUserId, ?string $email = null, ?int $expiresInDays = null, ?int $maxUses = null): InviteCode
     {
         return InviteCode::create([
             'admin_user_id' => $adminUserId,
@@ -32,9 +26,6 @@ class InviteCodeService
 
     /**
      * Validate an invite code
-     *
-     * @param string $code
-     * @return array
      */
     public function validateCode(string $code): array
     {
@@ -42,7 +33,7 @@ class InviteCodeService
             ->where('is_active', true)
             ->first();
 
-        if (!$inviteCode) {
+        if (! $inviteCode) {
             return [
                 'valid' => false,
                 'message' => 'Invalid or inactive invite code.',
@@ -56,7 +47,7 @@ class InviteCodeService
             ];
         }
 
-        if ($inviteCode->current_uses >= $inviteCode->max_uses) {
+        if ($inviteCode->max_uses !== null && $inviteCode->current_uses >= $inviteCode->max_uses) {
             return [
                 'valid' => false,
                 'message' => 'This invite code has reached its usage limit.',
@@ -72,16 +63,12 @@ class InviteCodeService
 
     /**
      * Mark an invite code as used
-     *
-     * @param string $codeId
-     * @param int|null $userId
-     * @return InviteCode
      */
     public function markAsUsed(string $codeId, ?int $userId = null): InviteCode
     {
         $inviteCode = InviteCode::findOrFail($codeId);
         $inviteCode->increment('current_uses');
-        
+
         if ($userId) {
             $inviteCode->update([
                 'used_by_user_id' => $userId,
@@ -89,7 +76,7 @@ class InviteCodeService
             ]);
         }
 
-        if ($inviteCode->current_uses >= $inviteCode->max_uses) {
+        if ($inviteCode->max_uses !== null && $inviteCode->current_uses >= $inviteCode->max_uses) {
             $inviteCode->update(['is_active' => false]);
         }
 
@@ -98,21 +85,17 @@ class InviteCodeService
 
     /**
      * Revoke an invite code
-     *
-     * @param string $codeId
-     * @return InviteCode
      */
     public function revokeCode(string $codeId): InviteCode
     {
         $inviteCode = InviteCode::findOrFail($codeId);
         $inviteCode->update(['is_active' => false]);
+
         return $inviteCode;
     }
 
     /**
      * Generate a unique random code
-     *
-     * @return string
      */
     private function generateUniqueCode(): string
     {

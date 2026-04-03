@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -31,6 +30,7 @@ class InviteCode extends Model
         'expires_at' => 'datetime',
         'used_at' => 'datetime',
         'is_active' => 'boolean',
+        'max_uses' => 'integer',
         'metadata' => 'array',
     ];
 
@@ -71,7 +71,7 @@ class InviteCode extends Model
 
     public function isValid(): bool
     {
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             return false;
         }
 
@@ -79,7 +79,7 @@ class InviteCode extends Model
             return false;
         }
 
-        if ($this->current_uses >= $this->max_uses) {
+        if ($this->max_uses !== null && $this->current_uses >= $this->max_uses) {
             return false;
         }
 
@@ -89,8 +89,8 @@ class InviteCode extends Model
     public function markAsUsed(?int $userId = null): void
     {
         $this->increment('current_uses');
-        
-        if ($this->current_uses >= $this->max_uses) {
+
+        if ($this->max_uses !== null && $this->current_uses >= $this->max_uses) {
             $this->update([
                 'used_by_user_id' => $userId,
                 'used_at' => now(),
