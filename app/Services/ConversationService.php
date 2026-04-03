@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Log;
 
 class ConversationService
 {
+    private const ADMIN_PLAN_MAX_TOKENS = 4200;
+
     private const COVERAGE_PROMPTS = [
         'business_goal' => 'What is the main business outcome or problem this project needs to solve first?',
         'users' => 'Who will use this product day to day, and are there any different user roles or permission levels?',
@@ -460,13 +462,23 @@ class ConversationService
             $conversationHistory = $session->getConversationHistory();
             $adminUserId = $session->inviteCode->admin_user_id;
 
-            // Create plan record
-            $plan = DiscoveryPlan::create([
+            $plan = DiscoveryPlan::firstOrNew([
                 'session_id' => $session->id,
+            ]);
+
+            $plan->fill([
                 'admin_user_id' => $adminUserId,
                 'raw_conversation' => $conversationHistory,
+                'structured_requirements' => null,
+                'user_summary' => null,
+                'technical_plan' => null,
+                'cost_estimate' => null,
+                'timeline_estimate' => null,
+                'tech_recommendations' => null,
                 'status' => PlanStatus::Generating,
+                'generated_at' => null,
             ]);
+            $plan->save();
 
             // Stage 2: Extract structured requirements
             $stage2Prompt = $this->llmService->getStage2Prompt(
@@ -521,7 +533,7 @@ class ConversationService
                 'You are a senior technical architect and project planner. Create comprehensive technical plans. Output ONLY valid JSON.',
                 $adminPlanPrompt,
                 null,
-                6500,
+                self::ADMIN_PLAN_MAX_TOKENS,
                 0.25
             );
 
@@ -531,6 +543,12 @@ class ConversationService
             }
 
             $adminPlan = $this->llmService->parseJsonResponse($adminPlanResult['message']);
+
+            if (! $this->adminPlanHasRequiredSections($adminPlan)) {
+                $plan->markAsFailed();
+
+                throw new \Exception('Failed to parse a usable admin plan');
+            }
 
             $plan->update([
                 'technical_plan' => $adminPlan,
@@ -566,5 +584,28 @@ class ConversationService
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    private function adminPlanHasRequiredSections(array|false $adminPlan): bool
+    {
+        if (! is_array($adminPlan) || $adminPlan === []) {
+            return false;
+        }
+
+        $requiredKeys = [
+            'executive_summary',
+            'full_technical_breakdown',
+            'tech_stack_details',
+            'timeline_week_ranges',
+            'cost_estimates',
+        ];
+
+        foreach ($requiredKeys as $requiredKey) {
+            if (! array_key_exists($requiredKey, $adminPlan)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

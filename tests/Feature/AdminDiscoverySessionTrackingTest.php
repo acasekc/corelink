@@ -335,4 +335,47 @@ class AdminDiscoverySessionTrackingTest extends TestCase
             ->assertJsonPath('structured_requirements.project.name', 'Client Portal')
             ->assertJsonPath('user_summary.project_overview', 'A portal for clients and staff.');
     }
+
+    public function test_failed_plan_can_be_retried_from_admin_session_action(): void
+    {
+        Queue::fake();
+
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'force_password_change' => false,
+        ]);
+
+        $invite = InviteCode::create([
+            'admin_user_id' => $admin->id,
+            'code' => 'RETRY001',
+            'is_active' => true,
+            'max_uses' => null,
+            'current_uses' => 0,
+        ]);
+
+        $session = BotSession::create([
+            'invite_code_id' => $invite->id,
+            'status' => SessionStatus::Failed,
+            'turn_count' => 5,
+        ]);
+
+        DiscoveryPlan::create([
+            'session_id' => $session->id,
+            'admin_user_id' => $admin->id,
+            'raw_conversation' => [
+                ['role' => 'user', 'content' => 'Generate a project plan.'],
+            ],
+            'status' => PlanStatus::Failed,
+        ]);
+
+        $response = $this->actingAs($admin)->postJson("/api/admin/discovery/sessions/{$session->id}/generate-plan");
+
+        $response
+            ->assertAccepted()
+            ->assertJsonPath('success', true);
+
+        Queue::assertPushed(GeneratePlanJob::class, function (GeneratePlanJob $job): bool {
+            return $job->connection === 'background';
+        });
+    }
 }

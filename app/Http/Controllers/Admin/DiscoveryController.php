@@ -60,9 +60,11 @@ class DiscoveryController extends Controller
             ? $session->status
             : SessionStatus::tryFrom((string) $session->status);
 
-        return $session->discoveryPlan === null
+        $hasRetryableFailedPlan = $session->discoveryPlan?->status === \App\Enums\PlanStatus::Failed;
+
+        return ($session->discoveryPlan === null || $hasRetryableFailedPlan)
             && $session->turn_count >= 3
-            && $status?->canGeneratePlan() === true;
+            && ($status?->canGeneratePlan() === true || $status === SessionStatus::Failed);
     }
 
     private function ensureSessionBelongsToCurrentAdmin(BotSession $session): void

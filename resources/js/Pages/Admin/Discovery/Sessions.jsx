@@ -167,7 +167,9 @@ const Sessions = () => {
                   <td className="px-6 py-4 text-gray-300">{session.turn_count}</td>
                   <td className="px-6 py-4">
                     {session.discovery_plan ? (
-                      <span className="text-green-400 text-sm">Generated</span>
+                      <span className={`text-sm ${session.discovery_plan.status === 'failed' ? 'text-red-400' : 'text-green-400'}`}>
+                        {session.discovery_plan.status === 'failed' ? 'Failed' : 'Generated'}
+                      </span>
                     ) : (
                       <span className="text-gray-500 text-sm">—</span>
                     )}
@@ -186,7 +188,7 @@ const Sessions = () => {
                           disabled={generatingSessionId === session.id}
                           className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {generatingSessionId === session.id ? 'Starting…' : 'Generate Estimate'}
+                          {generatingSessionId === session.id ? 'Starting…' : session.discovery_plan?.status === 'failed' ? 'Retry Estimate' : 'Generate Estimate'}
                         </button>
                       )}
                       <a href={`/admin/discovery/sessions/${session.id}`} className="text-blue-400 hover:text-blue-300 text-sm">View Details</a>
