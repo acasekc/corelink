@@ -114,6 +114,8 @@ class BotSessionController extends Controller
             return response()->json(['error' => 'Session not found'], 404);
         }
 
+        $session->markAsSeen();
+
         return response()->json([
             'session_id' => $session->id,
             'status' => $session->status,
@@ -132,6 +134,8 @@ class BotSessionController extends Controller
         if (! $session) {
             return response()->json(['error' => 'Session not found'], 404);
         }
+
+        $session->markAsSeen();
 
         $conversations = $this->conversationService->getHistory($sessionId);
 
@@ -162,6 +166,8 @@ class BotSessionController extends Controller
         if (! $session) {
             return response()->json(['error' => 'Session not found'], 404);
         }
+
+        $session->markAsSeen();
 
         $message = $request->input('message');
         $detectedReferences = $this->websiteReferenceService->extractReferencesFromText(
@@ -241,6 +247,8 @@ class BotSessionController extends Controller
             return response()->json(['error' => 'Session not found'], 404);
         }
 
+        $session->markAsSeen();
+
         // Check if conversation already started
         if ($session->turn_count > 0) {
             return response()->json([
@@ -267,6 +275,8 @@ class BotSessionController extends Controller
         if (! $session) {
             return response()->json(['error' => 'Session not found'], 404);
         }
+
+        $session->markAsSeen();
 
         // Check session status
         if ($session->status === SessionStatus::Completed) {
@@ -312,6 +322,8 @@ class BotSessionController extends Controller
             return response()->json(['error' => 'Session not found'], 404);
         }
 
+        $session->markAsSeen();
+
         $plan = $session->discoveryPlan;
 
         if (! $plan) {
@@ -333,6 +345,23 @@ class BotSessionController extends Controller
             'status' => $plan->status->value,
             'summary' => $plan->user_summary,
             'created_at' => $plan->created_at,
+        ], 200);
+    }
+
+    public function heartbeat(string $sessionId): JsonResponse
+    {
+        $session = $this->conversationService->getSession($sessionId);
+
+        if (! $session) {
+            return response()->json(['error' => 'Session not found'], 404);
+        }
+
+        $session->markAsSeen(true);
+
+        return response()->json([
+            'success' => true,
+            'status' => $session->status instanceof SessionStatus ? $session->status->value : (string) $session->status,
+            'last_seen_at' => $session->last_seen_at?->toISOString(),
         ], 200);
     }
 

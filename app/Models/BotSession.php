@@ -3,24 +3,29 @@
 namespace App\Models;
 
 use App\Enums\SessionStatus;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class BotSession extends Model
 {
     use HasFactory, HasUuids;
 
+    public const ACTIVE_WINDOW_MINUTES = 5;
+
+    private const HEARTBEAT_THROTTLE_SECONDS = 20;
+
     protected $fillable = [
         'user_id',
         'invite_code_id',
         'session_token',
         'started_at',
+        'last_seen_at',
         'completed_at',
         'status',
         'turn_count',
@@ -34,6 +39,7 @@ class BotSession extends Model
 
     protected $casts = [
         'started_at' => 'datetime',
+        'last_seen_at' => 'datetime',
         'completed_at' => 'datetime',
         'status' => SessionStatus::class,
         'conversation_state' => 'array',
@@ -53,6 +59,9 @@ class BotSession extends Model
             }
             if (empty($model->started_at)) {
                 $model->started_at = now();
+            }
+            if (empty($model->last_seen_at)) {
+                $model->last_seen_at = $model->started_at;
             }
         });
     }
@@ -95,6 +104,7 @@ class BotSession extends Model
             if ($conv->assistant_message) {
                 $messages[] = ['role' => 'assistant', 'content' => $conv->assistant_message];
             }
+
             return $messages;
         })->toArray();
     }
@@ -104,16 +114,47 @@ class BotSession extends Model
         $this->increment('turn_count');
     }
 
+    public static function activeWindowStart(?Carbon $referenceTime = null): Carbon
+    {
+        return ($referenceTime ?? now())->copy()->subMinutes(self::ACTIVE_WINDOW_MINUTES);
+    }
+
+    public function markAsSeen(bool $force = false): void
+    {
+        if (
+            ! $force
+            && $this->last_seen_at instanceof Carbon
+            && $this->last_seen_at->gte(now()->subSeconds(self::HEARTBEAT_THROTTLE_SECONDS))
+        ) {
+            return;
+        }
+
+        $timestamps = $this->timestamps;
+
+        $this->timestamps = false;
+        $this->forceFill([
+            'last_seen_at' => now(),
+        ])->saveQuietly();
+        $this->timestamps = $timestamps;
+    }
+
     public function markAsCompleted(): void
     {
         $this->update([
-            'status' => 'completed',
+            'status' => SessionStatus::Completed,
             'completed_at' => now(),
         ]);
     }
 
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->status === SessionStatus::Active;
+    }
+
+    public function isRecentlyActive(?Carbon $referenceTime = null): bool
+    {
+        return $this->isActive()
+            && $this->last_seen_at instanceof Carbon
+            && $this->last_seen_at->gte(self::activeWindowStart($referenceTime));
     }
 }

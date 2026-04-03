@@ -6,8 +6,12 @@ const statusClass = (status) => {
   switch (status) {
     case "active":
       return "bg-blue-600 text-white";
+    case "generating":
+      return "bg-purple-600 text-white";
     case "completed":
       return "bg-green-600 text-white";
+    case "failed":
+      return "bg-red-600 text-white";
     case "pending":
       return "bg-yellow-500 text-black";
     default:
@@ -59,7 +63,10 @@ const SessionDetail = () => {
         </div>
         <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
           <p className="text-gray-400 text-sm">Last Activity</p>
-          <p className="text-gray-300 mt-1">{formatDate(session.updated_at)}</p>
+          <p className="text-gray-300 mt-1">{formatDate(session.last_activity_at || session.updated_at)}</p>
+          {session.is_active_now && (
+            <p className="mt-2 text-xs font-medium text-emerald-300">Active in the last 5 minutes</p>
+          )}
         </div>
       </div>
       {session.discovery_plan && (

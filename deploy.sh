@@ -35,6 +35,12 @@ composer install --no-dev --optimize-autoloader --no-interaction
 echo "📦 Installing NPM dependencies..."
 npm ci
 
+echo "🧽 Preparing build directory..."
+sudo rm -rf public/build
+mkdir -p public/build
+sudo chown -R "${APP_USER}:$(id -gn)" public/build
+sudo chmod -R u+rwX public/build
+
 echo "🔨 Building frontend assets..."
 npm run build
 

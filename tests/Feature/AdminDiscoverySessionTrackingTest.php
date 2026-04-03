@@ -46,6 +46,7 @@ class AdminDiscoverySessionTrackingTest extends TestCase
             'invite_code_id' => $ownedInvite->id,
             'status' => SessionStatus::Active,
             'turn_count' => 2,
+            'last_seen_at' => now()->subMinute(),
             'metadata' => [
                 'user_email' => 'owner@example.com',
             ],
@@ -66,8 +67,55 @@ class AdminDiscoverySessionTrackingTest extends TestCase
             ->assertOk()
             ->assertJsonPath('summary.total', 1)
             ->assertJsonPath('summary.active', 1)
+            ->assertJsonPath('summary.active_now', 1)
             ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.is_active_now', true)
             ->assertJsonPath('data.0.metadata.user_email', 'owner@example.com');
+    }
+
+    public function test_admin_summary_distinguishes_live_sessions_from_stale_active_sessions(): void
+    {
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'force_password_change' => false,
+        ]);
+
+        $invite = InviteCode::create([
+            'admin_user_id' => $admin->id,
+            'code' => 'LIVENOW1',
+            'is_active' => true,
+            'max_uses' => null,
+            'current_uses' => 0,
+        ]);
+
+        BotSession::create([
+            'invite_code_id' => $invite->id,
+            'status' => SessionStatus::Active,
+            'turn_count' => 3,
+            'last_seen_at' => now()->subMinutes(12),
+            'metadata' => [
+                'user_email' => 'stale@example.com',
+            ],
+        ]);
+
+        BotSession::create([
+            'invite_code_id' => $invite->id,
+            'status' => SessionStatus::Active,
+            'turn_count' => 1,
+            'last_seen_at' => now()->subMinutes(2),
+            'metadata' => [
+                'user_email' => 'live@example.com',
+            ],
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/api/admin/discovery/sessions');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('summary.total', 2)
+            ->assertJsonPath('summary.active', 2)
+            ->assertJsonPath('summary.active_now', 1)
+            ->assertJsonPath('summary.active_window_minutes', 5);
     }
 
     public function test_admin_can_view_owned_discovery_session_detail_as_json(): void
@@ -89,6 +137,7 @@ class AdminDiscoverySessionTrackingTest extends TestCase
             'invite_code_id' => $invite->id,
             'status' => SessionStatus::Active,
             'turn_count' => 1,
+            'last_seen_at' => now()->subMinutes(3),
             'metadata' => [
                 'user_email' => 'founder@example.com',
             ],
@@ -108,6 +157,7 @@ class AdminDiscoverySessionTrackingTest extends TestCase
             ->assertOk()
             ->assertJsonPath('id', $session->id)
             ->assertJsonPath('invite_code.code', 'DETAIL01')
+            ->assertJsonPath('is_active_now', true)
             ->assertJsonCount(2, 'messages')
             ->assertJsonPath('messages.0.content', 'We need a client portal.')
             ->assertJsonPath('messages.1.content', 'Who will use it first?');

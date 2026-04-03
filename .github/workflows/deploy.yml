@@ -34,6 +34,12 @@ jobs:
             
             echo "📦 Installing NPM dependencies..."
             npm ci
+
+            echo "🧽 Preparing build directory..."
+            sudo rm -rf public/build
+            mkdir -p public/build
+            sudo chown -R "${DEPLOY_USER}:${DEPLOY_GROUP}" public/build
+            sudo chmod -R u+rwX public/build
             
             echo "🔨 Building frontend assets..."
             npm run build

@@ -5,6 +5,7 @@ import SeoHead from '@/components/SeoHead';
 const Chat = ({ meta }) => {
   const { url } = usePage();
   const urlParams = new URLSearchParams((url || '').split('?')[1] || '');
+  const heartbeatIntervalMs = 30000;
   const referenceTypeOptions = [
     { value: 'reference_example', label: 'General example' },
     { value: 'competitor', label: 'Competitor' },
@@ -47,6 +48,35 @@ const Chat = ({ meta }) => {
   const messageInputRef = useRef(null);
   const echoChannelRef = useRef(null);
   const apiBase = '/api/bot';
+
+  const sendHeartbeat = async (sid = sessionId) => {
+    if (!sid) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiBase}/sessions/${sid}/heartbeat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        keepalive: true,
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.status) {
+        setSessionStatus(data.status);
+      }
+    } catch (error) {
+      console.error('Error sending heartbeat:', error);
+    }
+  };
 
   const updateReference = (index, field, value) => {
     setReferences((prev) => prev.map((reference, referenceIndex) => (
@@ -132,6 +162,22 @@ const Chat = ({ meta }) => {
       }
     };
   }, [sessionId]);
+
+  useEffect(() => {
+    if (!sessionId || sessionStatus === 'completed' || sessionStatus === 'failed') {
+      return undefined;
+    }
+
+    sendHeartbeat(sessionId);
+
+    const intervalId = window.setInterval(() => {
+      sendHeartbeat(sessionId);
+    }, heartbeatIntervalMs);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [sessionId, sessionStatus]);
   
   // Auto-fetch email when code is provided via URL
   useEffect(() => {
@@ -307,6 +353,7 @@ const Chat = ({ meta }) => {
         setBotOfferedSummary(data.bot_offered_summary || false);
         
         if (data.plan_generation_started) {
+          setSessionStatus('generating');
           setPlanGenerating(true);
           pollForPlanCompletion();
         }
@@ -343,6 +390,7 @@ const Chat = ({ meta }) => {
       const data = await response.json();
       
       if (response.ok) {
+        setSessionStatus('generating');
         setMessages(prev => [...prev, {
           role: 'assistant',
           content: "I'm now creating your project summary. This may take a moment..."

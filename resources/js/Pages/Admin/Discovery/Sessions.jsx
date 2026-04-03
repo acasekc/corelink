@@ -1,6 +1,33 @@
 import React, { useEffect, useState } from "react";
 
-const formatDate = (dateStr) => new Date(dateStr).toLocaleString();
+const formatDate = (dateStr) => (dateStr ? new Date(dateStr).toLocaleString() : '—');
+const formatRelativeTime = (dateStr) => {
+  if (!dateStr) {
+    return '—';
+  }
+
+  const deltaSeconds = Math.round((new Date(dateStr).getTime() - Date.now()) / 1000);
+  const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+
+  if (Math.abs(deltaSeconds) < 60) {
+    return rtf.format(deltaSeconds, 'second');
+  }
+
+  const deltaMinutes = Math.round(deltaSeconds / 60);
+
+  if (Math.abs(deltaMinutes) < 60) {
+    return rtf.format(deltaMinutes, 'minute');
+  }
+
+  const deltaHours = Math.round(deltaMinutes / 60);
+
+  if (Math.abs(deltaHours) < 24) {
+    return rtf.format(deltaHours, 'hour');
+  }
+
+  return rtf.format(Math.round(deltaHours / 24), 'day');
+};
+
 const statusClass = (status) => {
   switch (status) {
     case "active":
@@ -19,7 +46,7 @@ const statusClass = (status) => {
 };
 
 const Sessions = () => {
-  const [sessions, setSessions] = useState({ data: [], last_page: 1, current_page: 1, summary: { total: 0, active: 0, generating: 0, completed: 0, failed: 0 } });
+  const [sessions, setSessions] = useState({ data: [], last_page: 1, current_page: 1, summary: { total: 0, active: 0, active_now: 0, active_window_minutes: 5, generating: 0, completed: 0, failed: 0 } });
 
   useEffect(() => {
     fetch(`/api/admin/discovery/sessions?page=${sessions.current_page}`, {
@@ -36,9 +63,10 @@ const Sessions = () => {
     <div>
       <h2 className="text-2xl font-bold mb-6">Discovery Sessions</h2>
 
-      <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-6">
         {[
           { label: "Total", value: sessions.summary?.total ?? 0, tone: "text-white" },
+          { label: `Active Now (${sessions.summary?.active_window_minutes ?? 5}m)`, value: sessions.summary?.active_now ?? 0, tone: "text-cyan-300" },
           { label: "Active", value: sessions.summary?.active ?? 0, tone: "text-blue-400" },
           { label: "Generating", value: sessions.summary?.generating ?? 0, tone: "text-purple-400" },
           { label: "Completed", value: sessions.summary?.completed ?? 0, tone: "text-green-400" },
@@ -74,7 +102,15 @@ const Sessions = () => {
               sessions.data.map((session) => (
                 <tr key={session.id} className="hover:bg-gray-700/30">
                   <td className="px-6 py-4">
-                    <div className="text-gray-300">{session.metadata?.user_email || 'Anonymous'}</div>
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <span>{session.metadata?.user_email || 'Anonymous'}</span>
+                      {session.is_active_now && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                          Live now
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className="font-mono text-purple-400 text-sm">{session.invite_code?.code}</span>
@@ -91,7 +127,10 @@ const Sessions = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 text-gray-400 text-sm">{formatDate(session.created_at)}</td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">{formatDate(session.updated_at)}</td>
+                  <td className="px-6 py-4 text-gray-400 text-sm">
+                    <div>{formatDate(session.last_activity_at || session.updated_at)}</div>
+                    <div className="text-xs text-gray-500">{formatRelativeTime(session.last_activity_at || session.updated_at)}</div>
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <a href={`/admin/discovery/sessions/${session.id}`} className="text-blue-400 hover:text-blue-300 text-sm">View Details</a>
                   </td>

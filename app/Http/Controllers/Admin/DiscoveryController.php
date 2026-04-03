@@ -2,23 +2,53 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\SessionStatus;
 use App\Http\Controllers\Controller;
 use App\Mail\InviteCodeMail;
 use App\Models\BotSession;
 use App\Models\DiscoveryPlan;
 use App\Models\InviteCode;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class DiscoveryController extends Controller
 {
-    private function sessionBaseQuery()
+    private function sessionBaseQuery(): Builder
     {
         return BotSession::with(['inviteCode', 'discoveryPlan'])
             ->whereHas('inviteCode', function ($q) {
                 $q->where('admin_user_id', auth()->id());
             });
+    }
+
+    private function sessionSummary(): array
+    {
+        $baseQuery = $this->sessionBaseQuery();
+
+        return [
+            'total' => (clone $baseQuery)->count(),
+            'active' => (clone $baseQuery)->where('status', SessionStatus::Active->value)->count(),
+            'active_now' => (clone $baseQuery)
+                ->where('status', SessionStatus::Active->value)
+                ->whereNotNull('last_seen_at')
+                ->where('last_seen_at', '>=', BotSession::activeWindowStart())
+                ->count(),
+            'active_window_minutes' => BotSession::ACTIVE_WINDOW_MINUTES,
+            'generating' => (clone $baseQuery)->where('status', SessionStatus::Generating->value)->count(),
+            'completed' => (clone $baseQuery)->where('status', SessionStatus::Completed->value)->count(),
+            'failed' => (clone $baseQuery)->where('status', SessionStatus::Failed->value)->count(),
+        ];
+    }
+
+    private function transformSession(BotSession $session): array
+    {
+        return [
+            ...$session->toArray(),
+            'is_active_now' => $session->isRecentlyActive(),
+            'last_activity_at' => ($session->last_seen_at ?? $session->updated_at)?->toISOString(),
+        ];
     }
 
     /**
@@ -146,20 +176,15 @@ class DiscoveryController extends Controller
     {
         $sessions = $this->sessionBaseQuery()
             ->orderByRaw("case when status = 'active' then 0 when status = 'generating' then 1 else 2 end")
+            ->orderByDesc('last_seen_at')
             ->orderByDesc('updated_at')
-            ->latest()
-            ->paginate(20);
+            ->paginate(20)
+            ->through(fn (BotSession $session): array => $this->transformSession($session));
 
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
                 ...$sessions->toArray(),
-                'summary' => [
-                    'total' => $this->sessionBaseQuery()->count(),
-                    'active' => $this->sessionBaseQuery()->where('status', 'active')->count(),
-                    'generating' => $this->sessionBaseQuery()->where('status', 'generating')->count(),
-                    'completed' => $this->sessionBaseQuery()->where('status', 'completed')->count(),
-                    'failed' => $this->sessionBaseQuery()->where('status', 'failed')->count(),
-                ],
+                'summary' => $this->sessionSummary(),
             ]);
         }
 
@@ -203,7 +228,7 @@ class DiscoveryController extends Controller
 
         if ($request->expectsJson() || $request->is('api/*')) {
             return response()->json([
-                ...$session->toArray(),
+                ...$this->transformSession($session),
                 'messages' => $messages,
             ]);
         }
