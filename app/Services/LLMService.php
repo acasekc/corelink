@@ -9,13 +9,15 @@ class LLMService
 {
     protected ?string $apiKey;
 
-    protected string $baseUrl = 'https://api.openai.com/v1';
+    protected string $baseUrl;
 
-    protected string $model = 'gpt-4';
+    protected string $model;
 
     public function __construct()
     {
-        $this->apiKey = config('services.openai.key') ?? '';
+        $this->apiKey = config('services.openai.api_key') ?? '';
+        $this->baseUrl = config('services.openai.base_url', 'https://api.openai.com/v1');
+        $this->model = config('services.openai.model', 'gpt-4o');
     }
 
     /**
