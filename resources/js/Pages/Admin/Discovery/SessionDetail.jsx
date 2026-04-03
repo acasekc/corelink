@@ -20,7 +20,12 @@ const SessionDetail = () => {
   const [session, setSession] = useState(null);
 
   useEffect(() => {
-    fetch(`/admin/discovery/sessions/${sessionId}`)
+    fetch(`/api/admin/discovery/sessions/${sessionId}`, {
+      headers: {
+        Accept: "application/json",
+      },
+      credentials: "same-origin",
+    })
       .then((res) => res.json())
       .then((data) => setSession(data));
   }, [sessionId]);

@@ -7,6 +7,10 @@ const statusClass = (status) => {
       return "bg-blue-600 text-white";
     case "completed":
       return "bg-green-600 text-white";
+    case "generating":
+      return "bg-purple-600 text-white";
+    case "failed":
+      return "bg-red-600 text-white";
     case "pending":
       return "bg-yellow-500 text-black";
     default:
@@ -15,10 +19,15 @@ const statusClass = (status) => {
 };
 
 const Sessions = () => {
-  const [sessions, setSessions] = useState({ data: [], last_page: 1, current_page: 1 });
+  const [sessions, setSessions] = useState({ data: [], last_page: 1, current_page: 1, summary: { total: 0, active: 0, generating: 0, completed: 0, failed: 0 } });
 
   useEffect(() => {
-    fetch(`/admin/discovery/sessions?page=${sessions.current_page}`)
+    fetch(`/api/admin/discovery/sessions?page=${sessions.current_page}`, {
+      headers: {
+        Accept: "application/json",
+      },
+      credentials: "same-origin",
+    })
       .then((res) => res.json())
       .then((data) => setSessions(data));
   }, [sessions.current_page]);
@@ -26,6 +35,22 @@ const Sessions = () => {
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Discovery Sessions</h2>
+
+      <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-5">
+        {[
+          { label: "Total", value: sessions.summary?.total ?? 0, tone: "text-white" },
+          { label: "Active", value: sessions.summary?.active ?? 0, tone: "text-blue-400" },
+          { label: "Generating", value: sessions.summary?.generating ?? 0, tone: "text-purple-400" },
+          { label: "Completed", value: sessions.summary?.completed ?? 0, tone: "text-green-400" },
+          { label: "Failed", value: sessions.summary?.failed ?? 0, tone: "text-red-400" },
+        ].map((item) => (
+          <div key={item.label} className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+            <p className="text-sm text-gray-400">{item.label}</p>
+            <p className={`mt-2 text-2xl font-bold ${item.tone}`}>{item.value}</p>
+          </div>
+        ))}
+      </div>
+
       <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-700/50">
@@ -36,13 +61,14 @@ const Sessions = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Turns</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Plan</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Started</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Last Activity</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
             {sessions.data.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">No sessions yet.</td>
+                <td colSpan={8} className="px-6 py-8 text-center text-gray-500">No sessions yet.</td>
               </tr>
             ) : (
               sessions.data.map((session) => (
@@ -65,6 +91,7 @@ const Sessions = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 text-gray-400 text-sm">{formatDate(session.created_at)}</td>
+                  <td className="px-6 py-4 text-gray-400 text-sm">{formatDate(session.updated_at)}</td>
                   <td className="px-6 py-4 text-right">
                     <a href={`/admin/discovery/sessions/${session.id}`} className="text-blue-400 hover:text-blue-300 text-sm">View Details</a>
                   </td>
@@ -77,13 +104,14 @@ const Sessions = () => {
       {sessions.last_page > 1 && (
         <div className="mt-4 flex justify-center space-x-2">
           {Array.from({ length: sessions.last_page }, (_, i) => i + 1).map((page) => (
-            <a
+            <button
               key={page}
-              href={`?page=${page}`}
+              type="button"
+              onClick={() => setSessions((prev) => ({ ...prev, current_page: page }))}
               className={`px-3 py-1 rounded text-sm ${page === sessions.current_page ? 'bg-purple-600' : 'bg-gray-700 hover:bg-gray-600'}`}
             >
               {page}
-            </a>
+            </button>
           ))}
         </div>
       )}

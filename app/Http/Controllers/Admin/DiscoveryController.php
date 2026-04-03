@@ -13,6 +13,14 @@ use Illuminate\Support\Str;
 
 class DiscoveryController extends Controller
 {
+    private function sessionBaseQuery()
+    {
+        return BotSession::with(['inviteCode', 'discoveryPlan'])
+            ->whereHas('inviteCode', function ($q) {
+                $q->where('admin_user_id', auth()->id());
+            });
+    }
+
     /**
      * Dashboard overview
      */
@@ -136,12 +144,24 @@ class DiscoveryController extends Controller
      */
     public function sessions(Request $request)
     {
-        $sessions = BotSession::with(['inviteCode', 'discoveryPlan'])
-            ->whereHas('inviteCode', function ($q) {
-                $q->where('admin_user_id', auth()->id());
-            })
+        $sessions = $this->sessionBaseQuery()
+            ->orderByRaw("case when status = 'active' then 0 when status = 'generating' then 1 else 2 end")
+            ->orderByDesc('updated_at')
             ->latest()
             ->paginate(20);
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                ...$sessions->toArray(),
+                'summary' => [
+                    'total' => $this->sessionBaseQuery()->count(),
+                    'active' => $this->sessionBaseQuery()->where('status', 'active')->count(),
+                    'generating' => $this->sessionBaseQuery()->where('status', 'generating')->count(),
+                    'completed' => $this->sessionBaseQuery()->where('status', 'completed')->count(),
+                    'failed' => $this->sessionBaseQuery()->where('status', 'failed')->count(),
+                ],
+            ]);
+        }
 
         return view('app');
     }
@@ -149,7 +169,7 @@ class DiscoveryController extends Controller
     /**
      * View a single session with full conversation
      */
-    public function showSession(BotSession $session)
+    public function showSession(Request $request, BotSession $session)
     {
         // Ensure the session belongs to this admin
         if ($session->inviteCode->admin_user_id !== auth()->id()) {
@@ -180,6 +200,13 @@ class DiscoveryController extends Controller
 
             return $msgs;
         })->values();
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                ...$session->toArray(),
+                'messages' => $messages,
+            ]);
+        }
 
         return view('app');
     }
