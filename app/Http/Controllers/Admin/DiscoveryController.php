@@ -284,19 +284,27 @@ class DiscoveryController extends Controller
             ->latest()
             ->paginate(20);
 
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json($plans);
+        }
+
         return view('app');
     }
 
     /**
      * View a single plan with full details
      */
-    public function showPlan(DiscoveryPlan $plan)
+    public function showPlan(Request $request, DiscoveryPlan $plan)
     {
         if ($plan->admin_user_id !== auth()->id()) {
             abort(403);
         }
 
         $plan->load(['session.inviteCode']);
+
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json($plan);
+        }
 
         return view('app');
     }

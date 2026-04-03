@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Enums\PlanStatus;
 use App\Enums\SessionStatus;
 use App\Jobs\GeneratePlanJob;
 use App\Models\BotConversation;
 use App\Models\BotSession;
+use App\Models\DiscoveryPlan;
 use App\Models\InviteCode;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -233,5 +235,104 @@ class AdminDiscoverySessionTrackingTest extends TestCase
             ->assertJsonPath('message', 'This session is not ready for estimate generation yet.');
 
         Queue::assertNothingPushed();
+    }
+
+    public function test_admin_can_list_owned_discovery_plans_as_json(): void
+    {
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'force_password_change' => false,
+        ]);
+
+        $invite = InviteCode::create([
+            'admin_user_id' => $admin->id,
+            'code' => 'PLANLIST1',
+            'is_active' => true,
+            'max_uses' => null,
+            'current_uses' => 0,
+        ]);
+
+        $session = BotSession::create([
+            'invite_code_id' => $invite->id,
+            'status' => SessionStatus::Completed,
+            'turn_count' => 5,
+            'metadata' => [
+                'user_email' => 'planner@example.com',
+            ],
+        ]);
+
+        $plan = DiscoveryPlan::create([
+            'session_id' => $session->id,
+            'admin_user_id' => $admin->id,
+            'raw_conversation' => [
+                ['role' => 'user', 'content' => 'We need a portal.'],
+            ],
+            'status' => PlanStatus::Completed,
+            'user_summary' => [
+                'project_overview' => 'A client portal.',
+            ],
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/api/admin/discovery/plans');
+
+        $response
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $plan->id)
+            ->assertJsonPath('data.0.session.metadata.user_email', 'planner@example.com');
+    }
+
+    public function test_admin_can_view_owned_discovery_plan_detail_as_json(): void
+    {
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'force_password_change' => false,
+        ]);
+
+        $invite = InviteCode::create([
+            'admin_user_id' => $admin->id,
+            'code' => 'PLANVIEW1',
+            'is_active' => true,
+            'max_uses' => null,
+            'current_uses' => 0,
+        ]);
+
+        $session = BotSession::create([
+            'invite_code_id' => $invite->id,
+            'status' => SessionStatus::Completed,
+            'turn_count' => 6,
+            'metadata' => [
+                'user_email' => 'viewer@example.com',
+            ],
+        ]);
+
+        $plan = DiscoveryPlan::create([
+            'session_id' => $session->id,
+            'admin_user_id' => $admin->id,
+            'raw_conversation' => [
+                ['role' => 'user', 'content' => 'We need a portal for clients and staff.'],
+            ],
+            'status' => PlanStatus::Completed,
+            'structured_requirements' => [
+                'project' => [
+                    'name' => 'Client Portal',
+                ],
+            ],
+            'user_summary' => [
+                'project_overview' => 'A portal for clients and staff.',
+            ],
+            'technical_plan' => [
+                'phases' => ['MVP'],
+            ],
+        ]);
+
+        $response = $this->actingAs($admin)->getJson("/api/admin/discovery/plans/{$plan->id}");
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('id', $plan->id)
+            ->assertJsonPath('session.metadata.user_email', 'viewer@example.com')
+            ->assertJsonPath('structured_requirements.project.name', 'Client Portal')
+            ->assertJsonPath('user_summary.project_overview', 'A portal for clients and staff.');
     }
 }

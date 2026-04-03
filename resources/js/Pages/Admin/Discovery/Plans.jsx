@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 
-const formatDate = (dateStr) => new Date(dateStr).toLocaleString();
+const formatDate = (dateStr) => (dateStr ? new Date(dateStr).toLocaleString() : '—');
 const statusClass = (status) => {
   switch (status) {
-    case "active":
-      return "bg-blue-600 text-white";
+    case "generating":
+      return "bg-purple-600 text-white";
     case "completed":
       return "bg-green-600 text-white";
-    case "pending":
-      return "bg-yellow-500 text-black";
+    case "failed":
+      return "bg-red-600 text-white";
     default:
       return "bg-gray-600 text-white";
   }
@@ -17,10 +17,20 @@ const statusClass = (status) => {
 const Plans = () => {
   const [plans, setPlans] = useState({ data: [], last_page: 1, current_page: 1 });
 
+  const loadPlans = async (page = plans.current_page) => {
+    const response = await fetch(`/api/admin/discovery/plans?page=${page}`, {
+      headers: {
+        Accept: 'application/json',
+      },
+      credentials: 'same-origin',
+    });
+
+    const data = await response.json();
+    setPlans(data);
+  };
+
   useEffect(() => {
-    fetch(`/admin/discovery/plans?page=${plans.current_page}`)
-      .then((res) => res.json())
-      .then((data) => setPlans(data));
+    loadPlans();
   }, [plans.current_page]);
 
   return (
@@ -73,13 +83,14 @@ const Plans = () => {
       {plans.last_page > 1 && (
         <div className="mt-4 flex justify-center space-x-2">
           {Array.from({ length: plans.last_page }, (_, i) => i + 1).map((page) => (
-            <a
+            <button
               key={page}
-              href={`?page=${page}`}
+              type="button"
+              onClick={() => setPlans((prev) => ({ ...prev, current_page: page }))}
               className={`px-3 py-1 rounded text-sm ${page === plans.current_page ? 'bg-purple-600' : 'bg-gray-700 hover:bg-gray-600'}`}
             >
               {page}
-            </a>
+            </button>
           ))}
         </div>
       )}
