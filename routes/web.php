@@ -80,6 +80,7 @@ Route::middleware(['auth', 'admin', 'force-password-change'])->prefix('api/admin
         Route::get('/invites', [AdminDiscoveryController::class, 'invites']);
         Route::get('/sessions', [AdminDiscoveryController::class, 'sessions']);
         Route::get('/sessions/{session}', [AdminDiscoveryController::class, 'showSession']);
+        Route::post('/sessions/{session}/generate-plan', [AdminDiscoveryController::class, 'generatePlan']);
     });
 
     // Anthropic Plan Tiers

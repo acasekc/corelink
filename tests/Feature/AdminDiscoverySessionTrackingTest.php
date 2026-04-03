@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Enums\SessionStatus;
+use App\Jobs\GeneratePlanJob;
 use App\Models\BotConversation;
 use App\Models\BotSession;
 use App\Models\InviteCode;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class AdminDiscoverySessionTrackingTest extends TestCase
@@ -70,6 +72,7 @@ class AdminDiscoverySessionTrackingTest extends TestCase
             ->assertJsonPath('summary.active_now', 1)
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.is_active_now', true)
+            ->assertJsonPath('data.0.can_generate_plan', false)
             ->assertJsonPath('data.0.metadata.user_email', 'owner@example.com');
     }
 
@@ -161,5 +164,74 @@ class AdminDiscoverySessionTrackingTest extends TestCase
             ->assertJsonCount(2, 'messages')
             ->assertJsonPath('messages.0.content', 'We need a client portal.')
             ->assertJsonPath('messages.1.content', 'Who will use it first?');
+    }
+
+    public function test_admin_can_start_plan_generation_for_owned_session_without_existing_plan(): void
+    {
+        Queue::fake();
+
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'force_password_change' => false,
+        ]);
+
+        $invite = InviteCode::create([
+            'admin_user_id' => $admin->id,
+            'code' => 'GENPLAN1',
+            'is_active' => true,
+            'max_uses' => null,
+            'current_uses' => 0,
+        ]);
+
+        $session = BotSession::create([
+            'invite_code_id' => $invite->id,
+            'status' => SessionStatus::Active,
+            'turn_count' => 4,
+            'metadata' => [
+                'user_email' => 'estimate@example.com',
+            ],
+        ]);
+
+        $response = $this->actingAs($admin)->postJson("/api/admin/discovery/sessions/{$session->id}/generate-plan");
+
+        $response
+            ->assertAccepted()
+            ->assertJsonPath('success', true);
+
+        Queue::assertPushed(GeneratePlanJob::class, function (GeneratePlanJob $job): bool {
+            return $job->connection === 'background';
+        });
+    }
+
+    public function test_admin_cannot_start_plan_generation_when_session_is_not_ready(): void
+    {
+        Queue::fake();
+
+        $admin = User::factory()->create([
+            'is_admin' => true,
+            'force_password_change' => false,
+        ]);
+
+        $invite = InviteCode::create([
+            'admin_user_id' => $admin->id,
+            'code' => 'TOOSOON1',
+            'is_active' => true,
+            'max_uses' => null,
+            'current_uses' => 0,
+        ]);
+
+        $session = BotSession::create([
+            'invite_code_id' => $invite->id,
+            'status' => SessionStatus::Active,
+            'turn_count' => 2,
+        ]);
+
+        $response = $this->actingAs($admin)->postJson("/api/admin/discovery/sessions/{$session->id}/generate-plan");
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'This session is not ready for estimate generation yet.');
+
+        Queue::assertNothingPushed();
     }
 }

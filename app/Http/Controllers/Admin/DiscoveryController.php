@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\SessionStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\GeneratePlanJob;
 use App\Mail\InviteCodeMail;
 use App\Models\BotSession;
 use App\Models\DiscoveryPlan;
 use App\Models\InviteCode;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -48,7 +50,26 @@ class DiscoveryController extends Controller
             ...$session->toArray(),
             'is_active_now' => $session->isRecentlyActive(),
             'last_activity_at' => ($session->last_seen_at ?? $session->updated_at)?->toISOString(),
+            'can_generate_plan' => $this->canGeneratePlanForSession($session),
         ];
+    }
+
+    private function canGeneratePlanForSession(BotSession $session): bool
+    {
+        $status = $session->status instanceof SessionStatus
+            ? $session->status
+            : SessionStatus::tryFrom((string) $session->status);
+
+        return $session->discoveryPlan === null
+            && $session->turn_count >= 3
+            && $status?->canGeneratePlan() === true;
+    }
+
+    private function ensureSessionBelongsToCurrentAdmin(BotSession $session): void
+    {
+        if ($session->inviteCode->admin_user_id !== auth()->id()) {
+            abort(403);
+        }
     }
 
     /**
@@ -196,10 +217,7 @@ class DiscoveryController extends Controller
      */
     public function showSession(Request $request, BotSession $session)
     {
-        // Ensure the session belongs to this admin
-        if ($session->inviteCode->admin_user_id !== auth()->id()) {
-            abort(403);
-        }
+        $this->ensureSessionBelongsToCurrentAdmin($session);
 
         $session->load(['inviteCode', 'conversations', 'discoveryPlan']);
 
@@ -234,6 +252,26 @@ class DiscoveryController extends Controller
         }
 
         return view('app');
+    }
+
+    public function generatePlan(BotSession $session): JsonResponse
+    {
+        $session->loadMissing(['inviteCode', 'discoveryPlan']);
+
+        $this->ensureSessionBelongsToCurrentAdmin($session);
+
+        if (! $this->canGeneratePlanForSession($session)) {
+            return response()->json([
+                'message' => 'This session is not ready for estimate generation yet.',
+            ], 422);
+        }
+
+        GeneratePlanJob::dispatch($session)->onConnection('background');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Estimate generation started.',
+        ], 202);
     }
 
     /**

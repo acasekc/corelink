@@ -47,21 +47,64 @@ const statusClass = (status) => {
 
 const Sessions = () => {
   const [sessions, setSessions] = useState({ data: [], last_page: 1, current_page: 1, summary: { total: 0, active: 0, active_now: 0, active_window_minutes: 5, generating: 0, completed: 0, failed: 0 } });
+  const [generatingSessionId, setGeneratingSessionId] = useState(null);
+  const [actionError, setActionError] = useState('');
 
-  useEffect(() => {
-    fetch(`/api/admin/discovery/sessions?page=${sessions.current_page}`, {
+  const loadSessions = async (page = sessions.current_page) => {
+    const response = await fetch(`/api/admin/discovery/sessions?page=${page}`, {
       headers: {
         Accept: "application/json",
       },
       credentials: "same-origin",
-    })
-      .then((res) => res.json())
-      .then((data) => setSessions(data));
+    });
+
+    const data = await response.json();
+    setSessions(data);
+  };
+
+  useEffect(() => {
+    loadSessions();
   }, [sessions.current_page]);
+
+  const generatePlan = async (sessionId) => {
+    setGeneratingSessionId(sessionId);
+    setActionError('');
+
+    try {
+      const response = await fetch(`/api/admin/discovery/sessions/${sessionId}/generate-plan`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setActionError(data.message || 'Unable to start estimate generation.');
+
+        return;
+      }
+
+      await loadSessions();
+    } catch (error) {
+      setActionError('Unable to start estimate generation.');
+    } finally {
+      setGeneratingSessionId(null);
+    }
+  };
 
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Discovery Sessions</h2>
+
+      {actionError && (
+        <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {actionError}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 mb-6 md:grid-cols-6">
         {[
@@ -132,7 +175,19 @@ const Sessions = () => {
                     <div className="text-xs text-gray-500">{formatRelativeTime(session.last_activity_at || session.updated_at)}</div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <a href={`/admin/discovery/sessions/${session.id}`} className="text-blue-400 hover:text-blue-300 text-sm">View Details</a>
+                    <div className="flex items-center justify-end gap-3">
+                      {session.can_generate_plan && (
+                        <button
+                          type="button"
+                          onClick={() => generatePlan(session.id)}
+                          disabled={generatingSessionId === session.id}
+                          className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {generatingSessionId === session.id ? 'Starting…' : 'Generate Estimate'}
+                        </button>
+                      )}
+                      <a href={`/admin/discovery/sessions/${session.id}`} className="text-blue-400 hover:text-blue-300 text-sm">View Details</a>
+                    </div>
                   </td>
                 </tr>
               ))
