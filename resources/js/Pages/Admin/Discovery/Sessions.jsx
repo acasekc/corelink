@@ -45,6 +45,8 @@ const statusClass = (status) => {
   }
 };
 
+const getCsrfToken = () => decodeURIComponent(document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
+
 const Sessions = () => {
   const [sessions, setSessions] = useState({ data: [], last_page: 1, current_page: 1, summary: { total: 0, active: 0, active_now: 0, active_window_minutes: 5, generating: 0, completed: 0, failed: 0 } });
   const [generatingSessionId, setGeneratingSessionId] = useState(null);
@@ -76,6 +78,7 @@ const Sessions = () => {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': getCsrfToken(),
         },
         credentials: 'same-origin',
       });
