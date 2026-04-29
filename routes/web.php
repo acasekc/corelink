@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ArticleSettingsController;
 use App\Http\Controllers\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Admin\CaseStudyController as AdminCaseStudyController;
 use App\Http\Controllers\Admin\DiscoveryController as AdminDiscoveryController;
+use App\Http\Controllers\Admin\IntakeController as AdminIntakeController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\Admin\ProjectController as AdminProjectController;
 use App\Http\Controllers\Api\UploadController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Helpdesk\AuthController as HelpdeskAuthController;
 use App\Http\Controllers\Helpdesk\Public\InvoiceController as PublicInvoiceController;
 use App\Http\Controllers\Helpdesk\StripeWebhookController;
 use App\Http\Controllers\Helpdesk\XeroWebhookController;
+use App\Http\Controllers\IntakeController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PostmarkWebhookController;
 use App\Http\Controllers\ProjectController;
@@ -85,6 +87,21 @@ Route::middleware(['auth', 'admin', 'force-password-change'])->prefix('api/admin
         Route::get('/plans/{plan}', [AdminDiscoveryController::class, 'showPlan']);
     });
 
+    // Client Intake API
+    Route::prefix('intake')->group(function () {
+        Route::get('/dashboard', [AdminIntakeController::class, 'dashboard']);
+        Route::get('/invites', [AdminIntakeController::class, 'index']);
+        Route::post('/invites', [AdminIntakeController::class, 'store']);
+        Route::post('/invites/{invite}/resend', [AdminIntakeController::class, 'resend']);
+        Route::post('/invites/{invite}/revoke', [AdminIntakeController::class, 'revoke']);
+        Route::delete('/invites/{invite}', [AdminIntakeController::class, 'destroy']);
+        Route::get('/submissions/{intake}', [AdminIntakeController::class, 'show']);
+        Route::get('/submissions/{intake}/pdf', [AdminIntakeController::class, 'pdf']);
+        Route::get('/submissions/{intake}/files/{kind}', [AdminIntakeController::class, 'downloadAttachment'])
+            ->where('kind', 'logo|brand-guidelines');
+        Route::post('/submissions/{intake}/convert', [AdminIntakeController::class, 'convert']);
+    });
+
     // Anthropic Plan Tiers
     Route::get('/anthropic-plan-tiers', [AnthropicPlanTierController::class, 'index']);
     Route::post('/anthropic-plan-tiers', [AnthropicPlanTierController::class, 'store']);
@@ -97,6 +114,25 @@ Route::middleware(['auth', 'admin', 'force-password-change'])->prefix('api/admin
 // Discovery Bot Routes
 Route::get('/discovery', [DiscoveryController::class, 'chat'])->name('discovery.chat');
 Route::get('/discovery/{sessionId}/summary', [DiscoveryController::class, 'summary'])->name('discovery.summary');
+
+/*
+|--------------------------------------------------------------------------
+| Client Intake Form (public, code-gated)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('intake')->name('intake.')->group(function () {
+    Route::get('/{code}/submitted', [IntakeController::class, 'submitted'])->name('submitted');
+    Route::get('/{code}', [IntakeController::class, 'show'])
+        ->middleware('throttle:60,1')
+        ->name('show');
+    Route::post('/{code}/draft', [IntakeController::class, 'saveDraft'])
+        ->middleware('throttle:120,1')
+        ->name('draft');
+    Route::post('/{code}', [IntakeController::class, 'submit'])
+        ->middleware('throttle:5,10')
+        ->name('submit');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -235,6 +271,11 @@ Route::middleware(['auth', 'admin', 'force-password-change', 'no-cache'])->prefi
         Route::post('/{article}/reject', [AdminArticleController::class, 'reject'])->name('reject');
         Route::post('/{article}/generate-image', [AdminArticleController::class, 'generateImage'])->name('generate-image');
     });
+
+    // Admin Intake (SPA - React handles routing)
+    Route::get('/intake/{any?}', [PageController::class, 'adminSpa'])
+        ->where('any', '.*')
+        ->name('intake');
 
     // Admin Helpdesk (SPA - React handles routing)
     Route::get('/helpdesk/{any?}', [PageController::class, 'helpdesk'])

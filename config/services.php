@@ -77,6 +77,7 @@ return [
 
     'helpdesk' => [
         'api_key' => env('HELPDESK_API_KEY'),
+        'intake_api_key' => env('HELPDESK_INTAKE_API_KEY'),
         'base_url' => env('HELPDESK_BASE_URL', 'https://corelink.dev/api/helpdesk/v1'),
     ],
 
