@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Ticket, LogIn, Loader2 } from "lucide-react";
+import { consumeIntent } from "../../utils/adminAuthGuard";
 
 const HelpdeskLogin = () => {
     const [form, setForm] = useState({
@@ -10,6 +11,11 @@ const HelpdeskLogin = () => {
         errors: {},
         processing: false,
     });
+
+    const intentRef = useRef(null);
+    if (intentRef.current === null) {
+        intentRef.current = consumeIntent() ?? "";
+    }
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -39,6 +45,7 @@ const HelpdeskLogin = () => {
                     email: form.email,
                     password: form.password,
                     remember: form.remember,
+                    intended: intentRef.current || undefined,
                 }),
             });
 

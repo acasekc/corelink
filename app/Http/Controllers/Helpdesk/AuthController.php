@@ -49,9 +49,12 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'intended' => 'nullable|string|max:1000',
         ]);
 
         $credentials['password'] = trim($credentials['password']);
+        $intent = $credentials['intended'] ?? null;
+        unset($credentials['intended']);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
@@ -62,7 +65,7 @@ class AuthController extends Controller
             if ($user->is_admin) {
                 return response()->json([
                     'message' => 'Login successful',
-                    'redirect' => '/admin/helpdesk',
+                    'redirect' => $this->resolveRedirect($request, $intent, '/admin/helpdesk', '/admin/helpdesk', '/admin/'),
                     'is_admin' => true,
                 ]);
             }
@@ -79,7 +82,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => 'Login successful',
-                'redirect' => '/helpdesk',
+                'redirect' => $this->resolveRedirect($request, $intent, '/helpdesk', '/helpdesk', '/helpdesk/'),
                 'is_admin' => false,
             ]);
         }
@@ -88,6 +91,49 @@ class AuthController extends Controller
             'message' => 'The provided credentials do not match our records.',
             'errors' => ['credentials' => 'The provided credentials do not match our records.'],
         ], 401);
+    }
+
+    /**
+     * Resolve post-login redirect: client-supplied intent → session url.intended → default.
+     * Restricts intents to same-origin URLs starting with one of $allowedPrefixes.
+     */
+    private function resolveRedirect(Request $request, ?string $intent, string $exactAllowed, string $default, string ...$allowedPrefixes): string
+    {
+        $sessionIntent = $request->session()->pull('url.intended');
+
+        foreach ([$intent, $sessionIntent] as $candidate) {
+            if ($this->isSafeUrl($candidate, $exactAllowed, $allowedPrefixes)) {
+                return $candidate;
+            }
+        }
+
+        return $default;
+    }
+
+    /**
+     * @param  array<int, string>  $allowedPrefixes
+     */
+    private function isSafeUrl(?string $url, string $exactAllowed, array $allowedPrefixes): bool
+    {
+        if (! is_string($url) || $url === '') {
+            return false;
+        }
+
+        if (str_starts_with($url, '//') || preg_match('#^[a-z][a-z0-9+.-]*://#i', $url)) {
+            return false;
+        }
+
+        if ($url === $exactAllowed) {
+            return true;
+        }
+
+        foreach ($allowedPrefixes as $prefix) {
+            if (str_starts_with($url, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

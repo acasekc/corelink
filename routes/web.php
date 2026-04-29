@@ -272,6 +272,9 @@ Route::middleware(['auth', 'admin', 'force-password-change', 'no-cache'])->prefi
         Route::post('/{article}/generate-image', [AdminArticleController::class, 'generateImage'])->name('generate-image');
     });
 
+    // Anthropic Plan Tiers (SPA shell — React handles routing)
+    Route::get('/anthropic-plan-tiers', [PageController::class, 'adminSpa'])->name('anthropic-plan-tiers');
+
     // Admin Intake (SPA - React handles routing)
     Route::get('/intake/{any?}', [PageController::class, 'adminSpa'])
         ->where('any', '.*')

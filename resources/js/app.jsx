@@ -1,6 +1,9 @@
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import AdminLayout from "./components/AdminLayout";
+import { installAuthGuard } from "./utils/adminAuthGuard";
+
+installAuthGuard();
 
 // Lazy load admin routes
 const Login = React.lazy(() => import("./Pages/Admin/Login"));

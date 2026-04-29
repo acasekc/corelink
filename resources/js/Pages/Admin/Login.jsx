@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
+import { consumeIntent } from "../../utils/adminAuthGuard";
 
 const Login = () => {
   const [form, setForm] = useState({
@@ -8,6 +9,13 @@ const Login = () => {
     errors: {},
     processing: false,
   });
+
+  // Capture intent on first render — sessionStorage is consumed (cleared) here
+  // so a refresh of the login page doesn't re-use a stale destination.
+  const intentRef = useRef(null);
+  if (intentRef.current === null) {
+    intentRef.current = consumeIntent() ?? "";
+  }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -38,6 +46,7 @@ const Login = () => {
           email: form.email,
           password: form.password,
           remember: form.remember,
+          intended: intentRef.current || undefined,
         }),
       });
       
