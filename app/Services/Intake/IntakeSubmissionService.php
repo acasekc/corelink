@@ -148,9 +148,12 @@ class IntakeSubmissionService
 
             $request = $this->attachIntakeFiles($request, $intake);
 
+            // Multipart can't carry nested objects, so flatten metadata into
+            // bracket-notation parts. The helpdesk API validates `metadata` as
+            // an array — JSON-encoding it would fail validation.
             $response = $request->post($url, [
                 ...$payload,
-                'metadata' => json_encode($metadata),
+                ...$this->flattenForMultipart($metadata, 'metadata'),
             ]);
 
             if ($response->successful()) {
@@ -207,6 +210,30 @@ class IntakeSubmissionService
         }
 
         return $request;
+    }
+
+    /**
+     * Flatten a (possibly nested) array into multipart-friendly bracket notation:
+     *   ['data' => ['email' => 'x']]  →  ['data[email]' => 'x']
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, scalar|null>
+     */
+    private function flattenForMultipart(array $payload, string $prefix): array
+    {
+        $flat = [];
+
+        foreach ($payload as $key => $value) {
+            $name = $prefix === '' ? (string) $key : $prefix.'['.$key.']';
+
+            if (is_array($value)) {
+                $flat = [...$flat, ...$this->flattenForMultipart($value, $name)];
+            } else {
+                $flat[$name] = is_bool($value) ? ($value ? '1' : '0') : $value;
+            }
+        }
+
+        return $flat;
     }
 
     private function extension(?string $path): string

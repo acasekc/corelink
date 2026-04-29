@@ -127,8 +127,14 @@ class ClientIntakeFlowTest extends TestCase
         $this->assertNotNull($invite->submitted_at);
 
         Http::assertSent(function ($request) {
+            // Metadata must travel as bracket-notation parts (not JSON-encoded
+            // strings) — the helpdesk API validates `metadata` as an array.
+            $body = (string) $request->body();
+
             return str_contains($request->url(), '/api/helpdesk/v1/tickets')
-                && $request->header('X-API-Key')[0] === 'test-prospect-key';
+                && $request->header('X-API-Key')[0] === 'test-prospect-key'
+                && str_contains($body, 'name="metadata[source]"')
+                && str_contains($body, 'name="metadata[intake_id]"');
         });
 
         Mail::assertQueued(IntakeConfirmationMail::class);
