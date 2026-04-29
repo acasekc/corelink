@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, FolderKanban, Briefcase, BookText, LifeBuoy, FileText } from "lucide-react";
+import { LayoutDashboard, FolderKanban, Briefcase, BookText, LifeBuoy, FileText, ClipboardList } from "lucide-react";
 
 export default function AdminHeader() {
   const location = useLocation();
@@ -8,6 +8,7 @@ export default function AdminHeader() {
   const navItems = [
     { to: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { to: "/admin/discovery", label: "Discovery", icon: FolderKanban },
+    { to: "/admin/intake", label: "Intake", icon: ClipboardList },
     { to: "/admin/case-studies", label: "Case Studies", icon: BookText },
     { to: "/admin/projects", label: "Projects", icon: Briefcase },
     { to: "/admin/articles", label: "Articles", icon: FileText },

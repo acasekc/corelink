@@ -18,6 +18,9 @@ const CaseStudyForm = React.lazy(() => import("./Pages/Admin/CaseStudies/Form"))
 const ProjectsList = React.lazy(() => import("./Pages/Admin/Projects/List"));
 const ProjectForm = React.lazy(() => import("./Pages/Admin/Projects/Form"));
 const AnthropicPlanTiers = React.lazy(() => import("./Pages/Admin/AnthropicPlanTiers"));
+const IntakeInvites = React.lazy(() => import("./Pages/Admin/Intake/Invites"));
+const CreateIntakeInvite = React.lazy(() => import("./Pages/Admin/Intake/CreateInvite"));
+const IntakeSubmissionDetail = React.lazy(() => import("./Pages/Admin/Intake/SubmissionDetail"));
 
 // Lazy load admin helpdesk routes
 const HelpdeskDashboard = React.lazy(() => import("./Pages/Admin/Helpdesk/Dashboard"));
@@ -99,6 +102,11 @@ export default function App() {
 					<Route path="/admin/projects/create" element={<AdminLayout><ProjectForm /></AdminLayout>} />
 					<Route path="/admin/projects/:id/edit" element={<AdminLayout><ProjectForm /></AdminLayout>} />
 					<Route path="/admin/anthropic-plan-tiers" element={<AdminLayout><AnthropicPlanTiers /></AdminLayout>} />
+
+					{/* Admin Client Intake */}
+					<Route path="/admin/intake" element={<AdminLayout><IntakeInvites /></AdminLayout>} />
+					<Route path="/admin/intake/invites/create" element={<AdminLayout><CreateIntakeInvite /></AdminLayout>} />
+					<Route path="/admin/intake/submissions/:id" element={<AdminLayout><IntakeSubmissionDetail /></AdminLayout>} />
 
 					{/* Admin Blog/Articles Routes */}
 					<Route path="/admin/articles" element={<AdminLayout><AdminArticlesIndex /></AdminLayout>} />
