@@ -12,6 +12,7 @@ use App\Models\Helpdesk\Invoice;
 use App\Models\Helpdesk\InvoiceLineItem;
 use App\Models\Helpdesk\Project;
 use App\Models\Helpdesk\ProjectHourlyRate;
+use App\Models\Helpdesk\Ticket;
 use App\Models\Helpdesk\TimeEntry;
 use App\Services\Helpdesk\InvoicePdfService;
 use App\Services\Helpdesk\XeroService;
@@ -92,6 +93,77 @@ class InvoiceController extends Controller
                 'total_minutes' => $timeEntries->sum('minutes'),
                 'total_billable_minutes' => $timeEntries->sum('billable_minutes'),
             ],
+        ]);
+    }
+
+    /**
+     * Surface time/tickets that won't show up under "uninvoiced time" so the
+     * admin can spot gaps before sending an invoice:
+     *  - non-billable, uninvoiced time entries (work tracked but flagged not
+     *    to bill — easy to overlook),
+     *  - open tickets with no billable time entries at all (the ticket exists
+     *    but no one has logged billable work against it yet).
+     *
+     * Closed/resolved tickets are excluded from `untimed_tickets` since
+     * surfacing every historical resolved ticket would drown out the signal.
+     */
+    public function nonBillableOverview(Project $project): JsonResponse
+    {
+        $nonBillableEntries = TimeEntry::whereHas('ticket', fn ($q) => $q->where('project_id', $project->id))
+            ->whereNull('invoice_line_item_id')
+            ->where('is_billable', false)
+            ->with(['ticket:id,title,number,project_id', 'user:id,name', 'hourlyRateCategory:id,name,slug'])
+            ->orderByDesc('date_worked')
+            ->get();
+
+        $untimedTickets = Ticket::where('project_id', $project->id)
+            ->whereHas('status', fn ($q) => $q->whereNotIn('slug', ['resolved', 'closed']))
+            ->whereDoesntHave('timeEntries', fn ($q) => $q->where('is_billable', true))
+            ->with(['status:id,slug,title,bg_color', 'priority:id,slug,title,bg_color', 'assignee:id,name'])
+            ->orderByDesc('updated_at')
+            ->get();
+
+        return response()->json([
+            'non_billable_entries' => $nonBillableEntries->map(fn (TimeEntry $entry) => [
+                'id' => $entry->id,
+                'ticket' => [
+                    'id' => $entry->ticket->id,
+                    'number' => $entry->ticket->number,
+                    'title' => $entry->ticket->title,
+                ],
+                'user' => $entry->user ? [
+                    'id' => $entry->user->id,
+                    'name' => $entry->user->name,
+                ] : null,
+                'minutes' => $entry->minutes,
+                'formatted_time' => TimeEntry::formatMinutes($entry->minutes),
+                'description' => $entry->description,
+                'date_worked' => $entry->date_worked->toDateString(),
+                'category' => $entry->hourlyRateCategory ? [
+                    'id' => $entry->hourlyRateCategory->id,
+                    'name' => $entry->hourlyRateCategory->name,
+                ] : null,
+            ]),
+            'untimed_tickets' => $untimedTickets->map(fn (Ticket $ticket) => [
+                'id' => $ticket->id,
+                'number' => $ticket->ticket_number,
+                'title' => $ticket->title,
+                'status' => $ticket->status ? [
+                    'slug' => $ticket->status->slug,
+                    'title' => $ticket->status->title,
+                    'color' => $ticket->status->bg_color,
+                ] : null,
+                'priority' => $ticket->priority ? [
+                    'slug' => $ticket->priority->slug,
+                    'title' => $ticket->priority->title,
+                    'color' => $ticket->priority->bg_color,
+                ] : null,
+                'assignee' => $ticket->assignee ? [
+                    'id' => $ticket->assignee->id,
+                    'name' => $ticket->assignee->name,
+                ] : null,
+                'updated_at' => $ticket->updated_at?->toIso8601String(),
+            ]),
         ]);
     }
 

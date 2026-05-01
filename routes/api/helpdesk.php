@@ -213,6 +213,7 @@ Route::prefix('api/helpdesk/admin')->middleware(['web', 'auth', 'admin', 'force-
     // Invoices
     Route::get('invoices', [InvoiceController::class, 'index']);
     Route::get('projects/{project}/uninvoiced-time', [InvoiceController::class, 'uninvoicedTimeEntries']);
+    Route::get('projects/{project}/non-billable-overview', [InvoiceController::class, 'nonBillableOverview']);
     Route::post('projects/{project}/invoices', [InvoiceController::class, 'store']);
     Route::get('invoices/{invoice}', [InvoiceController::class, 'show']);
     Route::patch('invoices/{invoice}', [InvoiceController::class, 'update']);

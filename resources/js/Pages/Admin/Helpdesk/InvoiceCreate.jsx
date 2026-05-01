@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { FileText, ArrowLeft, LogOut, Plus, Trash2, Clock, DollarSign, Check } from 'lucide-react';
+import { FileText, ArrowLeft, LogOut, Plus, Trash2, Clock, DollarSign, Check, AlertTriangle, ExternalLink } from 'lucide-react';
 
 const InvoiceCreate = () => {
     const navigate = useNavigate();
@@ -12,6 +12,8 @@ const InvoiceCreate = () => {
     const [selectedEntries, setSelectedEntries] = useState([]);
     const [hourlyRates, setHourlyRates] = useState([]);
     const [invoiceSettings, setInvoiceSettings] = useState(null);
+    const [nonBillableEntries, setNonBillableEntries] = useState([]);
+    const [untimedTickets, setUntimedTickets] = useState([]);
 
     const [formData, setFormData] = useState({
         project_id: searchParams.get('project') || '',
@@ -44,11 +46,14 @@ const InvoiceCreate = () => {
             }));
             fetchUnbilledEntries();
             fetchProjectSettings();
+            fetchNonBillableOverview();
         } else {
             setUnbilledEntries([]);
             setSelectedEntries([]);
             setHourlyRates([]);
             setInvoiceSettings(null);
+            setNonBillableEntries([]);
+            setUntimedTickets([]);
         }
     }, [formData.project_id]);
 
@@ -88,6 +93,22 @@ const InvoiceCreate = () => {
         } catch (err) {
             console.error('Failed to fetch unbilled entries:', err);
             setUnbilledEntries([]);
+        }
+    };
+
+    const fetchNonBillableOverview = async () => {
+        try {
+            const response = await fetch(`/api/helpdesk/admin/projects/${formData.project_id}/non-billable-overview`, {
+                credentials: 'same-origin',
+            });
+            if (!response.ok) throw new Error('Failed to fetch overview');
+            const json = await response.json();
+            setNonBillableEntries(json.non_billable_entries || []);
+            setUntimedTickets(json.untimed_tickets || []);
+        } catch (err) {
+            console.error('Failed to fetch non-billable overview:', err);
+            setNonBillableEntries([]);
+            setUntimedTickets([]);
         }
     };
 
@@ -595,6 +616,104 @@ const InvoiceCreate = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Non-Billable Time Entries — informational only */}
+                            {nonBillableEntries.length > 0 && (
+                                <div className="bg-slate-800/50 border border-amber-500/30 rounded-xl overflow-hidden">
+                                    <div className="p-4 border-b border-slate-700 flex items-start gap-3">
+                                        <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" />
+                                        <div>
+                                            <h3 className="font-semibold">Non-Billable Time</h3>
+                                            <p className="text-xs text-slate-400 mt-0.5">
+                                                These entries were marked non-billable and won't be on the invoice. Edit the time entry on the ticket if that's wrong.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="divide-y divide-slate-700">
+                                        {nonBillableEntries.map((entry) => (
+                                            <div key={entry.id} className="p-4 flex items-start gap-3">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <Link
+                                                            to={`/admin/helpdesk/tickets/${entry.ticket.id}`}
+                                                            className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1"
+                                                        >
+                                                            Ticket #{entry.ticket.number}
+                                                            <ExternalLink className="w-3 h-3" />
+                                                        </Link>
+                                                        <span className="text-xs text-slate-500 truncate">— {entry.ticket.title}</span>
+                                                        {entry.category && (
+                                                            <span className="text-xs px-1.5 py-0.5 bg-slate-600 rounded text-slate-300">
+                                                                {entry.category.name}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {entry.description && (
+                                                        <p className="text-sm text-slate-300 truncate">{entry.description}</p>
+                                                    )}
+                                                    <p className="text-xs text-slate-500 mt-1">
+                                                        {entry.user?.name} • {new Date(entry.date_worked + 'T00:00:00').toLocaleDateString()}
+                                                    </p>
+                                                </div>
+                                                <div className="text-sm text-slate-400 whitespace-nowrap">
+                                                    {entry.formatted_time}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tickets Without Billable Time — informational only */}
+                            {untimedTickets.length > 0 && (
+                                <div className="bg-slate-800/50 border border-amber-500/30 rounded-xl overflow-hidden">
+                                    <div className="p-4 border-b border-slate-700 flex items-start gap-3">
+                                        <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" />
+                                        <div>
+                                            <h3 className="font-semibold">Tickets Without Billable Time</h3>
+                                            <p className="text-xs text-slate-400 mt-0.5">
+                                                Open tickets in this project with no billable time logged yet. Verify nothing was missed before invoicing.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="divide-y divide-slate-700">
+                                        {untimedTickets.map((ticket) => (
+                                            <Link
+                                                key={ticket.id}
+                                                to={`/admin/helpdesk/tickets/${ticket.id}`}
+                                                className="p-4 flex items-start gap-3 hover:bg-slate-700/30 transition"
+                                            >
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-purple-400 text-sm font-medium">{ticket.number}</span>
+                                                        {ticket.status && (
+                                                            <span
+                                                                className="text-xs px-1.5 py-0.5 rounded text-white"
+                                                                style={{ backgroundColor: ticket.status.color }}
+                                                            >
+                                                                {ticket.status.title}
+                                                            </span>
+                                                        )}
+                                                        {ticket.priority && (
+                                                            <span
+                                                                className="text-xs px-1.5 py-0.5 rounded text-white"
+                                                                style={{ backgroundColor: ticket.priority.color }}
+                                                            >
+                                                                {ticket.priority.title}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-sm text-slate-200 truncate">{ticket.title}</p>
+                                                    {ticket.assignee && (
+                                                        <p className="text-xs text-slate-500 mt-1">Assigned to {ticket.assignee.name}</p>
+                                                    )}
+                                                </div>
+                                                <ExternalLink className="w-4 h-4 text-slate-500 mt-1" />
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Custom Line Items */}
                             <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
