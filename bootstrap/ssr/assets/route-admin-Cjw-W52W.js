@@ -1,7 +1,7 @@
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
 import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { Loader2, ArrowLeft, Plus, X, Layers, GripVertical, Pencil, Trash2, Key, AlertTriangle, CheckCircle, Lock, EyeOff, Eye, LogOut, FileText, Briefcase, MessageSquare, Ticket, Sparkles, Upload, ExternalLink, Edit } from "lucide-react";
+import { Loader2, ArrowLeft, Plus, X, Layers, GripVertical, Pencil, Trash2, Key, AlertTriangle, CheckCircle, Lock, EyeOff, Eye, LogOut, FileText, Briefcase, MessageSquare, Ticket, Sparkles, Copy, RefreshCw, Ban, ExternalLink, FileDown, Image, Upload, Edit } from "lucide-react";
 import { motion } from "framer-motion";
 const AnthropicPlanTiers = () => {
   const [loading, setLoading] = useState(true);
@@ -1217,7 +1217,7 @@ const statusClass = (status) => {
       return "bg-gray-600 text-white";
   }
 };
-const formatDate = (dateStr) => {
+const formatDate$2 = (dateStr) => {
   const d = new Date(dateStr);
   return d.toLocaleString();
 };
@@ -1288,7 +1288,7 @@ const DiscoveryDashboard = () => {
             /* @__PURE__ */ jsx("div", { className: "text-gray-400 text-sm mt-1", children: session.metadata?.user_email || "No email provided" })
           ] }),
           /* @__PURE__ */ jsxs("div", { className: "text-right", children: [
-            /* @__PURE__ */ jsx("div", { className: "text-gray-400 text-sm", children: formatDate(session.created_at) }),
+            /* @__PURE__ */ jsx("div", { className: "text-gray-400 text-sm", children: formatDate$2(session.created_at) }),
             /* @__PURE__ */ jsxs("div", { className: "text-gray-500 text-xs mt-1", children: [
               session.turn_count,
               " turns"
@@ -1310,6 +1310,516 @@ const DiscoveryDashboard = () => {
 const __vite_glob_0_17 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: DiscoveryDashboard
+}, Symbol.toStringTag, { value: "Module" }));
+function CreateIntakeInvite() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    prospect_name: "",
+    prospect_email: "",
+    business_name: "",
+    expires_days: 30,
+    send_email: false
+  });
+  const [errors, setErrors] = useState({});
+  const [processing, setProcessing] = useState(false);
+  const [created, setCreated] = useState(null);
+  const change = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  };
+  const submit = async (e) => {
+    e.preventDefault();
+    setProcessing(true);
+    setErrors({});
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+    try {
+      const res = await fetch("/api/admin/intake/invites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": csrf,
+          Accept: "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          ...form,
+          expires_days: form.expires_days ? Number(form.expires_days) : null
+        })
+      });
+      if (res.status === 422) {
+        const body = await res.json();
+        setErrors(body.errors || {});
+      } else if (res.ok) {
+        const body = await res.json();
+        setCreated(body);
+      }
+    } finally {
+      setProcessing(false);
+    }
+  };
+  const copyLink = () => {
+    if (created?.url) {
+      navigator.clipboard.writeText(created.url);
+    }
+  };
+  if (created) {
+    return /* @__PURE__ */ jsxs("div", { className: "max-w-xl space-y-4", children: [
+      /* @__PURE__ */ jsxs(Link, { to: "/admin/intake", className: "text-sm text-slate-400 hover:text-white inline-flex items-center gap-1", children: [
+        /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4" }),
+        " Back to invites"
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "bg-emerald-500/10 border border-emerald-500/40 rounded-lg p-5", children: [
+        /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold text-emerald-200 mb-1", children: "Invite created" }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-300 mb-4", children: "Send the link below to your prospect. Once they submit, the link stops working." }),
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 bg-slate-900 rounded-lg p-3 border border-slate-700", children: [
+          /* @__PURE__ */ jsx("code", { className: "flex-1 text-sm text-blue-300 break-all", children: created.url }),
+          /* @__PURE__ */ jsx("button", { onClick: copyLink, className: "p-2 rounded text-slate-400 hover:text-white hover:bg-slate-800", children: /* @__PURE__ */ jsx(Copy, { className: "w-4 h-4" }) })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "flex gap-3", children: [
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: () => navigate("/admin/intake"),
+            className: "px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm",
+            children: "Done"
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            onClick: () => {
+              setCreated(null);
+              setForm({ prospect_name: "", prospect_email: "", business_name: "", expires_days: 30, send_email: false });
+            },
+            className: "px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm",
+            children: "Create another"
+          }
+        )
+      ] })
+    ] });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "max-w-xl", children: [
+    /* @__PURE__ */ jsxs(Link, { to: "/admin/intake", className: "text-sm text-slate-400 hover:text-white inline-flex items-center gap-1 mb-4", children: [
+      /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4" }),
+      " Back to invites"
+    ] }),
+    /* @__PURE__ */ jsx("h1", { className: "text-2xl font-bold mb-6", children: "Create intake invite" }),
+    /* @__PURE__ */ jsxs("form", { onSubmit: submit, className: "bg-slate-800/50 border border-slate-700 rounded-lg p-6 space-y-4", children: [
+      /* @__PURE__ */ jsx(
+        Input,
+        {
+          label: "Business / organization name",
+          name: "business_name",
+          value: form.business_name,
+          onChange: change,
+          error: errors.business_name?.[0],
+          placeholder: "Acme Co."
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        Input,
+        {
+          label: "Prospect name",
+          name: "prospect_name",
+          value: form.prospect_name,
+          onChange: change,
+          error: errors.prospect_name?.[0]
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        Input,
+        {
+          label: "Prospect email",
+          name: "prospect_email",
+          type: "email",
+          value: form.prospect_email,
+          onChange: change,
+          error: errors.prospect_email?.[0],
+          help: "Optional — pre-fills the form and enables 'send email now'."
+        }
+      ),
+      /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("label", { className: "block text-sm font-medium text-slate-200 mb-1.5", children: "Expires in" }),
+        /* @__PURE__ */ jsxs(
+          "select",
+          {
+            name: "expires_days",
+            value: form.expires_days || "",
+            onChange: change,
+            className: "w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm focus:outline-none focus:border-blue-500",
+            children: [
+              /* @__PURE__ */ jsx("option", { value: "", children: "Never" }),
+              /* @__PURE__ */ jsx("option", { value: "7", children: "7 days" }),
+              /* @__PURE__ */ jsx("option", { value: "14", children: "14 days" }),
+              /* @__PURE__ */ jsx("option", { value: "30", children: "30 days" }),
+              /* @__PURE__ */ jsx("option", { value: "60", children: "60 days" }),
+              /* @__PURE__ */ jsx("option", { value: "90", children: "90 days" })
+            ]
+          }
+        )
+      ] }),
+      form.prospect_email && /* @__PURE__ */ jsxs("label", { className: "flex items-center gap-2 text-sm text-slate-300", children: [
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            type: "checkbox",
+            name: "send_email",
+            checked: form.send_email,
+            onChange: change,
+            className: "w-4 h-4 rounded bg-slate-900 border-slate-600"
+          }
+        ),
+        "Send invite email now"
+      ] }),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "submit",
+          disabled: processing,
+          className: "w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm",
+          children: processing ? "Creating…" : "Create invite"
+        }
+      )
+    ] })
+  ] });
+}
+function Input({ label, name, type = "text", value, onChange, error, help, placeholder }) {
+  return /* @__PURE__ */ jsxs("div", { children: [
+    /* @__PURE__ */ jsx("label", { className: "block text-sm font-medium text-slate-200 mb-1.5", children: label }),
+    /* @__PURE__ */ jsx(
+      "input",
+      {
+        type,
+        name,
+        value,
+        onChange,
+        placeholder: placeholder || "",
+        className: "w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+      }
+    ),
+    help && /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-500 mt-1", children: help }),
+    error && /* @__PURE__ */ jsx("p", { className: "text-xs text-red-400 mt-1", children: error })
+  ] });
+}
+const __vite_glob_0_33 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: CreateIntakeInvite
+}, Symbol.toStringTag, { value: "Module" }));
+const formatDate$1 = (s) => s ? new Date(s).toLocaleString() : "—";
+const STATUS_STYLES = {
+  pending: "bg-slate-500/20 text-slate-300",
+  opened: "bg-blue-500/20 text-blue-300",
+  submitted: "bg-emerald-500/20 text-emerald-300",
+  expired: "bg-yellow-500/20 text-yellow-300",
+  revoked: "bg-red-500/20 text-red-300"
+};
+function IntakeInvites() {
+  const [invites, setInvites] = useState({ data: [] });
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [invitesRes, statsRes] = await Promise.all([
+        fetch("/api/admin/intake/invites", { headers: { Accept: "application/json" }, credentials: "same-origin" }),
+        fetch("/api/admin/intake/dashboard", { headers: { Accept: "application/json" }, credentials: "same-origin" })
+      ]);
+      setInvites(await invitesRes.json());
+      const statsBody = await statsRes.json();
+      setStats(statsBody.data);
+    } catch (e) {
+      setError("Failed to load.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    load();
+  }, []);
+  const csrf = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+  const copyLink = (url) => {
+    navigator.clipboard.writeText(url);
+  };
+  const resend = async (invite) => {
+    if (!invite.prospect_email && !confirm("No email on file. Enter one to resend?")) return;
+    const email = invite.prospect_email || prompt("Send invite to which email?");
+    if (!email) return;
+    await fetch(`/api/admin/intake/invites/${invite.id}/resend`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrf(), Accept: "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ email })
+    });
+    alert("Invite email sent.");
+  };
+  const revoke = async (invite) => {
+    if (!confirm("Revoke this invite? The link will stop working.")) return;
+    await fetch(`/api/admin/intake/invites/${invite.id}/revoke`, {
+      method: "POST",
+      headers: { "X-CSRF-TOKEN": csrf(), Accept: "application/json" },
+      credentials: "same-origin"
+    });
+    load();
+  };
+  const remove = async (invite) => {
+    if (!confirm("Delete this invite? This cannot be undone.")) return;
+    await fetch(`/api/admin/intake/invites/${invite.id}`, {
+      method: "DELETE",
+      headers: { "X-CSRF-TOKEN": csrf(), Accept: "application/json" },
+      credentials: "same-origin"
+    });
+    load();
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-6", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+      /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("h1", { className: "text-2xl font-bold", children: "Client Intake" }),
+        /* @__PURE__ */ jsx("p", { className: "text-slate-400 text-sm mt-1", children: "Generate tracked intake links for prospects. Each link is single-use and tied to one submission." })
+      ] }),
+      /* @__PURE__ */ jsxs(
+        Link,
+        {
+          to: "/admin/intake/invites/create",
+          className: "inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold",
+          children: [
+            /* @__PURE__ */ jsx(Plus, { className: "w-4 h-4" }),
+            " Create invite"
+          ]
+        }
+      )
+    ] }),
+    stats && /* @__PURE__ */ jsx(Stats, { stats }),
+    error && /* @__PURE__ */ jsx("div", { className: "rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200", children: error }),
+    /* @__PURE__ */ jsx("div", { className: "bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden", children: /* @__PURE__ */ jsxs("table", { className: "w-full", children: [
+      /* @__PURE__ */ jsx("thead", { className: "bg-slate-800", children: /* @__PURE__ */ jsxs("tr", { className: "text-left text-xs uppercase tracking-wide text-slate-400", children: [
+        /* @__PURE__ */ jsx("th", { className: "px-4 py-3", children: "Prospect" }),
+        /* @__PURE__ */ jsx("th", { className: "px-4 py-3", children: "Status" }),
+        /* @__PURE__ */ jsx("th", { className: "px-4 py-3", children: "Sent" }),
+        /* @__PURE__ */ jsx("th", { className: "px-4 py-3", children: "Opened" }),
+        /* @__PURE__ */ jsx("th", { className: "px-4 py-3", children: "Submitted" }),
+        /* @__PURE__ */ jsx("th", { className: "px-4 py-3", children: "Step" }),
+        /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-right", children: "Actions" })
+      ] }) }),
+      /* @__PURE__ */ jsx("tbody", { className: "divide-y divide-slate-700", children: loading ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 7, className: "px-4 py-8 text-center text-slate-500", children: "Loading…" }) }) : invites.data.length === 0 ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 7, className: "px-4 py-8 text-center text-slate-500", children: "No invites yet." }) }) : invites.data.map((invite) => /* @__PURE__ */ jsxs("tr", { className: "hover:bg-slate-800/30 text-sm", children: [
+        /* @__PURE__ */ jsxs("td", { className: "px-4 py-3", children: [
+          /* @__PURE__ */ jsx("div", { className: "font-medium", children: invite.business_name || invite.prospect_name || "—" }),
+          /* @__PURE__ */ jsx("div", { className: "text-xs text-slate-400", children: invite.prospect_email || "no email" })
+        ] }),
+        /* @__PURE__ */ jsx("td", { className: "px-4 py-3", children: /* @__PURE__ */ jsx("span", { className: "px-2 py-0.5 rounded text-xs font-medium " + (STATUS_STYLES[invite.status] || "bg-slate-700 text-slate-300"), children: invite.status }) }),
+        /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-slate-400 text-xs", children: formatDate$1(invite.created_at) }),
+        /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-slate-400 text-xs", children: formatDate$1(invite.opened_at) }),
+        /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-slate-400 text-xs", children: formatDate$1(invite.submitted_at) }),
+        /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-slate-400 text-xs", children: invite.last_step !== null ? `Step ${invite.last_step + 1}` : "—" }),
+        /* @__PURE__ */ jsx("td", { className: "px-4 py-3", children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-1.5", children: [
+          /* @__PURE__ */ jsx("button", { onClick: () => copyLink(invite.public_url), title: "Copy link", className: "p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-700", children: /* @__PURE__ */ jsx(Copy, { className: "w-4 h-4" }) }),
+          invite.submission_id ? /* @__PURE__ */ jsx(Link, { to: `/admin/intake/submissions/${invite.submission_id}`, title: "View submission", className: "p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-700", children: /* @__PURE__ */ jsx(Eye, { className: "w-4 h-4" }) }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+            /* @__PURE__ */ jsx("button", { onClick: () => resend(invite), title: "Resend email", className: "p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-700", children: /* @__PURE__ */ jsx(RefreshCw, { className: "w-4 h-4" }) }),
+            /* @__PURE__ */ jsx("button", { onClick: () => revoke(invite), title: "Revoke", className: "p-1.5 rounded text-slate-400 hover:text-yellow-400 hover:bg-slate-700", children: /* @__PURE__ */ jsx(Ban, { className: "w-4 h-4" }) })
+          ] }),
+          /* @__PURE__ */ jsx("a", { href: invite.public_url, target: "_blank", rel: "noreferrer", title: "Open public form", className: "p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-700", children: /* @__PURE__ */ jsx(ExternalLink, { className: "w-4 h-4" }) }),
+          /* @__PURE__ */ jsx("button", { onClick: () => remove(invite), title: "Delete", className: "p-1.5 rounded text-slate-400 hover:text-red-400 hover:bg-slate-700", children: /* @__PURE__ */ jsx(Trash2, { className: "w-4 h-4" }) })
+        ] }) })
+      ] }, invite.id)) })
+    ] }) })
+  ] });
+}
+function Stats({ stats }) {
+  const cards = [
+    { label: "Total invites", value: stats.invites_total },
+    { label: "Pending", value: stats.invites_pending },
+    { label: "Opened", value: stats.invites_opened },
+    { label: "Submitted", value: stats.invites_submitted },
+    { label: "Open rate", value: stats.open_rate + "%" },
+    { label: "Completion rate", value: stats.completion_rate + "%" }
+  ];
+  return /* @__PURE__ */ jsx("div", { className: "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3", children: cards.map((card) => /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/40 border border-slate-700 rounded-lg p-3", children: [
+    /* @__PURE__ */ jsx("div", { className: "text-xs text-slate-400", children: card.label }),
+    /* @__PURE__ */ jsx("div", { className: "text-xl font-semibold mt-1", children: card.value })
+  ] }, card.label)) });
+}
+const __vite_glob_0_34 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: IntakeInvites
+}, Symbol.toStringTag, { value: "Module" }));
+const formatDate = (s) => s ? new Date(s).toLocaleString() : "—";
+function IntakeSubmissionDetail() {
+  const { id } = useParams();
+  const [intake, setIntake] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [converting, setConverting] = useState(false);
+  const [error, setError] = useState(null);
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/intake/submissions/${id}`, {
+        headers: { Accept: "application/json" },
+        credentials: "same-origin"
+      });
+      const body = await res.json();
+      setIntake(body.data);
+    } catch (e) {
+      setError("Failed to load submission.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    load();
+  }, [id]);
+  const convert = async () => {
+    if (!confirm("Create a new helpdesk project from this intake?")) return;
+    setConverting(true);
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+    try {
+      const res = await fetch(`/api/admin/intake/submissions/${id}/convert`, {
+        method: "POST",
+        headers: { "X-CSRF-TOKEN": csrf, Accept: "application/json" },
+        credentials: "same-origin"
+      });
+      if (res.ok) load();
+      else setError("Conversion failed.");
+    } finally {
+      setConverting(false);
+    }
+  };
+  if (loading) return /* @__PURE__ */ jsx("div", { className: "text-slate-400 text-sm", children: "Loading…" });
+  if (!intake) return /* @__PURE__ */ jsx("div", { className: "text-slate-400 text-sm", children: error || "Not found." });
+  return /* @__PURE__ */ jsxs("div", { className: "space-y-5", children: [
+    /* @__PURE__ */ jsx("div", { children: /* @__PURE__ */ jsxs(Link, { to: "/admin/intake", className: "text-sm text-slate-400 hover:text-white inline-flex items-center gap-1", children: [
+      /* @__PURE__ */ jsx(ArrowLeft, { className: "w-4 h-4" }),
+      " Back to invites"
+    ] }) }),
+    /* @__PURE__ */ jsxs("div", { className: "flex items-start justify-between gap-4 flex-wrap", children: [
+      /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("h1", { className: "text-2xl font-bold", children: intake.business_name }),
+        /* @__PURE__ */ jsxs("p", { className: "text-sm text-slate-400 mt-1", children: [
+          "Submitted by ",
+          intake.email,
+          " on ",
+          formatDate(intake.submitted_at)
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap gap-2", children: [
+        intake.has_pdf && /* @__PURE__ */ jsxs(
+          "a",
+          {
+            href: `/api/admin/intake/submissions/${intake.id}/pdf`,
+            className: "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-600",
+            children: [
+              /* @__PURE__ */ jsx(FileDown, { className: "w-4 h-4" }),
+              " PDF"
+            ]
+          }
+        ),
+        intake.helpdesk_ticket_number && /* @__PURE__ */ jsxs(
+          "a",
+          {
+            href: `/admin/helpdesk/tickets/${intake.helpdesk_ticket_id}`,
+            className: "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-600",
+            children: [
+              /* @__PURE__ */ jsx(ExternalLink, { className: "w-4 h-4" }),
+              " Ticket ",
+              intake.helpdesk_ticket_number
+            ]
+          }
+        ),
+        intake.converted_project ? /* @__PURE__ */ jsxs(
+          Link,
+          {
+            to: `/admin/helpdesk/projects/${intake.converted_project.slug}`,
+            className: "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-semibold",
+            children: [
+              /* @__PURE__ */ jsx(Briefcase, { className: "w-4 h-4" }),
+              " View project: ",
+              intake.converted_project.name
+            ]
+          }
+        ) : /* @__PURE__ */ jsxs(
+          "button",
+          {
+            onClick: convert,
+            disabled: converting,
+            className: "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-500 text-white font-semibold disabled:opacity-50",
+            children: [
+              /* @__PURE__ */ jsx(Briefcase, { className: "w-4 h-4" }),
+              " ",
+              converting ? "Converting…" : "Convert to project"
+            ]
+          }
+        )
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 lg:grid-cols-4 gap-4", children: [
+      /* @__PURE__ */ jsx("div", { className: "lg:col-span-3 space-y-4", children: intake.sections.map((section, idx) => /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/40 border border-slate-700 rounded-lg overflow-hidden", children: [
+        /* @__PURE__ */ jsx("div", { className: "bg-slate-800 px-4 py-2 text-sm font-semibold", children: section.title }),
+        /* @__PURE__ */ jsx("dl", { className: "p-4 space-y-2", children: section.fields.map((field, fIdx) => /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-1 text-sm", children: [
+          /* @__PURE__ */ jsx("dt", { className: "text-slate-400", children: field.label }),
+          /* @__PURE__ */ jsx("dd", { className: "sm:col-span-2 text-slate-100 break-words", children: field.value })
+        ] }, fIdx)) })
+      ] }, idx)) }),
+      /* @__PURE__ */ jsxs("aside", { className: "space-y-4", children: [
+        /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/40 border border-slate-700 rounded-lg p-4", children: [
+          /* @__PURE__ */ jsx("div", { className: "text-xs uppercase tracking-wide text-slate-400 mb-2", children: "Invite" }),
+          /* @__PURE__ */ jsxs("div", { className: "text-sm", children: [
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("span", { className: "text-slate-400", children: "Code:" }),
+              " ",
+              /* @__PURE__ */ jsx("code", { className: "text-blue-300", children: intake.invite?.code })
+            ] }),
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("span", { className: "text-slate-400", children: "Created:" }),
+              " ",
+              formatDate(intake.invite?.created_at)
+            ] }),
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("span", { className: "text-slate-400", children: "Opened:" }),
+              " ",
+              formatDate(intake.invite?.opened_at)
+            ] })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/40 border border-slate-700 rounded-lg p-4", children: [
+          /* @__PURE__ */ jsx("div", { className: "text-xs uppercase tracking-wide text-slate-400 mb-2", children: "Attachments" }),
+          /* @__PURE__ */ jsxs("div", { className: "space-y-1.5 text-sm", children: [
+            intake.has_logo ? /* @__PURE__ */ jsxs(
+              "a",
+              {
+                href: `/api/admin/intake/submissions/${intake.id}/files/logo`,
+                className: "flex items-center gap-2 text-blue-300 hover:text-blue-200",
+                children: [
+                  /* @__PURE__ */ jsx(Image, { className: "w-4 h-4" }),
+                  " Logo"
+                ]
+              }
+            ) : /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 text-slate-500", children: [
+              /* @__PURE__ */ jsx(Image, { className: "w-4 h-4" }),
+              " No logo"
+            ] }),
+            intake.has_brand_guidelines ? /* @__PURE__ */ jsxs(
+              "a",
+              {
+                href: `/api/admin/intake/submissions/${intake.id}/files/brand-guidelines`,
+                className: "flex items-center gap-2 text-blue-300 hover:text-blue-200",
+                children: [
+                  /* @__PURE__ */ jsx(FileText, { className: "w-4 h-4" }),
+                  " Brand guidelines"
+                ]
+              }
+            ) : /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 text-slate-500", children: [
+              /* @__PURE__ */ jsx(FileText, { className: "w-4 h-4" }),
+              " No brand guidelines"
+            ] })
+          ] })
+        ] })
+      ] })
+    ] })
+  ] });
+}
+const __vite_glob_0_35 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: IntakeSubmissionDetail
 }, Symbol.toStringTag, { value: "Module" }));
 function ProjectForm({ project: propProject }) {
   const navigate = useNavigate();
@@ -1794,7 +2304,7 @@ function ProjectForm({ project: propProject }) {
     ] }) })
   ] });
 }
-const __vite_glob_0_34 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_37 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectForm
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1976,17 +2486,20 @@ function ProjectsList() {
     ] }) }) })
   ] });
 }
-const __vite_glob_0_35 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_38 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ProjectsList
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  __vite_glob_0_35 as _,
-  __vite_glob_0_34 as a,
-  __vite_glob_0_17 as b,
-  __vite_glob_0_10 as c,
-  __vite_glob_0_9 as d,
-  __vite_glob_0_8 as e,
-  __vite_glob_0_7 as f,
-  __vite_glob_0_1 as g
+  __vite_glob_0_38 as _,
+  __vite_glob_0_37 as a,
+  __vite_glob_0_35 as b,
+  __vite_glob_0_34 as c,
+  __vite_glob_0_33 as d,
+  __vite_glob_0_17 as e,
+  __vite_glob_0_10 as f,
+  __vite_glob_0_9 as g,
+  __vite_glob_0_8 as h,
+  __vite_glob_0_7 as i,
+  __vite_glob_0_1 as j
 };

@@ -49,6 +49,9 @@ export default function IntakeForm({ meta, invite, prefill, draft, options }) {
 
   const update = (key, value) => {
     setData((prev) => ({ ...prev, [key]: value }));
+    if (submitError) {
+      setSubmitError(null);
+    }
     if (errors[key]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -59,6 +62,9 @@ export default function IntakeForm({ meta, invite, prefill, draft, options }) {
   };
 
   const toggleMulti = (key, value) => {
+    if (submitError) {
+      setSubmitError(null);
+    }
     setData((prev) => {
       const current = Array.isArray(prev[key]) ? prev[key] : [];
       const exists = current.includes(value);
@@ -70,12 +76,35 @@ export default function IntakeForm({ meta, invite, prefill, draft, options }) {
   };
 
   const setFile = (key, file) => {
+    if (submitError) {
+      setSubmitError(null);
+    }
     setFiles((prev) => ({ ...prev, [key]: file }));
   };
 
-  const validateStep = () => {
+  const focusField = (fieldKey) => {
+    if (!fieldKey) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      const container = document.querySelector(`[data-field-key="${fieldKey}"]`);
+      if (!container) {
+        return;
+      }
+
+      container.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      const target = container.querySelector("input, textarea, select, button");
+      if (target instanceof HTMLElement) {
+        target.focus();
+      }
+    }, 0);
+  };
+
+  const collectStepErrors = (stepConfig) => {
     const stepErrors = {};
-    (currentStep.fields || []).forEach((field) => {
+    (stepConfig.fields || []).forEach((field) => {
       if (!field.required) return;
       if (field.requiresValue && !field.requiresValue(data)) return;
 
@@ -91,8 +120,37 @@ export default function IntakeForm({ meta, invite, prefill, draft, options }) {
       }
     });
 
+    return stepErrors;
+  };
+
+  const validateStep = () => {
+    const stepErrors = collectStepErrors(currentStep);
+
     setErrors(stepErrors);
+
+    const firstField = Object.keys(stepErrors)[0];
+    if (firstField) {
+      focusField(firstField);
+    }
+
     return Object.keys(stepErrors).length === 0;
+  };
+
+  const findFirstInvalidStep = () => {
+    for (let index = 0; index < STEPS.length - 1; index += 1) {
+      const stepErrors = collectStepErrors(STEPS[index]);
+      const firstField = Object.keys(stepErrors)[0];
+
+      if (firstField) {
+        return {
+          stepIndex: index,
+          fieldKey: firstField,
+          errors: stepErrors,
+        };
+      }
+    }
+
+    return null;
   };
 
   const goNext = () => {
@@ -115,6 +173,16 @@ export default function IntakeForm({ meta, invite, prefill, draft, options }) {
     setSubmitError(null);
     setErrors({});
 
+    const clientError = findFirstInvalidStep();
+    if (clientError) {
+      setErrors(clientError.errors);
+      setStep(clientError.stepIndex);
+      setSubmitError(`Step ${clientError.stepIndex + 1}: please complete the highlighted field.`);
+      focusField(clientError.fieldKey);
+      setSubmitting(false);
+      return;
+    }
+
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       if (Array.isArray(value)) {
@@ -136,6 +204,7 @@ export default function IntakeForm({ meta, invite, prefill, draft, options }) {
         method: "POST",
         headers: {
           "X-CSRF-TOKEN": csrf,
+          "X-Requested-With": "XMLHttpRequest",
           Accept: "application/json",
         },
         credentials: "same-origin",
@@ -150,17 +219,27 @@ export default function IntakeForm({ meta, invite, prefill, draft, options }) {
 
       if (res.status === 422) {
         const body = await res.json();
-        setErrors(body.errors || {});
-        // Jump to the earliest step that has an error.
-        const firstErrorStep = STEPS.findIndex((s) =>
-          (s.fields || []).some((f) => body.errors?.[f.key])
-        );
-        if (firstErrorStep >= 0) setStep(firstErrorStep);
+        const normalizedErrors = normalizeErrors(body.errors || {});
+        const errorLocation = body.first_error?.field
+          ? {
+              stepIndex: body.first_error.step_index,
+              fieldKey: body.first_error.field,
+            }
+          : findFirstErrorLocation(normalizedErrors, STEPS, data);
+
+        setErrors(normalizedErrors);
+        setSubmitError(body.message || "Please correct the highlighted fields and try again.");
+
+        if (errorLocation) {
+          setStep(errorLocation.stepIndex);
+          focusField(errorLocation.fieldKey);
+        }
       } else if (res.ok) {
+        const body = await readJsonBody(res);
         clearLocalDraft(invite.code);
-        window.location.href = `/intake/${invite.code}/submitted`;
+        window.location.href = body?.redirect || `/intake/${invite.code}/submitted`;
       } else {
-        setSubmitError("Something went wrong. Please try again.");
+        setSubmitError(await buildSubmitErrorMessage(res));
       }
     } catch (e) {
       setSubmitError("Network error — your data is saved, please try again.");
@@ -293,7 +372,11 @@ function Field({ field, value, error, options, file, update, toggleMulti, setFil
   const errEl = error && <p className="text-xs text-red-400 mt-1">{error}</p>;
 
   const baseInput =
-    "w-full px-3.5 py-2.5 rounded-lg bg-slate-800/70 border border-slate-700 focus:outline-none focus:border-blue-500 text-white placeholder-slate-500";
+    "w-full px-3.5 py-2.5 rounded-lg bg-slate-800/70 border focus:outline-none text-white placeholder-slate-500 " +
+    (error
+      ? "border-red-500/80 focus:border-red-400"
+      : "border-slate-700 focus:border-blue-500");
+  const groupClassName = error ? "rounded-lg border border-red-500/50 bg-red-500/5 p-3" : "";
 
   switch (field.type) {
     case "text":
@@ -302,10 +385,12 @@ function Field({ field, value, error, options, file, update, toggleMulti, setFil
     case "tel":
     case "date":
       return (
-        <div>
+        <div data-field-key={field.key} className="scroll-mt-24">
           {labelEl}
           <input
             type={field.type}
+            name={field.key}
+            aria-invalid={Boolean(error)}
             value={value || ""}
             onChange={(e) => update(field.key, e.target.value)}
             placeholder={field.placeholder || ""}
@@ -318,9 +403,11 @@ function Field({ field, value, error, options, file, update, toggleMulti, setFil
 
     case "textarea":
       return (
-        <div>
+        <div data-field-key={field.key} className="scroll-mt-24">
           {labelEl}
           <textarea
+            name={field.key}
+            aria-invalid={Boolean(error)}
             value={value || ""}
             onChange={(e) => update(field.key, e.target.value)}
             placeholder={field.placeholder || ""}
@@ -335,9 +422,11 @@ function Field({ field, value, error, options, file, update, toggleMulti, setFil
     case "select": {
       const opts = options[field.optionGroup] || {};
       return (
-        <div>
+        <div data-field-key={field.key} className="scroll-mt-24">
           {labelEl}
           <select
+            name={field.key}
+            aria-invalid={Boolean(error)}
             value={value || ""}
             onChange={(e) => update(field.key, e.target.value)}
             className={baseInput}
@@ -358,14 +447,16 @@ function Field({ field, value, error, options, file, update, toggleMulti, setFil
     case "radio": {
       const opts = options[field.optionGroup] || {};
       return (
-        <div>
+        <div data-field-key={field.key} className="scroll-mt-24">
           {labelEl}
-          <div className="flex flex-wrap gap-2">
+          <div className={groupClassName}>
+            <div className="flex flex-wrap gap-2">
             {Object.entries(opts).map(([key, label]) => (
               <button
                 type="button"
                 key={key}
                 onClick={() => update(field.key, key)}
+                aria-invalid={Boolean(error)}
                 className={
                   "px-4 py-2 rounded-lg text-sm border transition " +
                   (value === key
@@ -376,6 +467,7 @@ function Field({ field, value, error, options, file, update, toggleMulti, setFil
                 {label}
               </button>
             ))}
+            </div>
           </div>
           {help}
           {errEl}
@@ -387,35 +479,38 @@ function Field({ field, value, error, options, file, update, toggleMulti, setFil
       const opts = options[field.optionGroup] || {};
       const current = Array.isArray(value) ? value : [];
       return (
-        <div>
+        <div data-field-key={field.key} className="scroll-mt-24">
           {labelEl}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {Object.entries(opts).map(([key, label]) => {
-              const active = current.includes(key);
-              return (
-                <button
-                  type="button"
-                  key={key}
-                  onClick={() => toggleMulti(field.key, key)}
-                  className={
-                    "px-3.5 py-2.5 rounded-lg text-sm border text-left flex items-center gap-2 transition " +
-                    (active
-                      ? "bg-blue-500/20 border-blue-500 text-white"
-                      : "bg-slate-800/40 border-slate-700 text-slate-300 hover:border-slate-500")
-                  }
-                >
-                  <span
+          <div className={groupClassName}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {Object.entries(opts).map(([key, label]) => {
+                const active = current.includes(key);
+                return (
+                  <button
+                    type="button"
+                    key={key}
+                    onClick={() => toggleMulti(field.key, key)}
+                    aria-invalid={Boolean(error)}
                     className={
-                      "w-4 h-4 rounded border flex items-center justify-center shrink-0 " +
-                      (active ? "bg-blue-500 border-blue-500" : "border-slate-500")
+                      "px-3.5 py-2.5 rounded-lg text-sm border text-left flex items-center gap-2 transition " +
+                      (active
+                        ? "bg-blue-500/20 border-blue-500 text-white"
+                        : "bg-slate-800/40 border-slate-700 text-slate-300 hover:border-slate-500")
                     }
                   >
-                    {active && <CheckCircle2 className="w-3 h-3 text-white" />}
-                  </span>
-                  {label}
-                </button>
-              );
-            })}
+                    <span
+                      className={
+                        "w-4 h-4 rounded border flex items-center justify-center shrink-0 " +
+                        (active ? "bg-blue-500 border-blue-500" : "border-slate-500")
+                      }
+                    >
+                      {active && <CheckCircle2 className="w-3 h-3 text-white" />}
+                    </span>
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           {help}
           {errEl}
@@ -425,14 +520,18 @@ function Field({ field, value, error, options, file, update, toggleMulti, setFil
 
     case "file":
       return (
-        <div>
+        <div data-field-key={field.key} className="scroll-mt-24">
           {labelEl}
-          <input
-            type="file"
-            accept={field.accept || ""}
-            onChange={(e) => setFile(field.key, e.target.files?.[0] || null)}
-            className="block w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-500"
-          />
+          <div className={groupClassName}>
+            <input
+              type="file"
+              name={field.key}
+              aria-invalid={Boolean(error)}
+              accept={field.accept || ""}
+              onChange={(e) => setFile(field.key, e.target.files?.[0] || null)}
+              className="block w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-500"
+            />
+          </div>
           {file && <p className="text-xs text-slate-400 mt-1">Selected: {file.name}</p>}
           {help}
           {errEl}
@@ -709,6 +808,80 @@ function buildSteps(_options) {
     },
     { title: "Review & submit", subtitle: "One last look before we send this off.", fields: [] },
   ];
+}
+
+function normalizeErrors(rawErrors) {
+  return Object.entries(rawErrors || {}).reduce((normalized, [field, message]) => {
+    const key = field.split(".")[0];
+    if (normalized[key]) {
+      return normalized;
+    }
+
+    normalized[key] = Array.isArray(message) ? message[0] : message;
+    return normalized;
+  }, {});
+}
+
+function findFirstErrorLocation(errors, steps, data) {
+  for (let stepIndex = 0; stepIndex < steps.length; stepIndex += 1) {
+    const fieldKey = (steps[stepIndex].fields || []).find((field) => {
+      if (field.requiresValue && !field.requiresValue(data)) {
+        return false;
+      }
+
+      return Boolean(errors[field.key]);
+    })?.key;
+
+    if (fieldKey) {
+      return { stepIndex, fieldKey };
+    }
+  }
+
+  const fallbackField = Object.keys(errors)[0];
+  if (!fallbackField) {
+    return null;
+  }
+
+  return {
+    stepIndex: 0,
+    fieldKey: fallbackField,
+  };
+}
+
+async function readJsonBody(response) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    return null;
+  }
+
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+async function buildSubmitErrorMessage(response) {
+  const body = await readJsonBody(response);
+
+  if (body?.message) {
+    return body.message;
+  }
+
+  if (response.status === 419) {
+    return "Your session expired. Refresh the page and try again.";
+  }
+
+  if (response.status === 429) {
+    return "Too many submit attempts. Please wait a few minutes and try again.";
+  }
+
+  if (response.status === 413) {
+    return "One of your files is too large. Upload files under 10 MB and try again.";
+  }
+
+  return "We could not submit your intake right now. Your draft is still saved, so please try again.";
 }
 
 // ----- draft persistence helpers -----

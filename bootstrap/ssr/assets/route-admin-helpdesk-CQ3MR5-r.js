@@ -1,7 +1,7 @@
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
-import React, { forwardRef, useState, useCallback, useEffect, useRef } from "react";
+import React, { forwardRef, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams, Link, useParams } from "react-router-dom";
-import { Bold, Italic, Strikethrough, List, ListOrdered, CheckCircle, AlertCircle, Loader2, ArrowLeft, Plus, LogOut, Search, X, Paperclip, Image, FileText, Ticket, Clock, FolderOpen, Check, DollarSign, Trash2, Edit2, Send, XCircle, Download, AlertTriangle, CreditCard, Eye, Save, Filter, ChevronLeft, ChevronRight, User, Mail, MapPin, Users, Shield, Bell, BellOff, EyeOff, Key, RefreshCw, Copy, Cpu, Settings2, Activity, Bot, Ban, Settings as Settings$1, GripVertical, Pencil, FolderArchive, MessageSquare, Lock, Unlock, Tag, Square, Play, Timer, RotateCcw } from "lucide-react";
+import { Bold, Italic, Strikethrough, List, ListOrdered, CheckCircle, AlertCircle, Loader2, ArrowLeft, Plus, LogOut, Search, X, Paperclip, Image, FileText, Ticket, Clock, FolderOpen, Check, AlertTriangle, ExternalLink, DollarSign, Trash2, Edit2, Send, XCircle, Download, CreditCard, Eye, Save, Filter, ChevronLeft, ChevronRight, User, Mail, MapPin, Users, Shield, Bell, BellOff, EyeOff, Key, RefreshCw, Copy, Cpu, Settings2, Activity, Bot, Ban, Settings as Settings$1, GripVertical, Pencil, FolderArchive, MessageSquare, Lock, Unlock, Tag, Square, Play, Timer, RotateCcw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
@@ -1187,6 +1187,8 @@ const InvoiceCreate = () => {
   const [selectedEntries, setSelectedEntries] = useState([]);
   const [hourlyRates, setHourlyRates] = useState([]);
   const [invoiceSettings, setInvoiceSettings] = useState(null);
+  const [nonBillableEntries, setNonBillableEntries] = useState([]);
+  const [untimedTickets, setUntimedTickets] = useState([]);
   const [formData, setFormData] = useState({
     project_id: searchParams.get("project") || "",
     client_name: "",
@@ -1215,11 +1217,14 @@ const InvoiceCreate = () => {
       }));
       fetchUnbilledEntries();
       fetchProjectSettings();
+      fetchNonBillableOverview();
     } else {
       setUnbilledEntries([]);
       setSelectedEntries([]);
       setHourlyRates([]);
       setInvoiceSettings(null);
+      setNonBillableEntries([]);
+      setUntimedTickets([]);
     }
   }, [formData.project_id]);
   useEffect(() => {
@@ -1255,6 +1260,21 @@ const InvoiceCreate = () => {
     } catch (err) {
       console.error("Failed to fetch unbilled entries:", err);
       setUnbilledEntries([]);
+    }
+  };
+  const fetchNonBillableOverview = async () => {
+    try {
+      const response = await fetch(`/api/helpdesk/admin/projects/${formData.project_id}/non-billable-overview`, {
+        credentials: "same-origin"
+      });
+      if (!response.ok) throw new Error("Failed to fetch overview");
+      const json = await response.json();
+      setNonBillableEntries(json.non_billable_entries || []);
+      setUntimedTickets(json.untimed_tickets || []);
+    } catch (err) {
+      console.error("Failed to fetch non-billable overview:", err);
+      setNonBillableEntries([]);
+      setUntimedTickets([]);
     }
   };
   const fetchProjectSettings = async () => {
@@ -1710,6 +1730,91 @@ const InvoiceCreate = () => {
               entry.id
             );
           }) }) : /* @__PURE__ */ jsx("div", { className: "p-8 text-center text-slate-500", children: "No unbilled time entries for this project" })
+        ] }),
+        nonBillableEntries.length > 0 && /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-amber-500/30 rounded-xl overflow-hidden", children: [
+          /* @__PURE__ */ jsxs("div", { className: "p-4 border-b border-slate-700 flex items-start gap-3", children: [
+            /* @__PURE__ */ jsx(AlertTriangle, { className: "w-5 h-5 text-amber-400 mt-0.5 shrink-0" }),
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("h3", { className: "font-semibold", children: "Non-Billable Time" }),
+              /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-400 mt-0.5", children: "These entries were marked non-billable and won't be on the invoice. Edit the time entry on the ticket if that's wrong." })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsx("div", { className: "divide-y divide-slate-700", children: nonBillableEntries.map((entry) => /* @__PURE__ */ jsxs("div", { className: "p-4 flex items-start gap-3", children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 mb-1", children: [
+                /* @__PURE__ */ jsxs(
+                  Link,
+                  {
+                    to: `/admin/helpdesk/tickets/${entry.ticket.id}`,
+                    className: "text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1",
+                    children: [
+                      "Ticket #",
+                      entry.ticket.number,
+                      /* @__PURE__ */ jsx(ExternalLink, { className: "w-3 h-3" })
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxs("span", { className: "text-xs text-slate-500 truncate", children: [
+                  "— ",
+                  entry.ticket.title
+                ] }),
+                entry.category && /* @__PURE__ */ jsx("span", { className: "text-xs px-1.5 py-0.5 bg-slate-600 rounded text-slate-300", children: entry.category.name })
+              ] }),
+              entry.description && /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-300 truncate", children: entry.description }),
+              /* @__PURE__ */ jsxs("p", { className: "text-xs text-slate-500 mt-1", children: [
+                entry.user?.name,
+                " • ",
+                (/* @__PURE__ */ new Date(entry.date_worked + "T00:00:00")).toLocaleDateString()
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "text-sm text-slate-400 whitespace-nowrap", children: entry.formatted_time })
+          ] }, entry.id)) })
+        ] }),
+        untimedTickets.length > 0 && /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-amber-500/30 rounded-xl overflow-hidden", children: [
+          /* @__PURE__ */ jsxs("div", { className: "p-4 border-b border-slate-700 flex items-start gap-3", children: [
+            /* @__PURE__ */ jsx(AlertTriangle, { className: "w-5 h-5 text-amber-400 mt-0.5 shrink-0" }),
+            /* @__PURE__ */ jsxs("div", { children: [
+              /* @__PURE__ */ jsx("h3", { className: "font-semibold", children: "Tickets Without Billable Time" }),
+              /* @__PURE__ */ jsx("p", { className: "text-xs text-slate-400 mt-0.5", children: "Open tickets in this project with no billable time logged yet. Verify nothing was missed before invoicing." })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsx("div", { className: "divide-y divide-slate-700", children: untimedTickets.map((ticket) => /* @__PURE__ */ jsxs(
+            Link,
+            {
+              to: `/admin/helpdesk/tickets/${ticket.id}`,
+              className: "p-4 flex items-start gap-3 hover:bg-slate-700/30 transition",
+              children: [
+                /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
+                  /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 mb-1", children: [
+                    /* @__PURE__ */ jsx("span", { className: "text-purple-400 text-sm font-medium", children: ticket.number }),
+                    ticket.status && /* @__PURE__ */ jsx(
+                      "span",
+                      {
+                        className: "text-xs px-1.5 py-0.5 rounded text-white",
+                        style: { backgroundColor: ticket.status.color },
+                        children: ticket.status.title
+                      }
+                    ),
+                    ticket.priority && /* @__PURE__ */ jsx(
+                      "span",
+                      {
+                        className: "text-xs px-1.5 py-0.5 rounded text-white",
+                        style: { backgroundColor: ticket.priority.color },
+                        children: ticket.priority.title
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-200 truncate", children: ticket.title }),
+                  ticket.assignee && /* @__PURE__ */ jsxs("p", { className: "text-xs text-slate-500 mt-1", children: [
+                    "Assigned to ",
+                    ticket.assignee.name
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsx(ExternalLink, { className: "w-4 h-4 text-slate-500 mt-1" })
+              ]
+            },
+            ticket.id
+          )) })
         ] }),
         /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden", children: [
           /* @__PURE__ */ jsxs("div", { className: "p-4 border-b border-slate-700 flex items-center justify-between", children: [
@@ -8065,6 +8170,9 @@ const TicketsList = () => {
   const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
   const [selectedIds, setSelectedIds] = useState([]);
   const [deleting, setDeleting] = useState(false);
+  const [bulkStatuses, setBulkStatuses] = useState([]);
+  const [bulkStatusId, setBulkStatusId] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [filters, setFilters] = useState({
     status: searchParams.get("status") || "",
     priority: searchParams.get("priority") || "",
@@ -8078,6 +8186,38 @@ const TicketsList = () => {
   useEffect(() => {
     fetchTickets();
   }, [searchParams]);
+  const selectedTickets = useMemo(
+    () => tickets.filter((ticket) => selectedIds.includes(ticket.id)),
+    [tickets, selectedIds]
+  );
+  const selectedProjectIds = useMemo(
+    () => [...new Set(selectedTickets.map((ticket) => ticket.project?.id).filter(Boolean))],
+    [selectedTickets]
+  );
+  const selectedProjectId = selectedProjectIds.length === 1 ? selectedProjectIds[0] : null;
+  useEffect(() => {
+    const fetchBulkStatuses = async () => {
+      if (!selectedProjectId) {
+        setBulkStatuses([]);
+        setBulkStatusId("");
+        return;
+      }
+      try {
+        const response = await fetch(`/api/helpdesk/admin/statuses?project_id=${selectedProjectId}`, {
+          credentials: "same-origin"
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch statuses");
+        }
+        const data = await response.json();
+        setBulkStatuses(data.data || []);
+      } catch (err) {
+        console.error("Failed to fetch bulk statuses:", err);
+        setBulkStatuses([]);
+      }
+    };
+    fetchBulkStatuses();
+  }, [selectedProjectId]);
   const fetchReferenceData = async () => {
     try {
       const [statusesRes, prioritiesRes, projectsRes] = await Promise.all([
@@ -8121,6 +8261,7 @@ const TicketsList = () => {
       if (!response.ok) throw new Error("Failed to fetch tickets");
       const data = await response.json();
       setTickets(data.data || []);
+      setSelectedIds([]);
       setPagination({
         current_page: data.current_page || 1,
         last_page: data.last_page || 1,
@@ -8201,6 +8342,34 @@ const TicketsList = () => {
       alert(err.message);
     } finally {
       setDeleting(false);
+    }
+  };
+  const handleBulkStatusUpdate = async () => {
+    if (selectedIds.length === 0 || !bulkStatusId || !selectedProjectId) return;
+    setUpdatingStatus(true);
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+      const response = await fetch("/api/helpdesk/admin/tickets/bulk-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": csrfToken,
+          "Accept": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({ ids: selectedIds, status_id: Number(bulkStatusId) })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update ticket statuses");
+      }
+      setBulkStatusId("");
+      setSelectedIds([]);
+      fetchTickets();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setUpdatingStatus(false);
     }
   };
   return /* @__PURE__ */ jsxs("div", { className: "min-h-screen bg-linear-to-b from-slate-900 to-slate-800 text-white", children: [
@@ -8307,24 +8476,54 @@ const TicketsList = () => {
         ] })
       ] }) }),
       selectedIds.length > 0 && /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-4 flex items-center justify-between", children: [
-        /* @__PURE__ */ jsxs("span", { className: "text-slate-300", children: [
-          selectedIds.length,
-          " ticket",
-          selectedIds.length !== 1 ? "s" : "",
-          " selected"
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsxs("span", { className: "text-slate-300", children: [
+            selectedIds.length,
+            " ticket",
+            selectedIds.length !== 1 ? "s" : "",
+            " selected"
+          ] }),
+          !selectedProjectId && /* @__PURE__ */ jsx("p", { className: "mt-1 text-sm text-amber-400", children: "Bulk status updates require all selected tickets to belong to the same project." })
         ] }),
-        /* @__PURE__ */ jsxs(
-          "button",
-          {
-            onClick: handleBulkDelete,
-            disabled: deleting,
-            className: "flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition",
-            children: [
-              /* @__PURE__ */ jsx(Trash2, { className: "w-4 h-4" }),
-              deleting ? "Deleting..." : "Delete Selected"
-            ]
-          }
-        )
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+          /* @__PURE__ */ jsxs(
+            "select",
+            {
+              value: bulkStatusId,
+              onChange: (e) => setBulkStatusId(e.target.value),
+              disabled: !selectedProjectId || updatingStatus,
+              className: "bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50",
+              children: [
+                /* @__PURE__ */ jsx("option", { value: "", children: "Change status..." }),
+                bulkStatuses.map((status) => /* @__PURE__ */ jsx("option", { value: status.id, children: status.title }, status.id))
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: handleBulkStatusUpdate,
+              disabled: !selectedProjectId || !bulkStatusId || updatingStatus,
+              className: "flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg transition",
+              children: [
+                /* @__PURE__ */ jsx(RefreshCw, { className: "w-4 h-4" }),
+                updatingStatus ? "Updating..." : "Update Status"
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: handleBulkDelete,
+              disabled: deleting,
+              className: "flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition",
+              children: [
+                /* @__PURE__ */ jsx(Trash2, { className: "w-4 h-4" }),
+                deleting ? "Deleting..." : "Delete Selected"
+              ]
+            }
+          )
+        ] })
       ] }),
       loading ? /* @__PURE__ */ jsx("div", { className: "text-center py-12 text-slate-400", children: "Loading tickets..." }) : error ? /* @__PURE__ */ jsxs("div", { className: "text-center py-12 text-red-400", children: [
         "Error: ",

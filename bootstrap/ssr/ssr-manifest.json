@@ -1,10 +1,10 @@
 {
   "resources/js/Layouts/InertiaPublicLayout.jsx": [],
   "resources/js/Pages/About.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/Admin/AnthropicPlanTiers.jsx": [
-    "/build/assets/route-admin-wwaxJFAI.js"
+    "/build/assets/route-admin-Cjw-W52W.js"
   ],
   "resources/js/Pages/Admin/Articles/Categories/Index.jsx": [
     "/build/assets/route-admin-articles-CbXnKHqn.js"
@@ -22,178 +22,193 @@
     "/build/assets/route-admin-articles-CbXnKHqn.js"
   ],
   "resources/js/Pages/Admin/CaseStudies/Form.jsx": [
-    "/build/assets/route-admin-wwaxJFAI.js"
+    "/build/assets/route-admin-Cjw-W52W.js"
   ],
   "resources/js/Pages/Admin/CaseStudies/List.jsx": [
-    "/build/assets/route-admin-wwaxJFAI.js"
+    "/build/assets/route-admin-Cjw-W52W.js"
   ],
   "resources/js/Pages/Admin/ChangePassword.jsx": [
-    "/build/assets/route-admin-wwaxJFAI.js"
+    "/build/assets/route-admin-Cjw-W52W.js"
   ],
   "resources/js/Pages/Admin/Dashboard.jsx": [
-    "/build/assets/route-admin-wwaxJFAI.js"
+    "/build/assets/route-admin-Cjw-W52W.js"
   ],
   "resources/js/Pages/Admin/Discovery/CreateInvite.jsx": [
-    "/build/assets/route-admin-discovery-Cn5xdTAD.js"
+    "/build/assets/route-admin-discovery-DewUjWTE.js"
   ],
   "resources/js/Pages/Admin/Discovery/Invites.jsx": [
-    "/build/assets/route-admin-discovery-Cn5xdTAD.js"
+    "/build/assets/route-admin-discovery-DewUjWTE.js"
   ],
   "resources/js/Pages/Admin/Discovery/PlanDetail.jsx": [
-    "/build/assets/route-admin-discovery-Cn5xdTAD.js"
+    "/build/assets/route-admin-discovery-DewUjWTE.js"
   ],
   "resources/js/Pages/Admin/Discovery/Plans.jsx": [
-    "/build/assets/route-admin-discovery-Cn5xdTAD.js"
+    "/build/assets/route-admin-discovery-DewUjWTE.js"
   ],
   "resources/js/Pages/Admin/Discovery/SessionDetail.jsx": [
-    "/build/assets/route-admin-discovery-Cn5xdTAD.js"
+    "/build/assets/route-admin-discovery-DewUjWTE.js"
   ],
   "resources/js/Pages/Admin/Discovery/Sessions.jsx": [
-    "/build/assets/route-admin-discovery-Cn5xdTAD.js"
+    "/build/assets/route-admin-discovery-DewUjWTE.js"
   ],
   "resources/js/Pages/Admin/DiscoveryDashboard.jsx": [
-    "/build/assets/route-admin-wwaxJFAI.js"
+    "/build/assets/route-admin-Cjw-W52W.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/CreateTicket.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/Dashboard.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoiceCreate.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoiceDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoiceEdit.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/InvoicesList.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/ProjectDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/ProjectForm.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/ProjectsList.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/Settings.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/TicketDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/TicketsList.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/UserDetail.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/UserForm.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/Pages/Admin/Helpdesk/UsersList.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
+  ],
+  "resources/js/Pages/Admin/Intake/CreateInvite.jsx": [
+    "/build/assets/route-admin-Cjw-W52W.js"
+  ],
+  "resources/js/Pages/Admin/Intake/Invites.jsx": [
+    "/build/assets/route-admin-Cjw-W52W.js"
+  ],
+  "resources/js/Pages/Admin/Intake/SubmissionDetail.jsx": [
+    "/build/assets/route-admin-Cjw-W52W.js"
   ],
   "resources/js/Pages/Admin/Login.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/Admin/Projects/Form.jsx": [
-    "/build/assets/route-admin-wwaxJFAI.js"
+    "/build/assets/route-admin-Cjw-W52W.js"
   ],
   "resources/js/Pages/Admin/Projects/List.jsx": [
-    "/build/assets/route-admin-wwaxJFAI.js"
+    "/build/assets/route-admin-Cjw-W52W.js"
   ],
   "resources/js/Pages/Blog/Category.jsx": [
-    "/build/assets/route-blog-CWQU3YQn.js"
+    "/build/assets/route-blog-DXWyZWAs.js"
   ],
   "resources/js/Pages/Blog/Index.jsx": [
-    "/build/assets/route-blog-CWQU3YQn.js"
+    "/build/assets/route-blog-DXWyZWAs.js"
   ],
   "resources/js/Pages/Blog/Show.jsx": [
-    "/build/assets/route-blog-CWQU3YQn.js"
+    "/build/assets/route-blog-DXWyZWAs.js"
   ],
   "resources/js/Pages/CaseStudies.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/CaseStudiesList.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/CaseStudyDetail.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/Contact.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/Discovery/Chat.jsx": [
-    "/build/assets/route-discovery-BIK4yySN.js"
+    "/build/assets/route-discovery-DzFL1w9U.js"
   ],
   "resources/js/Pages/Discovery/Summary.jsx": [
-    "/build/assets/route-discovery-BIK4yySN.js"
+    "/build/assets/route-discovery-DzFL1w9U.js"
   ],
   "resources/js/Pages/Helpdesk/ChangePassword.jsx": [
-    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
+    "/build/assets/route-user-helpdesk-CYRvUqdV.js"
   ],
   "resources/js/Pages/Helpdesk/CreateTicket.jsx": [
-    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
+    "/build/assets/route-user-helpdesk-CYRvUqdV.js"
   ],
   "resources/js/Pages/Helpdesk/Dashboard.jsx": [
-    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
+    "/build/assets/route-user-helpdesk-CYRvUqdV.js"
   ],
   "resources/js/Pages/Helpdesk/ForgotPassword.jsx": [
-    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
+    "/build/assets/route-user-helpdesk-CYRvUqdV.js"
   ],
   "resources/js/Pages/Helpdesk/Login.jsx": [
-    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
+    "/build/assets/route-user-helpdesk-CYRvUqdV.js"
   ],
   "resources/js/Pages/Helpdesk/Profile.jsx": [
-    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
+    "/build/assets/route-user-helpdesk-CYRvUqdV.js"
   ],
   "resources/js/Pages/Helpdesk/ProjectDetail.jsx": [
-    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
+    "/build/assets/route-user-helpdesk-CYRvUqdV.js"
   ],
   "resources/js/Pages/Helpdesk/ResetPassword.jsx": [
-    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
+    "/build/assets/route-user-helpdesk-CYRvUqdV.js"
   ],
   "resources/js/Pages/Helpdesk/TicketDetail.jsx": [
-    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
+    "/build/assets/route-user-helpdesk-CYRvUqdV.js"
   ],
   "resources/js/Pages/Helpdesk/TicketsList.jsx": [
-    "/build/assets/route-user-helpdesk-GZlD8N0x.js"
+    "/build/assets/route-user-helpdesk-CYRvUqdV.js"
   ],
   "resources/js/Pages/Home.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/Index.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
+  ],
+  "resources/js/Pages/Intake/Form.jsx": [
+    "/build/assets/route-public-BYogzmOm.js"
+  ],
+  "resources/js/Pages/Intake/Submitted.jsx": [
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/Privacy.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/Process.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/Projects.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/Pages/Terms.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/components/FeatureCard.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/components/Features.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/components/FileUploadProgress.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/components/Hero.jsx": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/components/InertiaFooter.jsx": [],
   "resources/js/components/InertiaHeader.jsx": [],
@@ -201,20 +216,23 @@
     "/build/assets/route-admin-articles-CbXnKHqn.js"
   ],
   "resources/js/components/LexicalMarkdownEditor.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/components/Logo.jsx": [],
   "resources/js/components/Markdown.jsx": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
   "resources/js/components/SeoHead.jsx": [
-    "/build/assets/route-blog-CWQU3YQn.js"
+    "/build/assets/route-blog-DXWyZWAs.js"
   ],
   "resources/js/data/caseStudies.js": [
-    "/build/assets/route-public-CBitcHF1.js"
+    "/build/assets/route-public-BYogzmOm.js"
   ],
   "resources/js/hooks/useFileUpload.js": [
-    "/build/assets/route-admin-helpdesk-hsrWmByL.js"
+    "/build/assets/route-admin-helpdesk-CQ3MR5-r.js"
   ],
-  "resources/js/ssr.jsx": []
+  "resources/js/ssr.jsx": [],
+  "resources/js/utils/adminAuthGuard.js": [
+    "/build/assets/route-public-BYogzmOm.js"
+  ]
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SubmitIntakeRequest;
 use App\Mail\IntakeConfirmationMail;
 use App\Models\ClientIntakeInvite;
 use App\Services\Intake\IntakeFormSchema;
@@ -10,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -78,21 +78,11 @@ class IntakeController extends Controller
     /**
      * Final submission.
      */
-    public function submit(Request $request, string $code): RedirectResponse
+    public function submit(SubmitIntakeRequest $request, string $code): JsonResponse|RedirectResponse
     {
         $invite = $this->resolveInvite($code);
 
-        $rules = [
-            ...IntakeFormSchema::submissionRules(),
-            ...IntakeFormSchema::fileRules(),
-        ];
-
-        $validated = $request->validate($rules);
-
-        // Honeypot — bots fill the hidden "website" field; humans don't.
-        if (! empty($validated['website'] ?? null)) {
-            throw ValidationException::withMessages(['website' => 'Invalid submission.']);
-        }
+        $validated = $request->validated();
 
         // Conditional: brand-guidelines upload only allowed when "Yes" selected.
         if ($validated['has_brand_guidelines'] !== 'yes') {
@@ -113,7 +103,14 @@ class IntakeController extends Controller
 
         Mail::to($intake->email)->queue(new IntakeConfirmationMail($intake));
 
-        return redirect('/intake/'.$invite->code.'/submitted');
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Your intake was submitted successfully.',
+                'redirect' => route('intake.submitted', ['code' => $invite->code]),
+            ], 201);
+        }
+
+        return redirect()->route('intake.submitted', ['code' => $invite->code]);
     }
 
     /**

@@ -1,8 +1,9 @@
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, Link, useParams, useSearchParams } from "react-router-dom";
-import { Loader2, Key, AlertTriangle, CheckCircle, Lock, EyeOff, Eye, AlertCircle, ChevronLeft, Plus, LogOut, Paperclip, Image, FileText, X, Ticket, User, Clock, CheckCircle2, FolderOpen, Mail, ArrowLeft, LogIn, Save, ChevronRight, Edit2, FolderArchive, Download, MessageSquare, Trash2, Send, Timer, Filter, Search } from "lucide-react";
-import { u as useFileUpload, L as LexicalMarkdownEditor, F as FileUploadProgress, v as validateFiles, M as Markdown } from "./route-admin-helpdesk-hsrWmByL.js";
+import { Loader2, Key, AlertTriangle, CheckCircle, Lock, EyeOff, Eye, AlertCircle, ChevronLeft, Plus, LogOut, Paperclip, Image, FileText, X, Ticket, User, Clock, CheckCircle2, FolderOpen, Mail, ArrowLeft, LogIn, Save, ChevronRight, Edit2, FolderArchive, Download, MessageSquare, Trash2, Send, Timer, Filter, Search, RefreshCw } from "lucide-react";
+import { u as useFileUpload, L as LexicalMarkdownEditor, F as FileUploadProgress, v as validateFiles, M as Markdown } from "./route-admin-helpdesk-CQ3MR5-r.js";
+import { c as consumeIntent } from "./route-public-BYogzmOm.js";
 const ChangePassword = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -228,7 +229,7 @@ const ChangePassword = () => {
     ] })
   ] }) });
 };
-const __vite_glob_0_45 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_48 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ChangePassword
 }, Symbol.toStringTag, { value: "Module" }));
@@ -584,7 +585,7 @@ function HelpdeskUserCreateTicket() {
     ] }) }) })
   ] });
 }
-const __vite_glob_0_46 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_49 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskUserCreateTicket
 }, Symbol.toStringTag, { value: "Module" }));
@@ -872,7 +873,7 @@ function HelpdeskUserDashboard() {
     ] }) })
   ] });
 }
-const __vite_glob_0_47 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_50 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskUserDashboard
 }, Symbol.toStringTag, { value: "Module" }));
@@ -982,7 +983,7 @@ const ForgotPassword = () => {
     ) })
   ] }) });
 };
-const __vite_glob_0_48 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_51 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ForgotPassword
 }, Symbol.toStringTag, { value: "Module" }));
@@ -994,6 +995,10 @@ const HelpdeskLogin = () => {
     errors: {},
     processing: false
   });
+  const intentRef = useRef(null);
+  if (intentRef.current === null) {
+    intentRef.current = consumeIntent() ?? "";
+  }
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({
@@ -1017,7 +1022,8 @@ const HelpdeskLogin = () => {
         body: JSON.stringify({
           email: form.email,
           password: form.password,
-          remember: form.remember
+          remember: form.remember,
+          intended: intentRef.current || void 0
         })
       });
       const data = await res.json();
@@ -1125,7 +1131,7 @@ const HelpdeskLogin = () => {
     ] }) })
   ] }) });
 };
-const __vite_glob_0_49 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_52 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskLogin
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1365,7 +1371,7 @@ const Profile = () => {
     ] })
   ] }) });
 };
-const __vite_glob_0_50 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_53 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Profile
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1676,7 +1682,7 @@ function UserProjectDetail() {
     ] }) })
   ] });
 }
-const __vite_glob_0_51 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_54 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: UserProjectDetail
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1851,7 +1857,7 @@ const ResetPassword = () => {
     ) })
   ] }) });
 };
-const __vite_glob_0_52 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_55 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ResetPassword
 }, Symbol.toStringTag, { value: "Module" }));
@@ -2698,7 +2704,7 @@ function HelpdeskUserTicketDetail() {
     ] }) }) })
   ] });
 }
-const __vite_glob_0_53 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_56 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskUserTicketDetail
 }, Symbol.toStringTag, { value: "Module" }));
@@ -2712,6 +2718,10 @@ function HelpdeskUserTicketsList() {
   const [projects, setProjects] = useState([]);
   const [statuses, setStatuses] = useState([]);
   const [priorities, setPriorities] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkStatuses, setBulkStatuses] = useState([]);
+  const [bulkStatusId, setBulkStatusId] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [filters, setFilters] = useState({
     status: searchParams.get("status") || "",
     priority: searchParams.get("priority") || "",
@@ -2767,6 +2777,7 @@ function HelpdeskUserTicketsList() {
         const result = await response.json();
         setTickets(result.data || []);
         setMeta(result.meta || {});
+        setSelectedIds([]);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -2775,6 +2786,40 @@ function HelpdeskUserTicketsList() {
     };
     fetchTickets();
   }, [filters, searchParams, navigate]);
+  const selectedTickets = useMemo(
+    () => tickets.filter((ticket) => selectedIds.includes(ticket.id)),
+    [tickets, selectedIds]
+  );
+  const selectedProjectIds = useMemo(
+    () => [...new Set(selectedTickets.map((ticket) => ticket.project?.id).filter(Boolean))],
+    [selectedTickets]
+  );
+  const selectedProjectId = selectedProjectIds.length === 1 ? selectedProjectIds[0] : null;
+  const selectedProject = projects.find((project) => project.id === selectedProjectId);
+  const canBulkChangeStatus = selectedProject?.role === "owner";
+  useEffect(() => {
+    const fetchBulkStatuses = async () => {
+      if (!selectedProjectId || !canBulkChangeStatus) {
+        setBulkStatuses([]);
+        setBulkStatusId("");
+        return;
+      }
+      try {
+        const response = await fetch(`/api/helpdesk/user/projects/${selectedProjectId}/reference-data`, {
+          credentials: "include"
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch statuses");
+        }
+        const data = await response.json();
+        setBulkStatuses(data.data?.statuses || []);
+      } catch (err) {
+        console.error("Failed to fetch bulk statuses:", err);
+        setBulkStatuses([]);
+      }
+    };
+    fetchBulkStatuses();
+  }, [selectedProjectId, canBulkChangeStatus]);
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
@@ -2796,6 +2841,57 @@ function HelpdeskUserTicketsList() {
       window.location.href = "/helpdesk/login";
     } catch (err) {
       console.error("Logout failed:", err);
+    }
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.length === tickets.length) {
+      setSelectedIds([]);
+      return;
+    }
+    setSelectedIds(tickets.map((ticket) => ticket.id));
+  };
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((currentId) => currentId !== id) : [...prev, id]);
+  };
+  const handleBulkStatusUpdate = async () => {
+    if (!canBulkChangeStatus || !selectedProjectId || !bulkStatusId || selectedIds.length === 0) {
+      return;
+    }
+    setUpdatingStatus(true);
+    try {
+      const response = await fetch("/api/helpdesk/user/tickets/bulk-status", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || ""
+        },
+        body: JSON.stringify({ ids: selectedIds, status_id: Number(bulkStatusId) })
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update ticket statuses");
+      }
+      setBulkStatusId("");
+      setSelectedIds([]);
+      const params = new URLSearchParams();
+      if (filters.status) params.append("status", filters.status);
+      if (filters.priority) params.append("priority", filters.priority);
+      if (filters.project) params.append("project", filters.project);
+      if (filters.search) params.append("search", filters.search);
+      if (filters.assigned_to_me) params.append("assigned_to_me", "1");
+      params.append("page", searchParams.get("page") || "1");
+      const refreshed = await fetch(`/api/helpdesk/user/tickets?${params}`, {
+        credentials: "include"
+      });
+      const refreshedResult = await refreshed.json();
+      setTickets(refreshedResult.data || []);
+      setMeta(refreshedResult.meta || {});
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setUpdatingStatus(false);
     }
   };
   return /* @__PURE__ */ jsxs("div", { className: "min-h-screen bg-linear-to-b from-slate-900 to-slate-800 text-white", children: [
@@ -2875,7 +2971,7 @@ function HelpdeskUserTicketsList() {
               ]
             }
           ),
-          /* @__PURE__ */ jsxs("div", { className: "relative flex-1 min-w-[200px]", children: [
+          /* @__PURE__ */ jsxs("div", { className: "relative flex-1 min-w-50", children: [
             /* @__PURE__ */ jsx(Search, { className: "absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" }),
             /* @__PURE__ */ jsx(
               "input",
@@ -2907,116 +3003,175 @@ function HelpdeskUserTicketsList() {
             ]
           }
         )
-      ] }) : /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden", children: [
-        /* @__PURE__ */ jsxs("table", { className: "w-full", children: [
-          /* @__PURE__ */ jsx("thead", { className: "bg-slate-800", children: /* @__PURE__ */ jsxs("tr", { children: [
-            /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Ticket" }),
-            /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Project" }),
-            /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Status" }),
-            /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Priority" }),
-            /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Assigned" }),
-            /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Created" })
-          ] }) }),
-          /* @__PURE__ */ jsx("tbody", { className: "divide-y divide-slate-700", children: tickets.map((ticket) => /* @__PURE__ */ jsxs("tr", { className: "hover:bg-slate-800/50", children: [
-            /* @__PURE__ */ jsxs("td", { className: "px-4 py-3", children: [
-              /* @__PURE__ */ jsxs(
-                Link,
-                {
-                  to: `/helpdesk/tickets/${ticket.id}`,
-                  className: "text-purple-400 hover:text-purple-300 font-medium",
-                  children: [
-                    "#",
-                    ticket.project?.ticket_prefix,
-                    "-",
-                    String(ticket.number).padStart(4, "0")
-                  ]
-                }
-              ),
-              /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400 truncate max-w-xs", children: ticket.title })
+      ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+        selectedIds.length > 0 && /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-4 flex items-center justify-between gap-4", children: [
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsxs("p", { className: "text-slate-300", children: [
+              selectedIds.length,
+              " ticket",
+              selectedIds.length !== 1 ? "s" : "",
+              " selected"
             ] }),
-            /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-sm", children: ticket.project?.name }),
-            /* @__PURE__ */ jsx("td", { className: "px-4 py-3", children: /* @__PURE__ */ jsx(
-              "span",
-              {
-                className: "px-2 py-1 rounded-full text-xs font-medium",
-                style: {
-                  backgroundColor: `${ticket.status?.color}20`,
-                  color: ticket.status?.color
-                },
-                children: ticket.status?.title
-              }
-            ) }),
-            /* @__PURE__ */ jsx("td", { className: "px-4 py-3", children: /* @__PURE__ */ jsx(
-              "span",
-              {
-                className: "px-2 py-1 rounded-full text-xs font-medium",
-                style: {
-                  backgroundColor: `${ticket.priority?.color}20`,
-                  color: ticket.priority?.color
-                },
-                children: ticket.priority?.title
-              }
-            ) }),
-            /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-sm", children: ticket.assignee?.name || /* @__PURE__ */ jsx("span", { className: "text-slate-500", children: "Unassigned" }) }),
-            /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-sm text-slate-400", children: new Date(ticket.created_at).toLocaleDateString() })
-          ] }, ticket.id)) })
-        ] }),
-        meta.last_page > 1 && /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between px-4 py-3 border-t border-slate-700", children: [
-          /* @__PURE__ */ jsxs("span", { className: "text-sm text-slate-400", children: [
-            "Page ",
-            meta.current_page,
-            " of ",
-            meta.last_page,
-            " (",
-            meta.total,
-            " tickets)"
+            !selectedProjectId && /* @__PURE__ */ jsx("p", { className: "mt-1 text-sm text-amber-400", children: "Bulk status updates require all selected tickets to belong to the same project." }),
+            selectedProjectId && !canBulkChangeStatus && /* @__PURE__ */ jsx("p", { className: "mt-1 text-sm text-amber-400", children: "Only project owners can bulk change ticket statuses." })
           ] }),
-          /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ jsx(
-              "button",
+          /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+            /* @__PURE__ */ jsxs(
+              "select",
               {
-                disabled: meta.current_page === 1,
-                onClick: () => {
-                  const params = new URLSearchParams(searchParams);
-                  params.set("page", String(meta.current_page - 1));
-                  setSearchParams(params);
-                },
-                className: "p-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg",
-                children: /* @__PURE__ */ jsx(ChevronLeft, { className: "w-4 h-4" })
+                value: bulkStatusId,
+                onChange: (e) => setBulkStatusId(e.target.value),
+                disabled: !selectedProjectId || !canBulkChangeStatus || updatingStatus,
+                className: "bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50",
+                children: [
+                  /* @__PURE__ */ jsx("option", { value: "", children: "Change status..." }),
+                  bulkStatuses.map((status) => /* @__PURE__ */ jsx("option", { value: status.id, children: status.title }, status.id))
+                ]
               }
             ),
-            /* @__PURE__ */ jsx(
+            /* @__PURE__ */ jsxs(
               "button",
               {
-                disabled: meta.current_page === meta.last_page,
-                onClick: () => {
-                  const params = new URLSearchParams(searchParams);
-                  params.set("page", String(meta.current_page + 1));
-                  setSearchParams(params);
-                },
-                className: "p-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg",
-                children: /* @__PURE__ */ jsx(ChevronRight, { className: "w-4 h-4" })
+                onClick: handleBulkStatusUpdate,
+                disabled: !selectedProjectId || !canBulkChangeStatus || !bulkStatusId || updatingStatus,
+                className: "flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-lg transition",
+                children: [
+                  /* @__PURE__ */ jsx(RefreshCw, { className: "w-4 h-4" }),
+                  updatingStatus ? "Updating..." : "Update Status"
+                ]
               }
             )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden", children: [
+          /* @__PURE__ */ jsxs("table", { className: "w-full", children: [
+            /* @__PURE__ */ jsx("thead", { className: "bg-slate-800", children: /* @__PURE__ */ jsxs("tr", { children: [
+              /* @__PURE__ */ jsx("th", { className: "px-4 py-3 w-10", children: /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "checkbox",
+                  checked: tickets.length > 0 && selectedIds.length === tickets.length,
+                  onChange: toggleSelectAll,
+                  className: "w-4 h-4 rounded border-slate-500 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                }
+              ) }),
+              /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Ticket" }),
+              /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Project" }),
+              /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Status" }),
+              /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Priority" }),
+              /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Assigned" }),
+              /* @__PURE__ */ jsx("th", { className: "px-4 py-3 text-left text-sm font-medium text-slate-400", children: "Created" })
+            ] }) }),
+            /* @__PURE__ */ jsx("tbody", { className: "divide-y divide-slate-700", children: tickets.map((ticket) => /* @__PURE__ */ jsxs("tr", { className: `hover:bg-slate-800/50 ${selectedIds.includes(ticket.id) ? "bg-slate-700/20" : ""}`, children: [
+              /* @__PURE__ */ jsx("td", { className: "px-4 py-3", children: /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "checkbox",
+                  checked: selectedIds.includes(ticket.id),
+                  onChange: () => toggleSelect(ticket.id),
+                  className: "w-4 h-4 rounded border-slate-500 bg-slate-700 text-purple-600 focus:ring-purple-500 focus:ring-offset-0"
+                }
+              ) }),
+              /* @__PURE__ */ jsxs("td", { className: "px-4 py-3", children: [
+                /* @__PURE__ */ jsxs(
+                  Link,
+                  {
+                    to: `/helpdesk/tickets/${ticket.id}`,
+                    className: "text-purple-400 hover:text-purple-300 font-medium",
+                    children: [
+                      "#",
+                      ticket.project?.ticket_prefix,
+                      "-",
+                      String(ticket.number).padStart(4, "0")
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-400 truncate max-w-xs", children: ticket.title })
+              ] }),
+              /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-sm", children: ticket.project?.name }),
+              /* @__PURE__ */ jsx("td", { className: "px-4 py-3", children: /* @__PURE__ */ jsx(
+                "span",
+                {
+                  className: "px-2 py-1 rounded-full text-xs font-medium",
+                  style: {
+                    backgroundColor: `${ticket.status?.color}20`,
+                    color: ticket.status?.color
+                  },
+                  children: ticket.status?.title
+                }
+              ) }),
+              /* @__PURE__ */ jsx("td", { className: "px-4 py-3", children: /* @__PURE__ */ jsx(
+                "span",
+                {
+                  className: "px-2 py-1 rounded-full text-xs font-medium",
+                  style: {
+                    backgroundColor: `${ticket.priority?.color}20`,
+                    color: ticket.priority?.color
+                  },
+                  children: ticket.priority?.title
+                }
+              ) }),
+              /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-sm", children: ticket.assignee?.name || /* @__PURE__ */ jsx("span", { className: "text-slate-500", children: "Unassigned" }) }),
+              /* @__PURE__ */ jsx("td", { className: "px-4 py-3 text-sm text-slate-400", children: new Date(ticket.created_at).toLocaleDateString() })
+            ] }, ticket.id)) })
+          ] }),
+          meta.last_page > 1 && /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between px-4 py-3 border-t border-slate-700", children: [
+            /* @__PURE__ */ jsxs("span", { className: "text-sm text-slate-400", children: [
+              "Page ",
+              meta.current_page,
+              " of ",
+              meta.last_page,
+              " (",
+              meta.total,
+              " tickets)"
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  disabled: meta.current_page === 1,
+                  onClick: () => {
+                    const params = new URLSearchParams(searchParams);
+                    params.set("page", String(meta.current_page - 1));
+                    setSearchParams(params);
+                  },
+                  className: "p-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg",
+                  children: /* @__PURE__ */ jsx(ChevronLeft, { className: "w-4 h-4" })
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  disabled: meta.current_page === meta.last_page,
+                  onClick: () => {
+                    const params = new URLSearchParams(searchParams);
+                    params.set("page", String(meta.current_page + 1));
+                    setSearchParams(params);
+                  },
+                  className: "p-2 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg",
+                  children: /* @__PURE__ */ jsx(ChevronRight, { className: "w-4 h-4" })
+                }
+              )
+            ] })
           ] })
         ] })
       ] })
     ] }) })
   ] });
 }
-const __vite_glob_0_54 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_57 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: HelpdeskUserTicketsList
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  __vite_glob_0_54 as _,
-  __vite_glob_0_53 as a,
-  __vite_glob_0_52 as b,
-  __vite_glob_0_51 as c,
-  __vite_glob_0_50 as d,
-  __vite_glob_0_49 as e,
-  __vite_glob_0_48 as f,
-  __vite_glob_0_47 as g,
-  __vite_glob_0_46 as h,
-  __vite_glob_0_45 as i
+  __vite_glob_0_57 as _,
+  __vite_glob_0_56 as a,
+  __vite_glob_0_55 as b,
+  __vite_glob_0_54 as c,
+  __vite_glob_0_53 as d,
+  __vite_glob_0_52 as e,
+  __vite_glob_0_51 as f,
+  __vite_glob_0_50 as g,
+  __vite_glob_0_49 as h,
+  __vite_glob_0_48 as i
 };

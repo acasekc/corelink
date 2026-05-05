@@ -1,12 +1,21 @@
 import { jsxs, jsx } from "react/jsx-runtime";
 import { useState, useRef, useEffect } from "react";
 import { usePage, Link } from "@inertiajs/react";
-import { S as SeoHead } from "./route-blog-CWQU3YQn.js";
+import { S as SeoHead } from "./route-blog-DXWyZWAs.js";
 const Chat = ({ meta }) => {
   const { url } = usePage();
   const urlParams = new URLSearchParams((url || "").split("?")[1] || "");
+  const heartbeatIntervalMs = 3e4;
+  const referenceTypeOptions = [
+    { value: "reference_example", label: "General example" },
+    { value: "competitor", label: "Competitor" },
+    { value: "feature_reference", label: "Feature reference" },
+    { value: "design_reference", label: "Design inspiration" }
+  ];
   const [inviteCode, setInviteCode] = useState(urlParams.get("code") || "");
   const [userEmail, setUserEmail] = useState("");
+  const [currentWebsiteUrl, setCurrentWebsiteUrl] = useState("");
+  const [references, setReferences] = useState([{ type: "reference_example", url: "" }]);
   const [inviteError, setInviteError] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const [sessionId, setSessionId] = useState(urlParams.get("session") || null);
@@ -19,11 +28,50 @@ const Chat = ({ meta }) => {
   const [botOfferedSummary, setBotOfferedSummary] = useState(false);
   const [turnNumber, setTurnNumber] = useState(0);
   const [turnStatus, setTurnStatus] = useState("discovery");
-  const maxTurns = 12;
+  const maxTurns = 16;
+  const canShowFinishButton = turnNumber >= 3 && (botOfferedSummary || turnStatus === "soft_nudge" || turnStatus === "force_summary" || turnNumber >= maxTurns - 2);
   const messagesContainerRef = useRef(null);
   const messageInputRef = useRef(null);
   const echoChannelRef = useRef(null);
   const apiBase = "/api/bot";
+  const sendHeartbeat = async (sid = sessionId) => {
+    if (!sid) {
+      return;
+    }
+    try {
+      const response = await fetch(`${apiBase}/sessions/${sid}/heartbeat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        keepalive: true
+      });
+      if (!response.ok) {
+        return;
+      }
+      const data = await response.json();
+      if (data.status) {
+        setSessionStatus(data.status);
+      }
+    } catch (error) {
+      console.error("Error sending heartbeat:", error);
+    }
+  };
+  const updateReference = (index, field, value) => {
+    setReferences((prev) => prev.map((reference, referenceIndex) => referenceIndex === index ? { ...reference, [field]: value } : reference));
+  };
+  const addReferenceRow = () => {
+    setReferences((prev) => [...prev, { type: "reference_example", url: "" }]);
+  };
+  const removeReferenceRow = (index) => {
+    setReferences((prev) => {
+      if (prev.length === 1) {
+        return [{ type: "reference_example", url: "" }];
+      }
+      return prev.filter((_, referenceIndex) => referenceIndex !== index);
+    });
+  };
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
@@ -72,6 +120,18 @@ const Chat = ({ meta }) => {
       }
     };
   }, [sessionId]);
+  useEffect(() => {
+    if (!sessionId || sessionStatus === "completed" || sessionStatus === "failed") {
+      return void 0;
+    }
+    sendHeartbeat(sessionId);
+    const intervalId = window.setInterval(() => {
+      sendHeartbeat(sessionId);
+    }, heartbeatIntervalMs);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [sessionId, sessionStatus]);
   useEffect(() => {
     const codeFromUrl = urlParams.get("code");
     if (codeFromUrl && !sessionId) {
@@ -140,12 +200,18 @@ const Chat = ({ meta }) => {
         },
         body: JSON.stringify({
           invite_code: inviteCode,
-          email: userEmail || null
+          email: userEmail || null,
+          current_website_url: currentWebsiteUrl.trim() || null,
+          references: references.map((reference) => ({
+            type: reference.type,
+            url: reference.url.trim()
+          })).filter((reference) => reference.url)
         })
       });
       const sessionData = await sessionResponse.json();
       if (!sessionResponse.ok) {
-        setInviteError(sessionData.message || "Failed to create session");
+        const sessionErrors = Object.values(sessionData.errors || {}).flat().join(" ");
+        setInviteError(sessionData.message || sessionErrors || "Failed to create session");
         return;
       }
       setSessionId(sessionData.session_id);
@@ -199,6 +265,7 @@ const Chat = ({ meta }) => {
         setTurnStatus(data.turn_status);
         setBotOfferedSummary(data.bot_offered_summary || false);
         if (data.plan_generation_started) {
+          setSessionStatus("generating");
           setPlanGenerating(true);
           pollForPlanCompletion();
         }
@@ -230,16 +297,19 @@ const Chat = ({ meta }) => {
       });
       const data = await response.json();
       if (response.ok) {
+        setSessionStatus("generating");
         setMessages((prev) => [...prev, {
           role: "assistant",
           content: "I'm now creating your project summary. This may take a moment..."
         }]);
+        setBotOfferedSummary(false);
         pollForPlanCompletion();
       } else {
         setPlanGenerating(false);
+        const missingTopics = Array.isArray(data.missing_topics) && data.missing_topics.length > 0 ? ` We still need a little more detail on: ${data.missing_topics.join(", ")}.` : "";
         setMessages((prev) => [...prev, {
           role: "assistant",
-          content: data.error || "Failed to start plan generation."
+          content: `${data.error || "Failed to start plan generation."}${missingTopics}`
         }]);
       }
     } catch (error) {
@@ -345,13 +415,83 @@ const Chat = ({ meta }) => {
               }
             )
           ] }),
+          /* @__PURE__ */ jsxs("div", { className: "mb-4", children: [
+            /* @__PURE__ */ jsxs("label", { htmlFor: "currentWebsiteUrl", className: "block text-sm font-semibold mb-2", children: [
+              "Current Website or Product URL ",
+              /* @__PURE__ */ jsx("span", { className: "text-slate-400 text-xs", children: "(optional)" })
+            ] }),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                id: "currentWebsiteUrl",
+                type: "text",
+                value: currentWebsiteUrl,
+                onChange: (e) => setCurrentWebsiteUrl(e.target.value),
+                placeholder: "example.com or https://example.com",
+                className: "w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none",
+                disabled: isValidating
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "mb-4", children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-3 mb-2", children: [
+              /* @__PURE__ */ jsxs("label", { className: "block text-sm font-semibold", children: [
+                "Reference URLs ",
+                /* @__PURE__ */ jsx("span", { className: "text-slate-400 text-xs", children: "(optional)" })
+              ] }),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: addReferenceRow,
+                  disabled: isValidating || references.length >= 5,
+                  className: "text-xs font-medium text-cyan-300 transition hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50",
+                  children: "+ Add reference"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "space-y-3", children: references.map((reference, index) => /* @__PURE__ */ jsx("div", { className: "rounded-lg border border-slate-700 bg-slate-900/40 p-3", children: /* @__PURE__ */ jsxs("div", { className: "grid gap-3 sm:grid-cols-[180px_minmax(0,1fr)_auto] sm:items-start", children: [
+              /* @__PURE__ */ jsx(
+                "select",
+                {
+                  value: reference.type,
+                  onChange: (e) => updateReference(index, "type", e.target.value),
+                  className: "w-full rounded-lg border border-slate-600 bg-slate-700 px-3 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500",
+                  disabled: isValidating,
+                  children: referenceTypeOptions.map((option) => /* @__PURE__ */ jsx("option", { value: option.value, children: option.label }, option.value))
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  type: "text",
+                  value: reference.url,
+                  onChange: (e) => updateReference(index, "url", e.target.value),
+                  placeholder: "example.com or https://example.com",
+                  className: "w-full rounded-lg border border-slate-600 bg-slate-700 px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500",
+                  disabled: isValidating
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => removeReferenceRow(index),
+                  className: "rounded-lg border border-slate-600 px-3 py-3 text-sm text-slate-300 transition hover:border-slate-500 hover:text-white",
+                  disabled: isValidating,
+                  children: "Remove"
+                }
+              )
+            ] }) }, index)) }),
+            /* @__PURE__ */ jsx("p", { className: "mt-2 text-xs text-slate-400", children: "Add competitor, feature, or design references. The bot treats them as context only and still confirms what belongs in scope." })
+          ] }),
           inviteError && /* @__PURE__ */ jsx("p", { className: "text-red-400 text-sm mb-4", children: inviteError }),
           /* @__PURE__ */ jsx(
             "button",
             {
               type: "submit",
               disabled: isValidating || !inviteCode,
-              className: "w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed",
+              className: "w-full bg-linear-to-r from-blue-500 to-cyan-500 rounded-lg py-3 font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
               children: isValidating ? "Validating..." : "Start Discovery"
             }
           )
@@ -371,6 +511,21 @@ const Chat = ({ meta }) => {
           turnStatus === "soft_nudge" && /* @__PURE__ */ jsx("div", { className: "text-sm text-yellow-300", children: "Wrapping up soon..." }),
           turnStatus === "force_summary" && /* @__PURE__ */ jsx("div", { className: "text-sm text-orange-300", children: "Final questions..." })
         ] }),
+        sessionStatus === "active" && canShowFinishButton && !planGenerating && /* @__PURE__ */ jsx("div", { className: "mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3", children: /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between", children: [
+          /* @__PURE__ */ jsxs("div", { children: [
+            /* @__PURE__ */ jsx("p", { className: "font-medium text-emerald-200", children: "Ready to wrap this up?" }),
+            /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-300", children: "If you feel like you've shared enough, you can end the discovery session and send it for estimate processing now." })
+          ] }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: requestPlan,
+              disabled: planGenerating,
+              className: "rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50",
+              children: "Finish & generate estimate"
+            }
+          )
+        ] }) }),
         /* @__PURE__ */ jsxs(
           "div",
           {
@@ -420,17 +575,17 @@ const Chat = ({ meta }) => {
               {
                 onClick: sendMessage,
                 disabled: !userMessage.trim() || isTyping || planGenerating,
-                className: "px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed",
+                className: "bg-linear-to-r from-blue-500 to-cyan-500 rounded-lg px-6 py-3 font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
                 children: "Send"
               }
             ),
-            turnNumber >= 3 && botOfferedSummary && /* @__PURE__ */ jsx(
+            canShowFinishButton && /* @__PURE__ */ jsx(
               "button",
               {
                 onClick: requestPlan,
                 disabled: planGenerating,
-                className: "px-4 py-2 bg-green-600 rounded-lg text-sm font-medium hover:bg-green-700 transition disabled:opacity-50",
-                children: "Generate Plan"
+                className: "rounded-lg bg-green-600 px-4 py-2 text-sm font-medium transition hover:bg-green-700 disabled:opacity-50",
+                children: "Finish & generate estimate"
               }
             )
           ] })
@@ -451,7 +606,7 @@ const Chat = ({ meta }) => {
     ] }) })
   ] });
 };
-const __vite_glob_0_43 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_46 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Chat
 }, Symbol.toStringTag, { value: "Module" }));
@@ -529,11 +684,11 @@ const Summary = ({ meta, sessionId, summary }) => {
     ] }) })
   ] });
 };
-const __vite_glob_0_44 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_47 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Summary
 }, Symbol.toStringTag, { value: "Module" }));
 export {
-  __vite_glob_0_44 as _,
-  __vite_glob_0_43 as a
+  __vite_glob_0_47 as _,
+  __vite_glob_0_46 as a
 };

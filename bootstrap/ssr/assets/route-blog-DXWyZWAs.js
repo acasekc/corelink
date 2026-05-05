@@ -4,11 +4,14 @@ import { Head, Link } from "@inertiajs/react";
 import { ArrowRight, Calendar, Clock, Linkedin, Facebook, ArrowLeft } from "lucide-react";
 function SeoHead({ meta }) {
   return /* @__PURE__ */ jsxs(Head, { title: meta?.title, children: [
+    meta?.canonical && /* @__PURE__ */ jsx("link", { rel: "canonical", href: meta.canonical }, "canonical"),
     meta?.description && /* @__PURE__ */ jsx("meta", { name: "description", content: meta.description }),
     meta?.title && /* @__PURE__ */ jsx("meta", { property: "og:title", content: `${meta.title} | CoreLink Development` }),
     meta?.description && /* @__PURE__ */ jsx("meta", { property: "og:description", content: meta.description }),
-    /* @__PURE__ */ jsx("meta", { property: "og:type", content: "website" }),
-    /* @__PURE__ */ jsx("meta", { property: "og:site_name", content: "CoreLink Development" })
+    meta?.canonical && /* @__PURE__ */ jsx("meta", { property: "og:url", content: meta.canonical }),
+    /* @__PURE__ */ jsx("meta", { property: "og:type", content: meta?.type ?? "website" }),
+    /* @__PURE__ */ jsx("meta", { property: "og:site_name", content: "CoreLink Development" }),
+    meta?.image && /* @__PURE__ */ jsx("meta", { property: "og:image", content: meta.image })
   ] });
 }
 const ArticleCard$1 = ({ article }) => {
@@ -146,7 +149,7 @@ function BlogCategory({ meta, category, articles = { data: [] }, categories = []
     ] }) })
   ] });
 }
-const __vite_glob_0_36 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_39 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: BlogCategory
 }, Symbol.toStringTag, { value: "Module" }));
@@ -308,7 +311,7 @@ function BlogIndex({ meta, articles = { data: [] }, categories = [], featuredArt
     ] }) })
   ] });
 }
-const __vite_glob_0_37 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_40 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: BlogIndex
 }, Symbol.toStringTag, { value: "Module" }));
@@ -535,13 +538,13 @@ function BlogShow({ meta, article, relatedArticles = [], recentArticles = [], ca
     ] }) })
   ] });
 }
-const __vite_glob_0_38 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_41 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: BlogShow
 }, Symbol.toStringTag, { value: "Module" }));
 export {
   SeoHead as S,
-  __vite_glob_0_38 as _,
-  __vite_glob_0_37 as a,
-  __vite_glob_0_36 as b
+  __vite_glob_0_41 as _,
+  __vite_glob_0_40 as a,
+  __vite_glob_0_39 as b
 };

@@ -140,6 +140,62 @@ class ClientIntakeFlowTest extends TestCase
         Mail::assertQueued(IntakeConfirmationMail::class);
     }
 
+    public function test_json_submission_succeeds_without_additional_notes(): void
+    {
+        Mail::fake();
+
+        Http::fake([
+            'corelink.dev/api/helpdesk/v1/tickets' => Http::response([
+                'data' => ['id' => 777, 'number' => 'PROSP-777'],
+            ], 201),
+        ]);
+
+        $invite = ClientIntakeInvite::create([
+            'status' => ClientIntakeInvite::STATUS_OPENED,
+            'expires_at' => now()->addDays(30),
+            'business_name' => 'Acme Co.',
+        ]);
+
+        $payload = $this->validSubmissionPayload();
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ])->post('/intake/'.$invite->code, $payload);
+
+        $response->assertCreated()
+            ->assertJsonPath('message', 'Your intake was submitted successfully.')
+            ->assertJsonPath('redirect', route('intake.submitted', ['code' => $invite->code]));
+
+        $this->assertDatabaseHas('client_intakes', [
+            'invite_id' => $invite->id,
+            'business_name' => 'Acme Co.',
+        ]);
+    }
+
+    public function test_json_submission_validation_returns_step_and_field_details(): void
+    {
+        $invite = ClientIntakeInvite::create([
+            'status' => ClientIntakeInvite::STATUS_OPENED,
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $payload = $this->validSubmissionPayload();
+        unset($payload['budget_range']);
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ])->post('/intake/'.$invite->code, $payload);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('errors.budget_range', 'The Budget range field is required.')
+            ->assertJsonPath('first_error.field', 'budget_range')
+            ->assertJsonPath('first_error.label', 'Budget range')
+            ->assertJsonPath('first_error.step_index', 6)
+            ->assertJsonPath('first_error.step_title', 'Timeline & Budget');
+    }
+
     public function test_already_submitted_code_404s(): void
     {
         $invite = ClientIntakeInvite::create([
