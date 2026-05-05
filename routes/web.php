@@ -130,7 +130,7 @@ Route::prefix('intake')->name('intake.')->group(function () {
         ->middleware('throttle:120,1')
         ->name('draft');
     Route::post('/{code}', [IntakeController::class, 'submit'])
-        ->middleware('throttle:5,10')
+        ->middleware('throttle:10,1')
         ->name('submit');
 });
 
