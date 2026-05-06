@@ -646,7 +646,7 @@ function buildSteps(_options) {
         { key: "contact_name", label: "Primary contact name", type: "text", required: true },
         { key: "email", label: "Email", type: "email", required: true },
         { key: "phone", label: "Phone", type: "tel" },
-        { key: "website_url", label: "Existing website URL", type: "url", placeholder: "https://" },
+        { key: "website_url", label: "Existing website URL", type: "text", placeholder: "example.com", help: "Domain only is fine — we'll add https:// for you." },
         { key: "referral_source", label: "How did you hear about us?", type: "text" },
       ],
     },

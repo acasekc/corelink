@@ -19,6 +19,26 @@ class SubmitIntakeRequest extends FormRequest
     }
 
     /**
+     * Accept bare domains for `website_url` by prepending https:// before the
+     * `url` rule runs. Real users rarely type the scheme; rejecting them for
+     * that would be the wrong UX.
+     */
+    protected function prepareForValidation(): void
+    {
+        $url = $this->input('website_url');
+
+        if (! is_string($url) || trim($url) === '') {
+            return;
+        }
+
+        $trimmed = trim($url);
+
+        if (! preg_match('#^https?://#i', $trimmed)) {
+            $this->merge(['website_url' => 'https://'.ltrim($trimmed, '/')]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>

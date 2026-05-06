@@ -196,6 +196,33 @@ class ClientIntakeFlowTest extends TestCase
             ->assertJsonPath('first_error.step_title', 'Timeline & Budget');
     }
 
+    public function test_bare_domain_in_website_url_is_accepted_and_normalized(): void
+    {
+        Mail::fake();
+
+        Http::fake([
+            'corelink.dev/api/helpdesk/v1/tickets' => Http::response([
+                'data' => ['id' => 999, 'number' => 'PROSP-999'],
+            ], 201),
+        ]);
+
+        $invite = ClientIntakeInvite::create([
+            'status' => ClientIntakeInvite::STATUS_OPENED,
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $payload = $this->validSubmissionPayload();
+        $payload['website_url'] = 'acme.test';
+
+        $this->withHeaders([
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ])->post('/intake/'.$invite->code, $payload)->assertCreated();
+
+        $intake = ClientIntake::firstOrFail();
+        $this->assertSame('https://acme.test', $intake->data['website_url']);
+    }
+
     public function test_already_submitted_code_404s(): void
     {
         $invite = ClientIntakeInvite::create([
