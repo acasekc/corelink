@@ -20,6 +20,12 @@ class McpApiKeyAuth
             $token = $request->header('X-API-Key') ?? $request->header('X-Helpdesk-Key');
         }
 
+        // Temporary: claude.ai connectors can't send custom headers, so the
+        // /mcp/helpdesk/k/{key} route carries the key in the URL path.
+        if (! $token) {
+            $token = $request->route('key');
+        }
+
         if (! $token) {
             return response()->json([
                 'jsonrpc' => '2.0',

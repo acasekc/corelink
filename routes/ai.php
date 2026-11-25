@@ -16,3 +16,8 @@ use Laravel\Mcp\Facades\Mcp;
 
 Mcp::web('/mcp/helpdesk', HelpdeskServer::class)
     ->middleware(McpApiKeyAuth::class);
+
+// Temporary key-in-URL variant for claude.ai custom connectors, which can't
+// send an Authorization header. Remove when CoreLink moves platforms.
+Mcp::web('/mcp/helpdesk/k/{key}', HelpdeskServer::class)
+    ->middleware(McpApiKeyAuth::class);
